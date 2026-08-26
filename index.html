@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aezza's French Quest 🇫🇷 - L'Aventure de Français</title>
+  <title>Aezza's Learning Quest 🌟 - French & Mathematics</title>
   <!-- Google Fonts: Plus Jakarta Sans & Quicksand as defined in Stitch Design System -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,28 +22,28 @@
     <!-- Top Header / Gamification Bar -->
     <header class="app-header" id="app-header">
       <div class="header-left">
-        <div class="avatar-badge" id="avatar-badge" title="Clique sur Coco !">
-          <span class="avatar-emoji">🦊</span>
-          <span class="avatar-beret">🥖</span>
+        <div class="avatar-badge" id="avatar-badge" title="Click on Coco!">
+          <span class="avatar-emoji" id="avatar-emoji">🦊</span>
+          <span class="avatar-beret" id="avatar-accessory">🥖</span>
         </div>
         <div class="user-greeting">
-          <span class="greeting-sub">Bienvenue !</span>
+          <span class="greeting-sub" id="greeting-sub">Bienvenue !</span>
           <h2 class="user-name" id="display-user-name">Aezza 🌟</h2>
         </div>
       </div>
 
       <div class="header-right-group" id="header-authenticated-stats">
         <div class="header-stats">
-          <div class="stat-pill streak-pill" title="Jours consécutifs d'entraînement">
+          <div class="stat-pill streak-pill" title="Consecutive training days">
             <span class="stat-icon">🔥</span>
             <span class="stat-value" id="stat-streak">5</span>
-            <span class="stat-label">Série</span>
+            <span class="stat-label">Streak</span>
           </div>
-          <div class="stat-pill star-pill" title="Étoiles magiques">
+          <div class="stat-pill star-pill" title="Magic stars earned">
             <span class="stat-icon">⭐</span>
             <span class="stat-value" id="stat-stars">120</span>
           </div>
-          <div class="stat-pill xp-pill" title="Points d'expérience">
+          <div class="stat-pill xp-pill" title="Experience points">
             <span class="stat-icon">⚡</span>
             <span class="stat-value" id="stat-xp">350</span>
             <span class="stat-label">XP</span>
@@ -54,48 +54,68 @@
         <div class="github-profile-pill" id="github-profile-pill">
           <img src="" alt="GitHub Avatar" class="github-user-avatar" id="github-user-avatar" />
           <span class="github-user-handle" id="github-user-handle">@asimmhd90</span>
-          <button class="btn-logout" id="btn-logout" title="Se déconnecter">🚪 Déconnexion</button>
+          <button class="btn-logout" id="btn-logout" title="Sign out">🚪 Logout</button>
         </div>
       </div>
     </header>
+
+    <!-- SUBJECT SWITCHER BAR (French vs Mathematics) -->
+    <div class="subject-switcher-container" id="subject-switcher-container">
+      <div class="subject-switcher">
+        <button class="subject-pill-btn active" id="btn-subject-french" data-subject="french">
+          <span class="subj-icon">🇫🇷</span>
+          <div class="subj-text-wrap">
+            <span class="subj-title">French Quest</span>
+            <span class="subj-sub">Mid-Term Syllabus</span>
+          </div>
+        </button>
+        <button class="subject-pill-btn" id="btn-subject-math" data-subject="math">
+          <span class="subj-icon">🔢</span>
+          <div class="subj-text-wrap">
+            <span class="subj-title">Mathematics Quest</span>
+            <span class="subj-sub">Grade 3 • SA-1 (0096)</span>
+          </div>
+        </button>
+      </div>
+    </div>
 
     <!-- Main Navigation Bar (Hidden when locked) -->
     <nav class="main-nav" id="main-nav">
       <button class="nav-btn active" data-tab="adventure">
         <span class="nav-icon">🗺️</span>
-        <span>Aventure</span>
+        <span id="nav-label-adventure">Aventure / Units</span>
       </button>
       <button class="nav-btn" data-tab="unscramble">
         <span class="nav-icon">🧩</span>
-        <span>Mots en Ordre</span>
+        <span id="nav-label-unscramble">Mots / Equations</span>
       </button>
       <button class="nav-btn" data-tab="matching">
         <span class="nav-icon">🎯</span>
-        <span>Paires Magiques</span>
+        <span id="nav-label-matching">Paires Magiques</span>
       </button>
       <button class="nav-btn" data-tab="flashcards">
         <span class="nav-icon">🎴</span>
-        <span>Cartes Mémo</span>
+        <span id="nav-label-flashcards">Cartes Mémo</span>
       </button>
       <button class="nav-btn" data-tab="mock-exam">
         <span class="nav-icon">📝</span>
-        <span>Examen Blanc</span>
+        <span id="nav-label-exam">Examen Blanc</span>
       </button>
       <button class="nav-btn" data-tab="trophies">
         <span class="nav-icon">🏆</span>
-        <span>Trophées</span>
+        <span>Trophées / Badges</span>
       </button>
     </nav>
 
     <!-- Mascot Bubble Banner (Hidden when locked) -->
     <div class="mascot-bar" id="mascot-bar">
-      <div class="mascot-img-box" id="mascot-click-target" title="Clique sur Coco !">
-        <div class="mascot-avatar">🦊</div>
+      <div class="mascot-img-box" id="mascot-click-target" title="Click on Coco!">
+        <div class="mascot-avatar" id="mascot-avatar-emoji">🦊</div>
       </div>
       <div class="mascot-speech-bubble">
         <p id="mascot-text">"Bonjour Aezza ! Je m'appelle Coco le renard. Prête à réussir ton examen de français ? Choisis un chapitre !"</p>
-        <button class="audio-btn-mini" id="mascot-voice-btn" title="Écouter la voix de Coco">
-          🔊 Écouter Coco
+        <button class="audio-btn-mini" id="mascot-voice-btn" title="Listen to Coco">
+          🔊 Speak Coco
         </button>
       </div>
     </div>
@@ -114,48 +134,48 @@
                 </svg>
                 <span class="octocat-beret">🥖</span>
               </div>
-              <h1 class="login-title">Espace Privé d'Aezza 🇫🇷</h1>
-              <p class="login-sub">Connexion sécurisée avec vos identifiants GitHub requis.</p>
+              <h1 class="login-title">Aezza's Learning Portal 🌟</h1>
+              <p class="login-sub">Secure access with your GitHub credentials or Family PIN.</p>
             </div>
 
             <form id="github-login-form" class="login-form">
               <div class="form-group">
-                <label for="gh-username">Nom d'utilisateur GitHub :</label>
+                <label for="gh-username">GitHub Username:</label>
                 <div class="input-with-icon">
                   <span class="input-icon">👤</span>
-                  <input type="text" id="gh-username" placeholder="ex: asimmhd90" value="asimmhd90" required autocomplete="username" />
+                  <input type="text" id="gh-username" placeholder="e.g. asimmhd90" value="asimmhd90" required autocomplete="username" />
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="gh-token">GitHub Token d'accès (PAT) :</label>
+                <label for="gh-token">GitHub Personal Access Token (PAT):</label>
                 <div class="input-with-icon">
                   <span class="input-icon">🔑</span>
-                  <input type="password" id="gh-token" placeholder="ghp_... ou github_pat_..." required autocomplete="current-password" />
+                  <input type="password" id="gh-token" placeholder="ghp_... or github_pat_..." required autocomplete="current-password" />
                 </div>
                 <div class="token-hint-text">
-                  <span>💡 <strong>Conseil :</strong> Créez un token sécurisé avec permission <code>read:user</code> sur <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">GitHub Settings ↗</a></span>
+                  <span>💡 <strong>Tip:</strong> Create a token with <code>read:user</code> scope in <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">GitHub Settings ↗</a></span>
                 </div>
               </div>
 
               <!-- Quick Demo / Parent Bypass Option -->
               <div class="form-group quick-pass-toggle">
                 <details>
-                  <summary>🔒 Ou utiliser le code d'accès Aezza & Papa</summary>
+                  <summary>🔒 Or use Aezza & Dad Passcode</summary>
                   <div class="quick-pass-box">
-                    <label for="quick-parent-pin">Code PIN Familial :</label>
-                    <input type="password" id="quick-parent-pin" placeholder="Entrez le code secret" />
+                    <label for="quick-parent-pin">Family PIN:</label>
+                    <input type="password" id="quick-parent-pin" placeholder="Enter secret code" />
                   </div>
                 </details>
               </div>
 
               <div class="login-error-banner" id="login-error-banner" style="display: none;">
                 <span class="error-icon">⚠️</span>
-                <span id="login-error-text">Identifiants GitHub invalides. Vérifiez votre nom d'utilisateur et votre token.</span>
+                <span id="login-error-text">Invalid GitHub credentials. Please check your username and token.</span>
               </div>
 
               <button type="submit" class="btn-primary btn-large btn-login" id="btn-submit-login">
-                <span>Vérifier & Déverrouiller 🚀</span>
+                <span>Verify & Unlock 🚀</span>
               </button>
             </form>
           </div>
@@ -165,97 +185,20 @@
       <!-- 1. ADVENTURE (CHAPTER SELECTOR) -->
       <section id="view-adventure" class="view-panel">
         <div class="section-title-wrap">
-          <h1 class="section-title">Choisis ton Aventure 🚀</h1>
-          <p class="section-desc">Entraîne-toi sur chaque chapitre du programme pour maîtriser ton contrôle !</p>
+          <h1 class="section-title" id="adventure-headline">Choisis ton Aventure 🚀</h1>
+          <p class="section-desc" id="adventure-subheadline">Entraîne-toi sur chaque chapitre du programme pour maîtriser ton contrôle !</p>
         </div>
 
-        <div class="chapter-grid">
-          <!-- Card 1: La Vie Quotidienne de Luc -->
-          <div class="chapter-card card-pink" data-chapter="ch1">
-            <div class="card-badge" id="badge-status-ch1">Chapitre 1</div>
-            <div class="card-icon-hero">⏰ 🏠</div>
-            <h3 class="card-title">La Vie Quotidienne de Luc</h3>
-            <p class="card-subtitle">Verbes Pronominaux & Routine</p>
-            <div class="tags-row">
-              <span class="tag">se lever</span>
-              <span class="tag">se coucher</span>
-              <span class="tag">s'habiller</span>
-              <span class="tag">se doucher</span>
-            </div>
-            <div class="progress-container">
-              <div class="progress-bar" id="prog-ch1" style="width: 0%"></div>
-            </div>
-            <div class="card-action-row">
-              <button class="btn-primary start-chapter-btn" data-chapter="ch1">S'entraîner 🚀</button>
-            </div>
-          </div>
-
-          <!-- Card 2: Le Monde Multiculturel -->
-          <div class="chapter-card card-mint" data-chapter="ch2">
-            <div class="card-badge" id="badge-status-ch2">Chapitre 2</div>
-            <div class="card-icon-hero">🌍 ✈️</div>
-            <h3 class="card-title">Le Monde Multiculturel</h3>
-            <p class="card-subtitle">Nationalités & Prépositions (à, en, au, aux)</p>
-            <div class="tags-row">
-              <span class="tag">français/e</span>
-              <span class="tag">en France</span>
-              <span class="tag">au Canada</span>
-              <span class="tag">aux États-Unis</span>
-            </div>
-            <div class="progress-container">
-              <div class="progress-bar" id="prog-ch2" style="width: 0%"></div>
-            </div>
-            <div class="card-action-row">
-              <button class="btn-primary start-chapter-btn" data-chapter="ch2">S'entraîner 🚀</button>
-            </div>
-          </div>
-
-          <!-- Card 3: La Bonne Nourriture & Les Repas -->
-          <div class="chapter-card card-blue" data-chapter="ch3">
-            <div class="card-badge" id="badge-status-ch3">Chapitre 3</div>
-            <div class="card-icon-hero">🥐 🍎</div>
-            <h3 class="card-title">La Bonne Nourriture</h3>
-            <p class="card-subtitle">Les Repas & Articles Partitifs (du, de la, de l', des)</p>
-            <div class="tags-row">
-              <span class="tag">petit déjeuner</span>
-              <span class="tag">du pain</span>
-              <span class="tag">de la confiture</span>
-              <span class="tag">de l'eau</span>
-            </div>
-            <div class="progress-container">
-              <div class="progress-bar" id="prog-ch3" style="width: 0%"></div>
-            </div>
-            <div class="card-action-row">
-              <button class="btn-primary start-chapter-btn" data-chapter="ch3">S'entraîner 🚀</button>
-            </div>
-          </div>
-
-          <!-- Card 4: Conjugaison & Loisirs -->
-          <div class="chapter-card card-yellow" data-chapter="ch4">
-            <div class="card-badge" id="badge-status-ch4">Grammaire & Loisirs</div>
-            <div class="card-icon-hero">🎨 ⚽</div>
-            <h3 class="card-title">Conjugaison & Mes Loisirs</h3>
-            <p class="card-subtitle">Aimer, Aller, Parler, Regarder, Habiter & J'aime...</p>
-            <div class="tags-row">
-              <span class="tag">Je vais</span>
-              <span class="tag">J'aime</span>
-              <span class="tag">Je n'aime pas</span>
-              <span class="tag">Habiter</span>
-            </div>
-            <div class="progress-container">
-              <div class="progress-bar" id="prog-ch4" style="width: 0%"></div>
-            </div>
-            <div class="card-action-row">
-              <button class="btn-primary start-chapter-btn" data-chapter="ch4">S'entraîner 🚀</button>
-            </div>
-          </div>
+        <!-- Dynamic Chapter Grid (Populated for French or Math) -->
+        <div class="chapter-grid" id="chapter-grid-container">
+          <!-- Dynamically populated by renderAdventureGrid() -->
         </div>
       </section>
 
       <!-- 2. QUIZ SCREEN (ACTIVE DURING CHAPTER QUIZ & MOCK EXAM) -->
       <section id="view-quiz" class="view-panel">
         <div class="quiz-header-bar">
-          <button class="btn-back" id="quiz-back-btn">⬅️ Menu Principal</button>
+          <button class="btn-back" id="quiz-back-btn">⬅️ Back to Menu</button>
           <div class="quiz-topic-title" id="quiz-topic-title">La Vie Quotidienne de Luc</div>
           <div class="quiz-progress-pill">
             <span id="quiz-current-num">1</span> / <span id="quiz-total-num">5</span>
@@ -270,20 +213,20 @@
           <div class="quiz-question-card" id="quiz-question-card">
             <!-- Audio recitation bar -->
             <div class="reciter-control-bar">
-              <button class="reciter-btn play-french-audio-btn" id="btn-speak-french" title="Écouter la prononciation en Français">
+              <button class="reciter-btn play-french-audio-btn" id="btn-speak-french" title="Listen to pronunciation">
                 <span class="speaker-icon">🔊</span>
-                <span>Écouter la phrase 🇫🇷</span>
+                <span id="label-speak-main">Écouter la phrase 🇫🇷</span>
               </button>
-              <button class="reciter-btn play-english-audio-btn" id="btn-speak-english" title="Hear English translation clue">
-                <span class="speaker-icon">🇬🇧</span>
-                <span>Traduction / Indice</span>
+              <button class="reciter-btn play-english-audio-btn" id="btn-speak-english" title="Hear English clue/explanation">
+                <span class="speaker-icon">💡</span>
+                <span id="label-speak-secondary">Traduction / Clue</span>
               </button>
-              <div class="speed-toggle" title="Vitesse de la voix">
-                <label for="audio-speed-select">🐢 Vitesse:</label>
+              <div class="speed-toggle" title="Voice speed">
+                <label for="audio-speed-select">🐢 Speed:</label>
                 <select id="audio-speed-select">
-                  <option value="0.75">Lente (0.75x)</option>
-                  <option value="0.9" selected>Normale (0.9x)</option>
-                  <option value="1.0">Rapide (1.0x)</option>
+                  <option value="0.75">Slow (0.75x)</option>
+                  <option value="0.9" selected>Normal (0.9x)</option>
+                  <option value="1.0">Fast (1.0x)</option>
                 </select>
               </div>
             </div>
@@ -305,69 +248,69 @@
               <div class="feedback-icon" id="feedback-icon">🎉</div>
               <div class="feedback-body">
                 <h4 id="feedback-title">Bravo Aezza !</h4>
-                <p id="feedback-explanation">"se réveille" est la forme correcte pour "Luc" (il).</p>
+                <p id="feedback-explanation">Explanation details here.</p>
               </div>
-              <button class="btn-primary" id="btn-next-question">Continuer ➡️</button>
+              <button class="btn-primary" id="btn-next-question">Next ➡️</button>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 3. WORD UNSCRAMBLE (REMETTEZ LES MOTS DANS L'ORDRE) -->
+      <!-- 3. WORD / EQUATION UNSCRAMBLE -->
       <section id="view-unscramble" class="view-panel">
         <div class="section-title-wrap">
-          <div class="badge-pill">🧩 Exercice Spécial Examen</div>
-          <h1 class="section-title">Remets les Mots dans l'Ordre !</h1>
-          <p class="section-desc">Clique sur les étiquettes pour construire la phrase française dans le bon ordre grammatical.</p>
+          <div class="badge-pill" id="unscramble-badge-pill">🧩 Special Exam Exercise</div>
+          <h1 class="section-title" id="unscramble-title">Remets les Mots dans l'Ordre !</h1>
+          <p class="section-desc" id="unscramble-desc">Clique sur les étiquettes pour construire la phrase française dans le bon ordre grammatical.</p>
         </div>
 
         <div class="unscramble-container">
           <div class="unscramble-card">
             <!-- Audio Bar -->
             <div class="reciter-control-bar">
-              <button class="reciter-btn" id="btn-unscramble-speak" title="Écouter la phrase modèle">
+              <button class="reciter-btn" id="btn-unscramble-speak" title="Listen to model">
                 <span class="speaker-icon">🔊</span>
-                <span>Écouter la phrase 🇫🇷</span>
+                <span>Listen Audio</span>
               </button>
-              <span class="unscramble-counter">Niveau <span id="unscramble-lvl">1</span> / <span id="unscramble-total">6</span></span>
+              <span class="unscramble-counter">Level <span id="unscramble-lvl">1</span> / <span id="unscramble-total">6</span></span>
             </div>
 
-            <!-- English Clue -->
+            <!-- Clue -->
             <div class="target-sentence-hint">
-              <span class="hint-label">🎯 Signification en anglais :</span>
+              <span class="hint-label" id="unscramble-hint-label">🎯 Target meaning / goal:</span>
               <p class="hint-text" id="unscramble-english-hint">"Luc wakes up at seven o'clock."</p>
             </div>
 
             <!-- Drop / Assembled Area -->
             <div class="drop-zone-wrapper">
-              <div class="zone-label">Ta phrase construite :</div>
+              <div class="zone-label" id="unscramble-drop-label">Your constructed answer:</div>
               <div class="word-drop-zone" id="word-drop-zone">
-                <span class="placeholder-text" id="drop-placeholder">Clique sur les étiquettes ci-dessous pour former la phrase...</span>
+                <span class="placeholder-text" id="drop-placeholder">Click the tiles below to build...</span>
               </div>
             </div>
 
-            <!-- Word Bank -->
+            <!-- Bank -->
             <div class="bank-zone-wrapper">
-              <div class="zone-label">Banque de mots :</div>
+              <div class="zone-label" id="unscramble-bank-label">Tile bank:</div>
               <div class="word-bank-zone" id="word-bank-zone">
-                <!-- Dynamically generated word chips -->
+                <!-- Dynamically generated chips -->
               </div>
             </div>
 
             <!-- Action Controls -->
             <div class="unscramble-actions">
-              <button class="btn-secondary" id="btn-reset-words">🔄 Réinitialiser</button>
-              <button class="btn-primary" id="btn-check-unscramble">Vérifier ✨</button>
+              <button class="btn-secondary" id="btn-reset-words">🔄 Reset</button>
+              <button class="btn-primary" id="btn-check-unscramble">Check ✨</button>
             </div>
 
             <!-- Feedback -->
             <div class="feedback-banner" id="unscramble-feedback">
               <div class="feedback-icon" id="unscramble-feedback-icon">🎉</div>
               <div class="feedback-body">
-                <h4 id="unscramble-feedback-title">Super travail !</h4>
-                <p id="unscramble-feedback-text">La phrase est parfaitement ordonnée !</p>
+                <h4 id="unscramble-feedback-title">Great Job!</h4>
+                <p id="unscramble-feedback-text">Everything is in the correct order!</p>
               </div>
-              <button class="btn-primary" id="btn-next-unscramble">Phrase suivante ➡️</button>
+              <button class="btn-primary" id="btn-next-unscramble">Next Puzzle ➡️</button>
             </div>
           </div>
         </div>
@@ -376,21 +319,19 @@
       <!-- 4. MATCHING PAIRS GAME -->
       <section id="view-matching" class="view-panel">
         <div class="section-title-wrap">
-          <div class="badge-pill">🎯 Jeu d'Association</div>
-          <h1 class="section-title">Les Paires Magiques</h1>
-          <p class="section-desc">Touche deux cartes correspondantes pour former des paires !</p>
+          <div class="badge-pill">🎯 Association Challenge</div>
+          <h1 class="section-title">Magic Pairs Matching</h1>
+          <p class="section-desc">Tap two matching cards to connect the pair!</p>
         </div>
 
-        <div class="matching-category-select">
-          <button class="match-cat-btn active" data-match-cat="nationalities">👥 Nationalités (Masc ↔ Fem)</button>
-          <button class="match-cat-btn" data-match-cat="prepositions">🌍 Pays & Prépositions (à, en, au, aux)</button>
-          <button class="match-cat-btn" data-match-cat="partitives">🥐 Nourriture & Partitifs (du, de la, des)</button>
+        <div class="matching-category-select" id="matching-category-tabs-container">
+          <!-- Dynamic category pills for French or Math -->
         </div>
 
         <div class="matching-board-container">
           <div class="matching-stats-bar">
-            <span>Paires trouvées : <strong id="match-found-count">0</strong> / <span id="match-total-count">5</span></span>
-            <button class="audio-btn-mini" id="btn-matching-replay-cat" title="Rejouer cette catégorie">🔄 Recommencer</button>
+            <span>Pairs found: <strong id="match-found-count">0</strong> / <span id="match-total-count">5</span></span>
+            <button class="audio-btn-mini" id="btn-matching-replay-cat" title="Replay category">🔄 Shuffle</button>
           </div>
           <div class="matching-grid" id="matching-grid">
             <!-- Dynamic pairs tiles -->
@@ -399,9 +340,9 @@
           <!-- Matching Completion Box -->
           <div class="matching-complete-box" id="matching-complete-box" style="display: none;">
             <div class="match-trophy">🌟</div>
-            <h3>Félicitations Aezza !</h3>
-            <p>Tu as trouvé toutes les paires magiques de cette catégorie ! (+30 XP)</p>
-            <button class="btn-primary" id="btn-match-next-cat">Catégorie Suivante ➡️</button>
+            <h3>Awesome job Aezza!</h3>
+            <p>You matched all pairs in this category! (+30 XP)</p>
+            <button class="btn-primary" id="btn-match-next-cat">Next Category ➡️</button>
           </div>
         </div>
       </section>
@@ -409,50 +350,46 @@
       <!-- 5. FLASHCARDS (CARTES MÉMO) -->
       <section id="view-flashcards" class="view-panel">
         <div class="section-title-wrap">
-          <h1 class="section-title">Cartes Mémo Magiques 🎴</h1>
-          <p class="section-desc">Passe en revue tout le vocabulaire et la grammaire avec la voix de Coco !</p>
+          <h1 class="section-title">Memory Flashcards 🎴</h1>
+          <p class="section-desc">Review key concepts, formulas, and vocabulary with Coco!</p>
         </div>
 
-        <div class="flashcard-category-tabs">
-          <button class="fc-tab active" data-fccat="verbes">⏰ Verbes Pronominaux</button>
-          <button class="fc-tab" data-fccat="conjugaison">✏️ Conjugaison (Aller, Aimer...)</button>
-          <button class="fc-tab" data-fccat="nationalites">🌎 Nationalités & Pays</button>
-          <button class="fc-tab" data-fccat="repas">🍳 Les Repas & Boissons</button>
-          <button class="fc-tab" data-fccat="loisirs">🎨 Mes Loisirs (J'aime...)</button>
+        <div class="flashcard-category-tabs" id="flashcard-tabs-container">
+          <!-- Dynamic category buttons -->
         </div>
 
         <div class="flashcard-arena">
           <div class="flashcard" id="flashcard-element">
             <div class="flashcard-inner">
               <div class="flashcard-front">
-                <span class="fc-tag" id="fc-tag">Verbe Pronominal</span>
+                <span class="fc-tag" id="fc-tag">Topic</span>
                 <div class="fc-emoji" id="fc-emoji">⏰</div>
-                <h2 class="fc-french" id="fc-french">se réveiller</h2>
-                <p class="fc-hint">Touche la carte pour voir la traduction 🔄</p>
+                <h2 class="fc-french" id="fc-french">Concept</h2>
+                <p class="fc-hint">Tap card to flip 🔄</p>
                 <div class="fc-action-row">
-                  <button class="fc-speaker-btn" id="fc-speaker-btn" title="Écouter la prononciation">🔊 Écouter</button>
-                  <button class="fc-flip-btn" id="fc-flip-btn">🔄 Retourner</button>
+                  <button class="fc-speaker-btn" id="fc-speaker-btn" title="Listen">🔊 Speak</button>
+                  <button class="fc-flip-btn" id="fc-flip-btn">🔄 Flip</button>
                 </div>
               </div>
               <div class="flashcard-back">
-                <span class="fc-tag">Traduction & Explication</span>
-                <h3 class="fc-english" id="fc-english">to wake up</h3>
+                <span class="fc-tag">Explanation & Rule</span>
+                <h3 class="fc-english" id="fc-english">Definition</h3>
                 <div class="fc-example-box">
-                  <p class="fc-example-fr" id="fc-example-fr">"Je me réveille à sept heures."</p>
-                  <p class="fc-example-en" id="fc-example-en">"I wake up at seven o'clock."</p>
+                  <p class="fc-example-fr" id="fc-example-fr">"Example"</p>
+                  <p class="fc-example-en" id="fc-example-en">"Details"</p>
                 </div>
                 <div class="fc-action-row">
-                  <button class="fc-speaker-btn" id="fc-example-speaker-btn" title="Écouter l'exemple">🔊 Écouter la phrase</button>
-                  <button class="fc-flip-btn" id="fc-flip-back-btn">🔄 Retourner</button>
+                  <button class="fc-speaker-btn" id="fc-example-speaker-btn" title="Listen Example">🔊 Speak Example</button>
+                  <button class="fc-flip-btn" id="fc-flip-back-btn">🔄 Flip</button>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="flashcard-controls">
-            <button class="btn-nav-fc" id="btn-fc-prev">⬅️ Précédent</button>
+            <button class="btn-nav-fc" id="btn-fc-prev">⬅️ Previous</button>
             <span class="fc-counter" id="fc-counter">1 / 6</span>
-            <button class="btn-nav-fc" id="btn-fc-next">Suivant ➡️</button>
+            <button class="btn-nav-fc" id="btn-fc-next">Next ➡️</button>
           </div>
         </div>
       </section>
@@ -460,25 +397,25 @@
       <!-- 6. MOCK EXAM (EXAMEN BLANC COMPLET) -->
       <section id="view-mock-exam" class="view-panel">
         <div class="exam-intro-card" id="exam-intro-card">
-          <div class="exam-badge">🎯 Évaluation Complète</div>
-          <h1 class="exam-title">Grand Examen Blanc de Français</h1>
-          <p class="exam-desc">Cet examen simule ton contrôle de mi-trimestre ! Il couvre les 3 chapitres, les verbes pronominaux, la conjugaison, les nationalités, les prépositions et les articles partitifs.</p>
+          <div class="exam-badge" id="exam-badge-label">🎯 Full Assessment Simulation</div>
+          <h1 class="exam-title" id="exam-title-text">Grand Examen Blanc</h1>
+          <p class="exam-desc" id="exam-desc-text">This simulated exam tests all topics from your syllabus!</p>
           
-          <div class="exam-features-list">
-            <div class="feat-item">✨ <strong>15 Questions variées</strong> comme dans un vrai devoir</div>
-            <div class="feat-item">🔊 Prononciation audio disponible pour chaque question</div>
-            <div class="feat-item">🏆 Certificat et trophée spécial à débloquer</div>
+          <div class="exam-features-list" id="exam-features-list">
+            <div class="feat-item">✨ <strong>15 Dynamic Questions</strong> balanced across all units</div>
+            <div class="feat-item">🔊 Audio narration and step-by-step solutions</div>
+            <div class="feat-item">🏆 Unlock special Champion Badges on high score</div>
           </div>
 
-          <button class="btn-primary btn-large" id="btn-start-mock-exam">Commencer l'Examen 📝</button>
+          <button class="btn-primary btn-large" id="btn-start-mock-exam">Start Exam 📝</button>
         </div>
 
         <!-- Exam Results Screen -->
         <div class="exam-results-card" id="exam-results-card" style="display: none;">
           <div class="results-header">
             <div class="results-trophy">🏆</div>
-            <h1 class="results-title">Félicitations Aezza !</h1>
-            <p class="results-sub">Tu as terminé ton examen blanc de français !</p>
+            <h1 class="results-title">Congratulations Aezza!</h1>
+            <p class="results-sub">You completed your exam simulation!</p>
           </div>
 
           <div class="results-score-box">
@@ -487,8 +424,8 @@
               <span class="score-den">/ 15</span>
             </div>
             <div class="score-feedback">
-              <h3 id="exam-grade-title">Excellent travail ! 🌟</h3>
-              <p id="exam-grade-msg">Tu es prête pour briller à ton examen de mi-trimestre !</p>
+              <h3 id="exam-grade-title">Outstanding Work! 🌟</h3>
+              <p id="exam-grade-msg">You are ready to ace your exam!</p>
             </div>
           </div>
 
@@ -498,8 +435,8 @@
           </div>
 
           <div class="results-actions">
-            <button class="btn-primary" id="btn-review-exam">Recommencer l'Examen 🔄</button>
-            <button class="btn-secondary" id="btn-exam-to-home">Retour au Menu 🏠</button>
+            <button class="btn-primary" id="btn-review-exam">Retry Exam 🔄</button>
+            <button class="btn-secondary" id="btn-exam-to-home">Back to Menu 🏠</button>
           </div>
         </div>
       </section>
@@ -507,65 +444,125 @@
       <!-- 7. TROPHIES & BADGES -->
       <section id="view-trophies" class="view-panel">
         <div class="section-title-wrap">
-          <h1 class="section-title">Le Coffre aux Trophées d'Aezza 🏆</h1>
-          <p class="section-desc">Débloque tous les badges magiques en complétant les activités !</p>
+          <h1 class="section-title">Aezza's Trophy Hall of Fame 🏆</h1>
+          <p class="section-desc">Unlock badges across French and Mathematics!</p>
         </div>
 
-        <div class="trophies-grid">
+        <div class="trophy-section-heading">🇫🇷 French Quest Badges</div>
+        <div class="trophies-grid" id="french-trophies-grid">
           <div class="trophy-card" id="trophy-ch1">
             <div class="trophy-icon">🇫🇷</div>
             <h3 class="trophy-name">Petit Parisien</h3>
-            <p class="trophy-desc">Complète le Chapitre 1 (La vie de Luc).</p>
-            <span class="trophy-status locked">À débloquer 🔒</span>
+            <p class="trophy-desc">Complete Chapter 1 (Luc's Routine).</p>
+            <span class="trophy-status locked">Locked 🔒</span>
           </div>
 
           <div class="trophy-card" id="trophy-ch2">
             <div class="trophy-icon">🌍</div>
             <h3 class="trophy-name">Explorateur du Monde</h3>
-            <p class="trophy-desc">Réussis le Chapitre 2 (Nationalités & Pays).</p>
-            <span class="trophy-status locked">À débloquer 🔒</span>
+            <p class="trophy-desc">Complete Chapter 2 (Nationalities & Places).</p>
+            <span class="trophy-status locked">Locked 🔒</span>
           </div>
 
           <div class="trophy-card" id="trophy-ch3">
             <div class="trophy-icon">🥐</div>
             <h3 class="trophy-name">Chef Pâtissier</h3>
-            <p class="trophy-desc">Maîtrise le Chapitre 3 (Repas & Partitifs).</p>
-            <span class="trophy-status locked">À débloquer 🔒</span>
+            <p class="trophy-desc">Master Chapter 3 (Meals & Partitives).</p>
+            <span class="trophy-status locked">Locked 🔒</span>
           </div>
 
           <div class="trophy-card" id="trophy-ch4">
             <div class="trophy-icon">🎨</div>
             <h3 class="trophy-name">Maître des Verbes</h3>
-            <p class="trophy-desc">Conjugue les verbes et décris tes loisirs.</p>
-            <span class="trophy-status locked">À débloquer 🔒</span>
+            <p class="trophy-desc">Conjugate verbs and express hobbies.</p>
+            <span class="trophy-status locked">Locked 🔒</span>
           </div>
 
           <div class="trophy-card" id="trophy-unscramble">
             <div class="trophy-icon">🧩</div>
             <h3 class="trophy-name">Génie des Phrases</h3>
-            <p class="trophy-desc">Remets toutes les phrases dans le bon ordre.</p>
-            <span class="trophy-status locked">À débloquer 🔒</span>
+            <p class="trophy-desc">Complete sentence unscramble puzzles.</p>
+            <span class="trophy-status locked">Locked 🔒</span>
           </div>
 
           <div class="trophy-card" id="trophy-matching">
             <div class="trophy-icon">🎯</div>
             <h3 class="trophy-name">Roi de la Mémoire</h3>
-            <p class="trophy-desc">Trouve toutes les Paires Magiques.</p>
-            <span class="trophy-status locked">À débloquer 🔒</span>
+            <p class="trophy-desc">Match all Magic Pairs.</p>
+            <span class="trophy-status locked">Locked 🔒</span>
           </div>
 
           <div class="trophy-card" id="trophy-exam">
             <div class="trophy-icon">👑</div>
             <h3 class="trophy-name">Reine du Français</h3>
-            <p class="trophy-desc">Obtenir 13/15 ou plus au Grand Examen Blanc.</p>
-            <span class="trophy-status locked">À débloquer 🔒</span>
+            <p class="trophy-desc">Score 13/15+ on French Mock Exam.</p>
+            <span class="trophy-status locked">Locked 🔒</span>
           </div>
 
           <div class="trophy-card" id="trophy-voice">
             <div class="trophy-icon">🎙️</div>
             <h3 class="trophy-name">Oreille Musicale</h3>
-            <p class="trophy-desc">Écoute 5 prononciations en français.</p>
-            <span class="trophy-status locked">À débloquer 🔒</span>
+            <p class="trophy-desc">Listen to 5 audio narrations.</p>
+            <span class="trophy-status locked">Locked 🔒</span>
+          </div>
+        </div>
+
+        <div class="trophy-section-heading" style="margin-top: 30px;">🔢 Mathematics Quest Badges (Grade 3 SA-1)</div>
+        <div class="trophies-grid" id="math-trophies-grid">
+          <div class="trophy-card" id="trophy-math-add">
+            <div class="trophy-icon">➕</div>
+            <h3 class="trophy-name">Calculation Wizard</h3>
+            <p class="trophy-desc">Master Addition, Subtraction & Estimation.</p>
+            <span class="trophy-status locked">Locked 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-math-pemdas">
+            <div class="trophy-icon">⚡</div>
+            <h3 class="trophy-name">PEMDAS Guru</h3>
+            <p class="trophy-desc">Solve Order of Operations puzzles.</p>
+            <span class="trophy-status locked">Locked 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-math-tables">
+            <div class="trophy-icon">✖️</div>
+            <h3 class="trophy-name">Tables Ace (2-15)</h3>
+            <p class="trophy-desc">Drill Multiplication Tables up to 15.</p>
+            <span class="trophy-status locked">Locked 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-math-factors">
+            <div class="trophy-icon">🔍</div>
+            <h3 class="trophy-name">Factor Finder</h3>
+            <p class="trophy-desc">Identify factors and common multiples.</p>
+            <span class="trophy-status locked">Locked 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-math-placeval">
+            <div class="trophy-icon">📊</div>
+            <h3 class="trophy-name">Place Value Master</h3>
+            <p class="trophy-desc">Solve Thousands, Hundreds, Tens & Ones.</p>
+            <span class="trophy-status locked">Locked 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-math-neg">
+            <div class="trophy-icon">❄️</div>
+            <h3 class="trophy-name">Sub-Zero Champion</h3>
+            <p class="trophy-desc">Master Negative Numbers on the number line.</p>
+            <span class="trophy-status locked">Locked 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-math-time">
+            <div class="trophy-icon">⏰</div>
+            <h3 class="trophy-name">Time Traveler</h3>
+            <p class="trophy-desc">Read analog clocks and calculate elapsed time.</p>
+            <span class="trophy-status locked">Locked 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-math-exam">
+            <div class="trophy-icon">🎓</div>
+            <h3 class="trophy-name">Math Summative Ace</h3>
+            <p class="trophy-desc">Score 13/15+ on Grand Math Exam.</p>
+            <span class="trophy-status locked">Locked 🔒</span>
           </div>
         </div>
       </section>
@@ -574,7 +571,7 @@
 
     <!-- Footer -->
     <footer class="app-footer">
-      <p>Conçu avec tendresse pour Aezza • Protégé par GitHub Auth 🥐🇫🇷</p>
+      <p>Aezza's Learning Quest • French 🇫🇷 & Mathematics 🔢 Grade 3 SA-1 • Protected by GitHub Auth</p>
     </footer>
   </div>
 

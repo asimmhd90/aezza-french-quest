@@ -1,55 +1,53 @@
-# Aezza's French Quest 🇫🇷 - L'Aventure de Français
+# Aezza's Learning Quest 🌟 - French 🇫🇷 & Mathematics 🔢
 
-An interactive, gamified French learning and quiz web application tailored for young learners (Grade 3-6 / Mid-term exam prep). Built following the **Google Stitch** design system (*"L'Aventure Pétillante"*) with vibrant candy-pastel colors, tactile 3D buttons, mascot guidance, and native browser voice recitation.
-
----
-
-## 🌟 Key Features
-
-- 🦊 **Mascot Guide (Coco le Renard)**: A friendly Parisian fox with a red beret who encourages the user, speaks French phrases, and provides study tips.
-- 🔊 **Voice Reciter (Audio Pronunciation)**: Powered by Web Speech API (`SpeechSynthesis`) with `fr-FR` native pronunciation, English translations, and speed controls (0.75x slow, 0.9x normal, 1.0x fast).
-- 🗺️ **Adventure Mode (Chapter Quizzes)**: Covers all syllabus topics with instant feedback, explanations, and XP rewards:
-  - **Chapitre 1**: *La Vie Quotidienne de Luc* (Verbes Pronominaux & Daily Routine)
-  - **Chapitre 2**: *Le Monde Multiculturel* (Nationalities & Prepositions: *à, en, au, aux*)
-  - **Chapitre 3**: *La Bonne Nourriture* (Meals: *petit déjeuner, déjeuner, dîner* & Partitive Articles: *du, de la, de l', des*)
-  - **Grammaire & Loisirs**: Conjugation of *Aimer, Aller, Parler, Regarder, Habiter* and expressing *Mes Loisirs* (*J'aime / Je n'aime pas*).
-- 🧩 **Remets les Mots dans l'Ordre (Sentence Unscrambler)**: Interactive word chips puzzle to reconstruct French sentences with audio model recitation.
-- 🎯 **Paires Magiques (Matching Pairs Game)**: Drag/tap tile-matching for Nationalities (Masc ↔ Fem), Countries ↔ Prepositions, and Food ↔ Partitives.
-- 🎴 **Cartes Mémo Magiques (3D Flashcards)**: Category-based flashcard review with dual audio playback (French vocab + full example sentence).
-- 📝 **Grand Examen Blanc (Mock Exam)**: 15-question comprehensive simulated exam with instant scoring, celebratory confetti, and complete answer review.
-- 🏆 **Gamification & Trophies**: Streak tracker (🔥), Stars (⭐), XP (⚡), and 8 unlockable badges with `localStorage` persistence.
+An interactive, gamified learning and exam preparation web application for **Aezza** (Grade 3 Summative Assessment 1). Built following the **Google Stitch** design system (*"L'Aventure Pétillante"*) with candy-pastel visuals, 3D tactile buttons, dual-language audio voice recitation, and procedural question generation.
 
 ---
 
-## 🚀 How to Run Locally
+## 🌟 Supported Subjects & Syllabi
 
-No build steps or dependencies required! It runs on pure HTML5, CSS3, and modern JavaScript.
+### 1. 🇫🇷 French Quest (*L'Aventure de Français*)
+- **Chapitre 1: La Vie Quotidienne de Luc** (Reflexive Verbs & Morning Routine)
+- **Chapitre 2: Le Monde Multiculturel** (Nationalities, Gender/Plural Agreements & Prepositions: *à, en, au, aux*)
+- **Chapitre 3: La Bonne Nourriture & Les Repas** (Meals: *petit déjeuner, déjeuner, dîner* & Partitive Articles: *du, de la, de l', des*)
+- **Grammaire & Mes Loisirs**: Conjugation of *Aimer, Aller, Parler, Regarder, Habiter* & Hobbies (*J'aime / Je n'aime pas*)
 
-### Option 1: Direct File Open
-Open `index.html` directly in any modern browser (Google Chrome, Microsoft Edge, Safari, Firefox).
-
-### Option 2: Local HTTP Server
-Using Python:
-```bash
-python -m http.server 8080
-```
-Then visit [http://localhost:8080](http://localhost:8080).
+### 2. 🔢 Mathematics Quest (*Grade 3 Summative Assessment 1 - 0096*)
+- **Unit 3: Addition & Subtraction of Whole Numbers & PEMDAS**
+  - Addition & subtraction with 2-digit/3-digit regrouping
+  - Estimation by rounding to the nearest 10 and nearest 100
+  - Generalizing with Even & Odd numbers (*Odd + Odd = Even, Odd × Odd = Odd, etc.*)
+  - Order of Operations (**PEMDAS** with Parentheses, Multiplication/Division, Addition/Subtraction)
+- **Unit 5: Multiplication, Multiples and Factors**
+  - Multiplication Tables (Drills for **Tables 2 to 15**)
+  - Finding Multiples & Common Multiples
+  - Factor pairs, divisibility, and word problems
+- **Previous Concepts: 1.2 Negative Numbers & 1.3 Place Value**
+  - 4-Digit Place Value (Thousands, Hundreds, Tens, Ones & Expanded Form: *5000 + 400 + 30 + 2*)
+  - 10, 100, 1000 More or Less
+  - Negative numbers on the number line & temperature drop problems (*3°C - 8°C = -5°C*)
+- **Previous Concepts: 2.1 Time**
+  - Reading analog & digital clocks (*Quarter past, Half past, Quarter to, exact minutes*)
+  - Elapsed time & duration word problems
+  - Time unit conversions (*hours to minutes, days to hours*)
 
 ---
 
-## 📂 Project Structure
+## 🎮 Interactive Activities
 
-```
-aezza-french-quest/
-├── index.html       # Main HTML application shell
-├── styles.css       # Google Stitch ("L'Aventure Pétillante") design system
-├── app.js           # Game engine, syllabus data, audio recitation, sound FX, confetti
-└── README.md        # Project documentation
-```
+- 🗺️ **Adventure Mode**: Dynamic procedural question generator for every chapter and unit with step-by-step explanations.
+- 🧩 **Words & Equations Builder (Unscramble)**: Interactive tiles to construct French sentences or solve PEMDAS arithmetic equations.
+- 🎯 **Magic Pairs Matching**: Touch-and-match pairs for Nationalities, Prepositions, Food Partitives, Times Tables (2-15), Factors/Multiples, and Expanded Place Value.
+- 🎴 **Memory Flashcards**: 3D flip study cards with dual speech audio playback in French and English.
+- 📝 **Grand Mock Exams (15 Questions)**: Full simulation with instant scoring, celebratory confetti, and question breakdown review.
+- 🏆 **Unified Trophies & Gamification**: Streak (🔥), Stars (⭐), XP (⚡), and 16 unlockable badges.
 
 ---
 
-## 🎨 Design System
+## 🔐 Authentication
+Protected with a **GitHub Login Gate** (verifies via GitHub REST API) and a quick **Family PIN passcode** for easy tablet / iPad access.
 
-- **Primary Colors**: Candy Pink (`#ff529a`), Mint Green (`#2eb872`), Sky Blue (`#0284c7`), Soleil Yellow (`#f59e0b`), Deep Grape (`#1f005f`)
-- **Typography**: [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) (Headlines & Badges) & [Quicksand](https://fonts.google.com/specimen/Quicksand) (Body & Reading text)
+---
+
+## 🚀 Live Link
+👉 **[https://asimmhd90.github.io/aezza-french-quest/](https://asimmhd90.github.io/aezza-french-quest/)**

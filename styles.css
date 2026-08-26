@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Aezza's French Quest - Stitch Design System ("L'Aventure Pétillante")
+   Aezza's Learning Quest - Stitch Design System ("L'Aventure Pétillante")
    ========================================================================== */
 
 :root {
@@ -37,6 +37,12 @@
   --yellow-shadow: #b45309;
   --yellow-bg: #fefce8;
   --yellow-border: #fde68a;
+
+  --purple-primary: #8b5cf6;
+  --purple-hover: #7c3aed;
+  --purple-shadow: #6d28d9;
+  --purple-bg: #f5f3ff;
+  --purple-border: #ddd6fe;
 
   --radius-sm: 12px;
   --radius-md: 20px;
@@ -134,7 +140,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 16px 20px 40px;
-  gap: 20px;
+  gap: 18px;
 }
 
 .app-header {
@@ -305,6 +311,80 @@ body {
 }
 
 /* ==========================================================================
+   SUBJECT SWITCHER BAR (French vs Math)
+   ========================================================================== */
+.subject-switcher-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.subject-switcher {
+  display: flex;
+  gap: 12px;
+  background: #ffffff;
+  padding: 8px 12px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 8px 25px rgba(112, 72, 232, 0.12);
+  border: 3px solid #ede4ff;
+  max-width: 600px;
+  width: 100%;
+}
+
+.subject-pill-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  text-align: left;
+}
+
+.subject-pill-btn:hover {
+  background: #faf8ff;
+  transform: translateY(-2px);
+}
+
+.subject-pill-btn.active {
+  background: linear-gradient(135deg, #ff529a 0%, #ff7eb3 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(255, 82, 154, 0.4);
+  transform: scale(1.02);
+}
+
+.subject-pill-btn#btn-subject-math.active {
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.4);
+}
+
+.subj-icon {
+  font-size: 28px;
+}
+
+.subj-text-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.subj-title {
+  font-family: var(--font-headline);
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.subj-sub {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+/* ==========================================================================
    Navigation Bar
    ========================================================================== */
 .main-nav {
@@ -354,6 +434,11 @@ body {
   transform: scale(1.03);
 }
 
+body.theme-math .nav-btn.active {
+  background: var(--blue-primary);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+}
+
 /* ==========================================================================
    Mascot Speech Bar
    ========================================================================== */
@@ -366,6 +451,12 @@ body {
   border-radius: var(--radius-md);
   border: 2px dashed #ffb3de;
   box-shadow: 0 6px 18px rgba(255, 179, 222, 0.3);
+}
+
+body.theme-math .mascot-bar {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  border-color: #9dd0f7;
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.2);
 }
 
 .mascot-img-box {
@@ -384,6 +475,11 @@ body {
   justify-content: center;
   border: 3px solid #ff85c0;
   transition: transform 0.2s;
+}
+
+body.theme-math .mascot-avatar {
+  background: #e0f2fe;
+  border-color: #38bdf8;
 }
 
 .mascot-img-box:hover .mascot-avatar {
@@ -416,10 +512,20 @@ body {
   white-space: nowrap;
 }
 
+body.theme-math .audio-btn-mini {
+  border-color: #38bdf8;
+  color: var(--blue-primary);
+  box-shadow: 0 3px 0 #38bdf8;
+}
+
 .audio-btn-mini:hover {
   background: #ff529a;
   color: #fff;
   transform: translateY(-1px);
+}
+body.theme-math .audio-btn-mini:hover {
+  background: #0284c7;
+  color: #fff;
 }
 .audio-btn-mini:active {
   transform: translateY(2px);
@@ -709,6 +815,12 @@ body {
   box-shadow: 0 10px 25px rgba(245, 158, 11, 0.2);
 }
 
+.card-purple {
+  border-color: var(--purple-border);
+  background: linear-gradient(180deg, #ffffff 0%, var(--purple-bg) 100%);
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.2);
+}
+
 .card-badge {
   align-self: flex-start;
   font-family: var(--font-headline);
@@ -778,6 +890,7 @@ body {
 .card-mint .progress-bar { background: var(--mint-primary); }
 .card-blue .progress-bar { background: var(--blue-primary); }
 .card-yellow .progress-bar { background: var(--yellow-primary); }
+.card-purple .progress-bar { background: var(--purple-primary); }
 
 /* ==========================================================================
    Buttons (Chunky 3D Tactile Buttons)
@@ -802,15 +915,29 @@ body {
   user-select: none;
 }
 
+body.theme-math .btn-primary {
+  background: var(--blue-primary);
+  box-shadow: 0 4px 0 var(--blue-shadow), 0 8px 18px rgba(2, 132, 199, 0.35);
+}
+
 .btn-primary:hover {
   background: var(--pink-hover);
   transform: translateY(-2px);
   box-shadow: 0 6px 0 var(--pink-shadow), 0 10px 22px rgba(255, 82, 154, 0.4);
 }
 
+body.theme-math .btn-primary:hover {
+  background: var(--blue-hover);
+  box-shadow: 0 6px 0 var(--blue-shadow), 0 10px 22px rgba(2, 132, 199, 0.4);
+}
+
 .btn-primary:active {
   transform: translateY(3px);
   box-shadow: 0 1px 0 var(--pink-shadow), 0 3px 8px rgba(255, 82, 154, 0.3);
+}
+
+body.theme-math .btn-primary:active {
+  box-shadow: 0 1px 0 var(--blue-shadow), 0 3px 8px rgba(2, 132, 199, 0.3);
 }
 
 .btn-secondary {
@@ -905,6 +1032,10 @@ body {
   background: linear-gradient(90deg, #ff85c0, #ff529a);
   border-radius: var(--radius-full);
   transition: width 0.35s ease;
+}
+
+body.theme-math .quiz-progress-fill {
+  background: linear-gradient(90deg, #38bdf8, #0284c7);
 }
 
 .quiz-card-container {
@@ -1067,6 +1198,12 @@ body {
   box-shadow: 0 6px 0 #ff85c0;
 }
 
+body.theme-math .quiz-option-btn:hover:not(:disabled) {
+  border-color: #38bdf8;
+  background: #f0f9ff;
+  box-shadow: 0 6px 0 #38bdf8;
+}
+
 .quiz-option-btn:active:not(:disabled) {
   transform: translateY(2px);
   box-shadow: 0 1px 0 #ff85c0;
@@ -1184,6 +1321,11 @@ body {
   padding: 14px 18px;
   border-radius: var(--radius-md);
   border-left: 5px solid var(--pink-primary);
+}
+
+body.theme-math .target-sentence-hint {
+  background: #f0f9ff;
+  border-left-color: var(--blue-primary);
 }
 
 .hint-label {
@@ -1360,11 +1502,21 @@ body {
   border-color: #ff85c0;
 }
 
+body.theme-math .match-tile:hover {
+  border-color: #38bdf8;
+}
+
 .match-tile.selected {
   background: #fff0f6;
   border-color: var(--pink-primary);
   box-shadow: 0 4px 0 var(--pink-shadow);
   transform: scale(1.05);
+}
+
+body.theme-math .match-tile.selected {
+  background: #f0f9ff;
+  border-color: var(--blue-primary);
+  box-shadow: 0 4px 0 var(--blue-shadow);
 }
 
 .match-tile.matched {
@@ -1484,6 +1636,11 @@ body {
   border: 3px solid #ffb3de;
 }
 
+body.theme-math .flashcard-front {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  border-color: #9dd0f7;
+}
+
 .flashcard-back {
   background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
   border: 3px solid #b2f2bb;
@@ -1506,9 +1663,10 @@ body {
 
 .fc-french {
   font-family: var(--font-headline);
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 900;
   color: var(--text-dark);
+  text-align: center;
 }
 
 .fc-hint {
@@ -1519,9 +1677,10 @@ body {
 
 .fc-english {
   font-family: var(--font-headline);
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
   color: #15803d;
+  text-align: center;
 }
 
 .fc-example-box {
@@ -1768,8 +1927,18 @@ body {
 }
 
 /* ==========================================================================
-   Trophies Grid
+   Trophies Grid & Section Headings
    ========================================================================== */
+.trophy-section-heading {
+  font-family: var(--font-headline);
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px dashed #ede4ff;
+}
+
 .trophies-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1866,6 +2035,10 @@ body {
   .stat-pill {
     padding: 6px 10px;
     font-size: 13px;
+  }
+  .subject-switcher {
+    flex-direction: column;
+    border-radius: var(--radius-md);
   }
   .section-title {
     font-size: 26px;
