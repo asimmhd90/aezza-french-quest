@@ -245,12 +245,28 @@
 
             <!-- Feedback Alert Bubble (Shown after answer) -->
             <div class="feedback-banner" id="quiz-feedback-banner">
-              <div class="feedback-icon" id="feedback-icon">🎉</div>
-              <div class="feedback-body">
-                <h4 id="feedback-title">Bravo Aezza !</h4>
-                <p id="feedback-explanation">Explanation details here.</p>
+              <div class="feedback-mascot-box">
+                <div class="feedback-mascot-avatar" id="feedback-mascot-avatar">🦊</div>
+                <div class="feedback-icon-badge" id="feedback-icon">🎉</div>
               </div>
-              <button class="btn-primary" id="btn-next-question">Next ➡️</button>
+              <div class="feedback-body">
+                <div class="feedback-header-row">
+                  <h4 id="feedback-title">Bravo Aezza !</h4>
+                  <button class="feedback-voice-btn" id="btn-speak-explanation" title="Listen to Coco explain this answer">
+                    🔊 Hear Coco's Explanation
+                  </button>
+                </div>
+                <div class="feedback-explanation-box">
+                  <div class="feedback-correct-answer-row" id="feedback-correct-answer-row" style="display: none;">
+                    <span class="correct-badge-pill">✅ Correct Answer:</span>
+                    <strong id="feedback-correct-text"></strong>
+                  </div>
+                  <p id="feedback-explanation">Explanation details here.</p>
+                </div>
+              </div>
+              <div class="feedback-action-wrap">
+                <button class="btn-primary" id="btn-next-question">Next ➡️</button>
+              </div>
             </div>
           </div>
         </div>

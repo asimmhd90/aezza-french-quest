@@ -1907,6 +1907,16 @@ function handleQuizAnswer(selectedIdx, btnElement, question) {
   const fbTitle = document.getElementById("feedback-title");
   const fbExp = document.getElementById("feedback-explanation");
   const fbIcon = document.getElementById("feedback-icon");
+  const fbCorrectRow = document.getElementById("feedback-correct-answer-row");
+  const fbCorrectText = document.getElementById("feedback-correct-text");
+  const fbMascotAvatar = document.getElementById("feedback-mascot-avatar");
+  const speakExpBtn = document.getElementById("btn-speak-explanation");
+
+  const isMath = AppState.currentSubject === "math";
+  if (fbMascotAvatar) fbMascotAvatar.textContent = isMath ? "🦊" : "🦊";
+
+  const explanationText = question.explanation;
+  const speed = document.getElementById("audio-speed-select").value;
 
   if (isCorrect) {
     btnElement.classList.add("correct");
@@ -1915,24 +1925,49 @@ function handleQuizAnswer(selectedIdx, btnElement, question) {
     AppState.quizScore++;
     addXP(20);
 
-    fbIcon.textContent = "🎉";
-    fbTitle.textContent = AppState.currentSubject === "math" ? "Brilliant Aezza! That's Correct!" : "Bravo Aezza ! C'est parfait !";
-    fbTitle.style.color = "#15803d";
+    if (fbIcon) fbIcon.textContent = "🎉";
+    if (fbTitle) {
+      fbTitle.textContent = isMath ? "Brilliant Aezza! That's 100% Correct!" : "Bravo Aezza ! C'est parfait !";
+      fbTitle.style.color = "#15803d";
+    }
+    if (fbCorrectRow) fbCorrectRow.style.display = "none";
     feedback.className = "feedback-banner show correct";
+    voice.speak(question.audio || question.fr, isMath ? "en-US" : "fr-FR", speed);
   } else {
     btnElement.classList.add("incorrect");
     allBtns[question.correct].classList.add("correct");
     sfx.incorrect();
 
-    fbIcon.textContent = "💡";
-    fbTitle.textContent = AppState.currentSubject === "math" ? "Almost! Here is the correct answer:" : "Presque ! Voici la bonne réponse :";
-    fbTitle.style.color = "#c2410c";
+    if (fbIcon) fbIcon.textContent = "💡";
+    if (fbTitle) {
+      fbTitle.textContent = isMath ? "💡 Professor Coco Explains:" : "💡 Coco t'explique la règle :";
+      fbTitle.style.color = "#c2410c";
+    }
+    if (fbCorrectRow && fbCorrectText) {
+      fbCorrectRow.style.display = "flex";
+      fbCorrectText.textContent = question.options[question.correct];
+    }
     feedback.className = "feedback-banner show incorrect";
+
+    // Coco reads the explanation directly out loud to teach Aezza!
+    const spokenExplanation = isMath
+      ? `The correct answer is ${question.options[question.correct]}. Here is why: ${explanationText}`
+      : `La bonne réponse est ${question.options[question.correct]}. Voici pourquoi : ${explanationText}`;
+    voice.speak(spokenExplanation, isMath ? "en-US" : "fr-FR", speed);
   }
 
-  fbExp.textContent = question.explanation;
-  const speed = document.getElementById("audio-speed-select").value;
-  voice.speak(question.audio || question.fr, question.lang || "fr-FR", speed);
+  if (fbExp) fbExp.textContent = explanationText;
+
+  if (speakExpBtn) {
+    speakExpBtn.onclick = () => {
+      sfx.pop();
+      const curSpeed = document.getElementById("audio-speed-select").value;
+      const spokenExplanation = isMath
+        ? `The correct answer is ${question.options[question.correct]}. Here is why: ${explanationText}`
+        : `La bonne réponse est ${question.options[question.correct]}. Voici pourquoi : ${explanationText}`;
+      voice.speak(spokenExplanation, isMath ? "en-US" : "fr-FR", curSpeed);
+    };
+  }
 }
 
 function initQuizListeners() {
@@ -2449,7 +2484,8 @@ function showExamResults() {
   }
 
   const reviewBox = document.getElementById("exam-review-box");
-  reviewBox.innerHTML = "<h3 style='margin-bottom:8px;'>Question Breakdown & Explanations:</h3>";
+  const isMath = AppState.currentSubject === "math";
+  reviewBox.innerHTML = `<h3 style='margin-bottom:8px;'>${isMath ? "Question Breakdown & Explanations:" : "Détail de tes réponses & Explications :"}</h3>`;
 
   AppState.quizAnswersHistory.forEach((hist, i) => {
     const item = document.createElement("div");
@@ -2457,9 +2493,27 @@ function showExamResults() {
     item.innerHTML = `
       <div class="review-q">Question ${i + 1}: ${hist.question}</div>
       <div class="review-ans">Your answer: <strong>${hist.chosen}</strong> ${hist.isCorrect ? "✅" : "❌"}</div>
-      ${!hist.isCorrect ? `<div class="review-correct">Correct answer: ${hist.correctAnswer}</div>` : ""}
-      <div style="font-size:12px; color:#5e4f71; font-style:italic;">${hist.explanation}</div>
+      ${!hist.isCorrect ? `<div class="review-correct">✅ Correct answer: <strong>${hist.correctAnswer}</strong></div>` : ""}
+      <div class="review-exp-row" style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:4px;">
+        <div style="font-size:13px; color:#5e4f71; font-style:italic; flex:1;">💡 ${hist.explanation}</div>
+        <button class="audio-btn-mini review-speak-btn" style="padding:4px 10px; font-size:11px;" title="Listen to Coco explain">
+          🔊 Hear Coco
+        </button>
+      </div>
     `;
+
+    const speakBtn = item.querySelector(".review-speak-btn");
+    if (speakBtn) {
+      speakBtn.onclick = () => {
+        sfx.pop();
+        const curSpeed = document.getElementById("audio-speed-select").value;
+        const msg = isMath
+          ? `For question ${i + 1}: The correct answer is ${hist.correctAnswer}. ${hist.explanation}`
+          : `Pour la question ${i + 1} : La bonne réponse est ${hist.correctAnswer}. ${hist.explanation}`;
+        voice.speak(msg, isMath ? "en-US" : "fr-FR", curSpeed);
+      };
+    }
+
     reviewBox.appendChild(item);
   });
 }
