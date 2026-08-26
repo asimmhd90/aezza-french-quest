@@ -1,51 +1,64 @@
-# Aezza's Learning Quest 🌟 - French 🇫🇷 & Mathematics 🔢
+# Sisters' Learning Quest 🌟🎈 - Multi-User Learning Portal (RBAC)
 
-An interactive, gamified learning and exam preparation web application for **Aezza** (Grade 3 Summative Assessment 1). Built following the **Google Stitch** design system (*"L'Aventure Pétillante"*) with candy-pastel visuals, 3D tactile buttons, dual-language audio voice recitation, and procedural question generation.
-
----
-
-## 🌟 Supported Subjects & Syllabi
-
-### 1. 🇫🇷 French Quest (*L'Aventure de Français*)
-- **Chapitre 1: La Vie Quotidienne de Luc** (Reflexive Verbs & Morning Routine)
-- **Chapitre 2: Le Monde Multiculturel** (Nationalities, Gender/Plural Agreements & Prepositions: *à, en, au, aux*)
-- **Chapitre 3: La Bonne Nourriture & Les Repas** (Meals: *petit déjeuner, déjeuner, dîner* & Partitive Articles: *du, de la, de l', des*)
-- **Grammaire & Mes Loisirs**: Conjugation of *Aimer, Aller, Parler, Regarder, Habiter* & Hobbies (*J'aime / Je n'aime pas*)
-
-### 2. 🔢 Mathematics Quest (*Grade 3 Summative Assessment 1 - 0096*)
-- **Unit 3: Addition & Subtraction of Whole Numbers & PEMDAS**
-  - Addition & subtraction with 2-digit/3-digit regrouping
-  - Estimation by rounding to the nearest 10 and nearest 100
-  - Generalizing with Even & Odd numbers (*Odd + Odd = Even, Odd × Odd = Odd, etc.*)
-  - Order of Operations (**PEMDAS** with Parentheses, Multiplication/Division, Addition/Subtraction)
-- **Unit 5: Multiplication, Multiples and Factors**
-  - Multiplication Tables (Drills for **Tables 2 to 15**)
-  - Finding Multiples & Common Multiples
-  - Factor pairs, divisibility, and word problems
-- **Previous Concepts: 1.2 Negative Numbers & 1.3 Place Value**
-  - 4-Digit Place Value (Thousands, Hundreds, Tens, Ones & Expanded Form: *5000 + 400 + 30 + 2*)
-  - 10, 100, 1000 More or Less
-  - Negative numbers on the number line & temperature drop problems (*3°C - 8°C = -5°C*)
-- **Previous Concepts: 2.1 Time**
-  - Reading analog & digital clocks (*Quarter past, Half past, Quarter to, exact minutes*)
-  - Elapsed time & duration word problems
-  - Time unit conversions (*hours to minutes, days to hours*)
+An interactive, gamified learning and exam preparation web application for **Aezza (Grade 3)** and **Fayra (Prep-I)**. Built following the **Google Stitch** design system (*"L'Aventure Pétillante"*) with candy-pastel visuals, 3D tactile buttons, dual-language audio voice recitation, and procedural question generation.
 
 ---
 
-## 🎮 Interactive Activities
+## 👥 Role-Based Learning Portals (RBAC)
 
-- 🗺️ **Adventure Mode**: Dynamic procedural question generator for every chapter and unit with step-by-step explanations.
-- 🧩 **Words & Equations Builder (Unscramble)**: Interactive tiles to construct French sentences or solve PEMDAS arithmetic equations.
-- 🎯 **Magic Pairs Matching**: Touch-and-match pairs for Nationalities, Prepositions, Food Partitives, Times Tables (2-15), Factors/Multiples, and Expanded Place Value.
-- 🎴 **Memory Flashcards**: 3D flip study cards with dual speech audio playback in French and English.
-- 📝 **Grand Mock Exams (15 Questions)**: Full simulation with instant scoring, celebratory confetti, and question breakdown review.
-- 🏆 **Unified Trophies & Gamification**: Streak (🔥), Stars (⭐), XP (⚡), and 16 unlockable badges.
+### 🌟 1. Aezza's Portal (Grade 3 Summative Assessment 1)
+- **🇫🇷 French Quest (*L'Aventure de Français*)**:
+  - Chapitre 1: La Vie Quotidienne de Luc (Reflexive Verbs & Morning Routine)
+  - Chapitre 2: Le Monde Multiculturel (Nationalities & Prepositions: *à, en, au, aux*)
+  - Chapitre 3: La Bonne Nourriture & Les Repas (Meals & Partitive Articles: *du, de la, de l', des*)
+  - Grammaire & Mes Loisirs: Conjugation of *Aimer, Aller, Parler, Regarder, Habiter* & Hobbies
+- **🔢 Mathematics Quest (*Grade 3 SA-1 - Subject Code 0096*)**:
+  - **Unit 3: Addition & Subtraction & PEMDAS**: Estimation to nearest 10/100, Even/Odd rules ($Odd + Odd = Even$, $Odd \times Odd = Odd$), and PEMDAS order of operations with brackets.
+  - **Unit 5: Multiplication Tables (2-15), Multiples & Factors**: Fact drills, common multiples, and factor pairs.
+  - **1.3 Place Value & 1.2 Negative Numbers**: 4-Digit place value, expanded form, temperature drops, and number lines.
+  - **2.1 Time Mastery**: Analog clock reading (*quarter past/to, half past*), elapsed time, and unit conversions.
+- **Mascot**: Coco the Fox 🦊 / Professor Coco 🎓
 
 ---
 
-## 🔐 Authentication
-Protected with a **GitHub Login Gate** (verifies via GitHub REST API) and a quick **Family PIN passcode** for easy tablet / iPad access.
+### 🎈 2. Fayra's Portal (Prep-I - Baldwin International School Little Wings)
+- **🔤 English Orals, Phonics & Writing (Ms. Ayesha Rehana)**:
+  - **Phonics & Letter Recognition ($Aa$ to $Oo$)**: Letter recognition, audio sound pronunciation, picture associations (Apple 🍎, Ball ⚽, Cat 🐱... Orange 🍊), capital/small matching ($M \leftrightarrow m$), and first letter identification.
+  - **4 Sing-Along Interactive Rhymes**:
+    1. 🐑 *Mary had a little lamb*
+    2. 🐸 *I’m a little tadpole*
+    3. 🌱 *Little Seeds*
+    4. ⛈️ *I hear thunder*
+- **🔢 Math Magic (Oral & Writing)**:
+  - **Number Recitation 1 to 30**: Interactive counting track.
+  - **Shapes Identification**: Square 🟦, Circle 🔴, Triangle 🔺, Rectangle 🟩, Oval 🥚.
+  - **Counting 1 to 10**: Count and write, count and tick, count and match.
+- **🌍 General Awareness (Ms. Ayesha Rehana)**:
+  - **Days of the Week**: Monday through Sunday.
+  - **Water Animals**: Fish 🐟, Dolphin 🐬, Octopus 🐙, Whale 🐋, Shark 🦈, Seahorse 🌊, Turtle 🐢, Crab 🦀.
+  - **Insects**: Butterfly 🦋, Honeybee 🐝, Ladybug 🐞, Ant 🐜, Caterpillar 🐛, Mosquito 🦟.
+  - **Safe vs Unsafe to Touch**: Safe toys/fruits vs dangerous hot tea/knives/plugs.
+  - **Emotions & Faces**: Happy 😊, Sad 😢, Angry 😠, Surprised 😲.
+  - **Birds**: Sparrow, Parrot, Peacock, Pigeon, Owl, Duck.
+- **Mascot**: Bunny Bella 🐰🎈
+
+---
+
+## 🎮 Interactive Activities & Games
+
+- 🗺️ **Adventure Mode**: Dynamic procedural question generator for each syllabus unit with step-by-step solutions.
+- 🧩 **Words & Equations Builder (Unscramble)**: Build French sentences, solve PEMDAS math equations, or spell Phonics words.
+- 🎯 **Magic Pairs Matching**: Match Nationalities, Prepositions, Times Tables, Phonics letters, Shapes, and Animals.
+- 🎴 **3D Memory Flashcards**: Flip study cards with native English and French voice recitation.
+- 📝 **Grand Mock Exams**: 15-question Grade 3 simulation and 10-question Prep-I assessment with instant grading and explanations.
+- 🏆 **Per-Student Hall of Fame**: Individual stars ⭐, streak 🔥, XP ⚡, and unlockable badges.
+
+---
+
+## 🔐 Kid-Friendly Access & Profile Switcher
+- **One-Click Profile Selection Cards**: Tap on **Aezza 🌟** or **Fayra 🎈** on the login screen.
+- **Quick Switch**: Tap **`🔄 Switch Sister`** in the header anytime to switch profiles without logging out.
+- **Recognized Passcodes**: `aezza`, `fayra`, `1234`, `5678`, `prep1`, `papa`, `asim`.
 
 ---
 

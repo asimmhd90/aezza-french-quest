@@ -50,32 +50,20 @@
           </div>
         </div>
 
-        <!-- Family Profile Pill & Logout -->
+        <!-- Family Profile Pill, Switcher & Logout -->
         <div class="github-profile-pill" id="github-profile-pill">
-          <span class="family-badge-icon">🌟</span>
-          <span class="github-user-handle" id="github-user-handle">Famille d'Aezza</span>
-          <button class="btn-logout" id="btn-logout" title="Lock App / Se Déconnecter">🔒 Verrouiller</button>
+          <span class="family-badge-icon" id="header-user-avatar">🌟</span>
+          <span class="github-user-handle" id="header-user-label">Aezza (Grade 3)</span>
+          <button class="btn-switch-user" id="btn-switch-user" title="Switch between Aezza and Fayra">🔄 Switch Sister</button>
+          <button class="btn-logout" id="btn-logout" title="Lock App / Se Déconnecter">🔒 Lock</button>
         </div>
       </div>
     </header>
 
-    <!-- SUBJECT SWITCHER BAR (French vs Mathematics) -->
+    <!-- DYNAMIC SUBJECT SWITCHER BAR -->
     <div class="subject-switcher-container" id="subject-switcher-container">
-      <div class="subject-switcher">
-        <button class="subject-pill-btn active" id="btn-subject-french" data-subject="french">
-          <span class="subj-icon">🇫🇷</span>
-          <div class="subj-text-wrap">
-            <span class="subj-title">French Quest</span>
-            <span class="subj-sub">Mid-Term Syllabus</span>
-          </div>
-        </button>
-        <button class="subject-pill-btn" id="btn-subject-math" data-subject="math">
-          <span class="subj-icon">🔢</span>
-          <div class="subj-text-wrap">
-            <span class="subj-title">Mathematics Quest</span>
-            <span class="subj-sub">Grade 3 • SA-1 (0096)</span>
-          </div>
-        </button>
+      <div class="subject-switcher" id="subject-switcher-buttons">
+        <!-- Dynamically populated based on active user (Aezza or Fayra) -->
       </div>
     </div>
 
@@ -109,13 +97,13 @@
 
     <!-- Mascot Bubble Banner (Hidden when locked) -->
     <div class="mascot-bar" id="mascot-bar">
-      <div class="mascot-img-box" id="mascot-click-target" title="Click on Coco!">
+      <div class="mascot-img-box" id="mascot-click-target" title="Click on Mascot!">
         <div class="mascot-avatar" id="mascot-avatar-emoji">🦊</div>
       </div>
       <div class="mascot-speech-bubble">
-        <p id="mascot-text">"Bonjour Aezza ! Je m'appelle Coco le renard. Prête à réussir ton examen de français ? Choisis un chapitre !"</p>
-        <button class="audio-btn-mini" id="mascot-voice-btn" title="Listen to Coco">
-          🔊 Speak Coco
+        <p id="mascot-text">"Bonjour Aezza ! Je m'appelle Coco le renard. Prête à réussir ton examen ? Choisis un chapitre !"</p>
+        <button class="audio-btn-mini" id="mascot-voice-btn" title="Listen to Mascot">
+          🔊 Speak
         </button>
       </div>
     </div>
@@ -123,35 +111,73 @@
     <!-- MAIN CONTENT VIEWPORTS -->
     <main id="main-content">
 
-      <!-- 0. FAMILY PASSWORD / LOGIN VIEW (ACTIVE BY DEFAULT IF NOT LOGGED IN) -->
+      <!-- 0. RBAC MULTI-USER LOGIN VIEW (ACTIVE BY DEFAULT IF NOT LOGGED IN) -->
       <section id="view-login" class="view-panel active">
         <div class="login-wrapper">
           <div class="login-card">
             <div class="login-header">
               <div class="octocat-badge">
-                <span style="font-size: 38px;">🔑</span>
-                <span class="octocat-beret">🦊</span>
+                <span style="font-size: 38px;">👑</span>
+                <span class="octocat-beret">✨</span>
               </div>
-              <h1 class="login-title">Espace Secret d'Aezza 🌟</h1>
-              <p class="login-sub">Entrez le mot de passe familial pour déverrouiller l'aventure !</p>
+              <h1 class="login-title">Sisters' Learning Quest 🌟🎈</h1>
+              <p class="login-sub">Choose your profile or enter your family secret code to start!</p>
             </div>
 
+            <!-- Visual Student Profile Cards (One-click login for kids) -->
+            <div class="profile-select-section">
+              <div class="profile-cards-grid">
+                <!-- Aezza Card -->
+                <div class="profile-card profile-card-aezza" id="btn-select-aezza">
+                  <div class="profile-avatar-box">🌟</div>
+                  <div class="profile-info">
+                    <h3 class="profile-name">Aezza</h3>
+                    <span class="profile-grade">Grade 3 • SA-1 (2026-27)</span>
+                    <div class="profile-subjects-preview">
+                      <span class="subj-tag">🇫🇷 French</span>
+                      <span class="subj-tag">🔢 Mathematics</span>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-primary btn-select-kid">Enter Aezza's Quest 🚀</button>
+                </div>
+
+                <!-- Fayra Card -->
+                <div class="profile-card profile-card-fayra" id="btn-select-fayra">
+                  <div class="profile-avatar-box">🎈</div>
+                  <div class="profile-info">
+                    <h3 class="profile-name">Fayra</h3>
+                    <span class="profile-grade">Prep-I • Little Wings (SA-1)</span>
+                    <div class="profile-subjects-preview">
+                      <span class="subj-tag">🔤 Phonics & Rhymes</span>
+                      <span class="subj-tag">🔢 Math Magic</span>
+                      <span class="subj-tag">🌍 Awareness</span>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-primary btn-select-kid btn-fayra-accent">Enter Fayra's Quest 🚀</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Passcode Alternative Form -->
             <form id="family-login-form" class="login-form">
+              <div class="passcode-divider">
+                <span>Or Enter Passcode</span>
+              </div>
+
               <div class="form-group">
-                <label for="family-password">Mot de passe familial :</label>
                 <div class="input-with-icon">
                   <span class="input-icon">🔐</span>
-                  <input type="password" id="family-password" placeholder="Entrez le mot de passe (ex: 1234 ou aezza2026)" required autocomplete="current-password" autofocus />
+                  <input type="password" id="family-password" placeholder="Passcode (e.g. aezza, fayra, 1234, 5678)" autocomplete="current-password" />
                 </div>
               </div>
 
               <div class="login-error-banner" id="login-error-banner" style="display: none;">
                 <span class="error-icon">⚠️</span>
-                <span id="login-error-text">Mot de passe incorrect. Réessayez !</span>
+                <span id="login-error-text">Incorrect passcode. Try 'aezza', 'fayra', or '1234'!</span>
               </div>
 
-              <button type="submit" class="btn-primary btn-large btn-login" id="btn-submit-login">
-                <span>Déverrouiller l'Aventure 🚀</span>
+              <button type="submit" class="btn-secondary btn-large btn-login" id="btn-submit-login">
+                <span>Unlock with Code 🔑</span>
               </button>
             </form>
           </div>
@@ -436,126 +462,12 @@
       <!-- 7. TROPHIES & BADGES -->
       <section id="view-trophies" class="view-panel">
         <div class="section-title-wrap">
-          <h1 class="section-title">Aezza's Trophy Hall of Fame 🏆</h1>
-          <p class="section-desc">Unlock badges across French and Mathematics!</p>
+          <h1 class="section-title" id="trophies-headline">Trophy Hall of Fame 🏆</h1>
+          <p class="section-desc" id="trophies-subheadline">Unlock shiny badges as you complete quizzes and master topics!</p>
         </div>
 
-        <div class="trophy-section-heading">🇫🇷 French Quest Badges</div>
-        <div class="trophies-grid" id="french-trophies-grid">
-          <div class="trophy-card" id="trophy-ch1">
-            <div class="trophy-icon">🇫🇷</div>
-            <h3 class="trophy-name">Petit Parisien</h3>
-            <p class="trophy-desc">Complete Chapter 1 (Luc's Routine).</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-ch2">
-            <div class="trophy-icon">🌍</div>
-            <h3 class="trophy-name">Explorateur du Monde</h3>
-            <p class="trophy-desc">Complete Chapter 2 (Nationalities & Places).</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-ch3">
-            <div class="trophy-icon">🥐</div>
-            <h3 class="trophy-name">Chef Pâtissier</h3>
-            <p class="trophy-desc">Master Chapter 3 (Meals & Partitives).</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-ch4">
-            <div class="trophy-icon">🎨</div>
-            <h3 class="trophy-name">Maître des Verbes</h3>
-            <p class="trophy-desc">Conjugate verbs and express hobbies.</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-unscramble">
-            <div class="trophy-icon">🧩</div>
-            <h3 class="trophy-name">Génie des Phrases</h3>
-            <p class="trophy-desc">Complete sentence unscramble puzzles.</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-matching">
-            <div class="trophy-icon">🎯</div>
-            <h3 class="trophy-name">Roi de la Mémoire</h3>
-            <p class="trophy-desc">Match all Magic Pairs.</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-exam">
-            <div class="trophy-icon">👑</div>
-            <h3 class="trophy-name">Reine du Français</h3>
-            <p class="trophy-desc">Score 13/15+ on French Mock Exam.</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-voice">
-            <div class="trophy-icon">🎙️</div>
-            <h3 class="trophy-name">Oreille Musicale</h3>
-            <p class="trophy-desc">Listen to 5 audio narrations.</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-        </div>
-
-        <div class="trophy-section-heading" style="margin-top: 30px;">🔢 Mathematics Quest Badges (Grade 3 SA-1)</div>
-        <div class="trophies-grid" id="math-trophies-grid">
-          <div class="trophy-card" id="trophy-math-add">
-            <div class="trophy-icon">➕</div>
-            <h3 class="trophy-name">Calculation Wizard</h3>
-            <p class="trophy-desc">Master Addition, Subtraction & Estimation.</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-math-pemdas">
-            <div class="trophy-icon">⚡</div>
-            <h3 class="trophy-name">PEMDAS Guru</h3>
-            <p class="trophy-desc">Solve Order of Operations puzzles.</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-math-tables">
-            <div class="trophy-icon">✖️</div>
-            <h3 class="trophy-name">Tables Ace (2-15)</h3>
-            <p class="trophy-desc">Drill Multiplication Tables up to 15.</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-math-factors">
-            <div class="trophy-icon">🔍</div>
-            <h3 class="trophy-name">Factor Finder</h3>
-            <p class="trophy-desc">Identify factors and common multiples.</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-math-placeval">
-            <div class="trophy-icon">📊</div>
-            <h3 class="trophy-name">Place Value Master</h3>
-            <p class="trophy-desc">Solve Thousands, Hundreds, Tens & Ones.</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-math-neg">
-            <div class="trophy-icon">❄️</div>
-            <h3 class="trophy-name">Sub-Zero Champion</h3>
-            <p class="trophy-desc">Master Negative Numbers on the number line.</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-math-time">
-            <div class="trophy-icon">⏰</div>
-            <h3 class="trophy-name">Time Traveler</h3>
-            <p class="trophy-desc">Read analog clocks and calculate elapsed time.</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
-
-          <div class="trophy-card" id="trophy-math-exam">
-            <div class="trophy-icon">🎓</div>
-            <h3 class="trophy-name">Math Summative Ace</h3>
-            <p class="trophy-desc">Score 13/15+ on Grand Math Exam.</p>
-            <span class="trophy-status locked">Locked 🔒</span>
-          </div>
+        <div id="trophies-content-container">
+          <!-- Dynamically populated for Aezza (French/Math) or Fayra (Phonics/Math Magic/Awareness) -->
         </div>
       </section>
 

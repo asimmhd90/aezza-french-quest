@@ -1,32 +1,22 @@
 /**
- * Aezza's Learning Quest - Unified Interactive Learning Engine
- * Subjects: 
- *   1. 🇫🇷 French Quest (La Vie de Luc, Le Monde Multiculturel, La Nourriture, Conjugaison & Loisirs)
- *   2. 🔢 Mathematics Quest (Grade 3 SA-1: Addition/Subtraction, Estimation, PEMDAS, Tables 2-15, Factors/Multiples, Place Value, Negative Numbers, Time)
- * Built with Google Stitch Design System ("L'Aventure Pétillante")
+ * Sisters' Learning Quest - Multi-User RBAC Learning Engine
+ * Users:
+ *   1. 🌟 Aezza (Grade 3 - SA-1):
+ *      - 🇫🇷 French Quest (La Vie de Luc, Le Monde Multiculturel, La Nourriture, Conjugaison & Loisirs)
+ *      - 🔢 Mathematics Quest (Addition/Subtraction, Estimation, PEMDAS, Tables 2-15, Factors/Multiples, Place Value, Negative Numbers, Time)
+ *   2. 🎈 Fayra (Prep-I - SA-1, Baldwin International School Little Wings):
+ *      - 🔤 English Phonics & Rhymes (Letters Aa-Oo, Picture Phonics, 4 Sing-Along Rhymes)
+ *      - 🔢 Math Magic (Numbers 1-30, Shapes: Square/Circle/Triangle/Rectangle/Oval, Counting 1-10)
+ *      - 🌍 General Awareness (Days of Week, Water Animals, Insects, Safe vs Unsafe Touch, Emotions, Birds)
  */
 
 // =============================================================================
-// 1. FAMILY AUTHENTICATION CONTROLLER (PIN / PASSWORD)
+// 1. RBAC AUTHENTICATION & USER PROFILE CONTROLLER
 // =============================================================================
 
 const AuthController = {
   isLoggedIn: false,
-
-  // Recognized Family Passcodes (case-insensitive)
-  validPasscodes: [
-    "1234",
-    "aezza",
-    "aezza2026",
-    "french2026",
-    "math2026",
-    "papa",
-    "asim",
-    "secret",
-    "quest",
-    "aezzaquest",
-    "2026"
-  ],
+  currentUser: "aezza", // "aezza" or "fayra"
 
   init() {
     this.checkAuth();
@@ -35,9 +25,12 @@ const AuthController = {
 
   checkAuth() {
     try {
-      const isAuth = localStorage.getItem("aezza_family_auth");
-      if (isAuth === "true") {
+      const savedUser = localStorage.getItem("sisters_quest_active_user");
+      const isAuth = localStorage.getItem("sisters_quest_auth");
+      if (isAuth === "true" && (savedUser === "aezza" || savedUser === "fayra")) {
+        this.currentUser = savedUser;
         this.isLoggedIn = true;
+        AppState.currentUser = savedUser;
         this.renderAuthenticatedUI();
         return true;
       }
@@ -50,11 +43,25 @@ const AuthController = {
     return false;
   },
 
+  loginAs(username) {
+    this.currentUser = username;
+    this.isLoggedIn = true;
+    AppState.currentUser = username;
+    localStorage.setItem("sisters_quest_auth", "true");
+    localStorage.setItem("sisters_quest_active_user", username);
+    sfx.correct();
+    confetti.blast();
+    showToast(username === "aezza" ? "🌟" : "🎈", `Welcome ${username === "aezza" ? "Aezza (Grade 3)" : "Fayra (Prep-I)"}!`);
+    this.renderAuthenticatedUI();
+  },
+
   renderAuthenticatedUI() {
     const mainNav = document.getElementById("main-nav");
     const mascotBar = document.getElementById("mascot-bar");
     const authStats = document.getElementById("header-authenticated-stats");
     const profilePill = document.getElementById("github-profile-pill");
+    const headerAvatar = document.getElementById("header-user-avatar");
+    const headerLabel = document.getElementById("header-user-label");
     const displayName = document.getElementById("display-user-name");
     const subjSwitcher = document.getElementById("subject-switcher-container");
 
@@ -63,7 +70,20 @@ const AuthController = {
     if (authStats) authStats.style.display = "flex";
     if (profilePill) profilePill.style.display = "flex";
     if (subjSwitcher) subjSwitcher.style.display = "flex";
-    if (displayName) displayName.textContent = "Aezza 🌟";
+
+    const isAezza = this.currentUser === "aezza";
+    if (headerAvatar) headerAvatar.textContent = isAezza ? "🌟" : "🎈";
+    if (headerLabel) headerLabel.textContent = isAezza ? "Aezza (Grade 3)" : "Fayra (Prep-I)";
+    if (displayName) displayName.textContent = isAezza ? "Aezza 🌟" : "Fayra 🎈";
+
+    document.body.classList.toggle("user-fayra", !isAezza);
+    document.body.classList.toggle("user-aezza", isAezza);
+
+    loadSavedStateForUser(this.currentUser);
+    renderSubjectSwitcherButtons();
+    renderAdventureGrid();
+    renderTrophiesView();
+    updateGamificationDisplay();
 
     showView("view-adventure");
   },
@@ -81,20 +101,37 @@ const AuthController = {
     if (authStats) authStats.style.display = "none";
     if (profilePill) profilePill.style.display = "none";
     if (subjSwitcher) subjSwitcher.style.display = "none";
-    if (displayName) displayName.textContent = "Accès Protégé 🔒";
+    if (displayName) displayName.textContent = "Select Profile 👑";
 
     showView("view-login");
   },
 
   bindEvents() {
-    const loginForm = document.getElementById("family-login-form");
+    const btnAezza = document.getElementById("btn-select-aezza");
+    const btnFayra = document.getElementById("btn-select-fayra");
+    const btnSwitch = document.getElementById("btn-switch-user");
     const logoutBtn = document.getElementById("btn-logout");
+    const loginForm = document.getElementById("family-login-form");
 
-    if (loginForm) {
-      loginForm.addEventListener("submit", (e) => {
-        e.preventDefault();
+    if (btnAezza) {
+      btnAezza.addEventListener("click", () => {
         sfx.pop();
-        this.handleLoginSubmit();
+        this.loginAs("aezza");
+      });
+    }
+
+    if (btnFayra) {
+      btnFayra.addEventListener("click", () => {
+        sfx.pop();
+        this.loginAs("fayra");
+      });
+    }
+
+    if (btnSwitch) {
+      btnSwitch.addEventListener("click", () => {
+        sfx.pop();
+        const nextUser = this.currentUser === "aezza" ? "fayra" : "aezza";
+        this.loginAs(nextUser);
       });
     }
 
@@ -104,45 +141,48 @@ const AuthController = {
         this.logout();
       });
     }
+
+    if (loginForm) {
+      loginForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        sfx.pop();
+        this.handlePasscodeSubmit();
+      });
+    }
   },
 
-  handleLoginSubmit() {
+  handlePasscodeSubmit() {
+    const passwordInput = document.getElementById("family-password");
     const errBanner = document.getElementById("login-error-banner");
     const errText = document.getElementById("login-error-text");
-    const passwordInput = document.getElementById("family-password");
     const entered = passwordInput ? passwordInput.value.trim().toLowerCase() : "";
 
     if (errBanner) errBanner.style.display = "none";
 
-    const customPin = localStorage.getItem("aezza_custom_family_pin");
-    const isCustomMatch = customPin && entered === customPin.toLowerCase();
-
-    if (this.validPasscodes.includes(entered) || isCustomMatch) {
-      localStorage.setItem("aezza_family_auth", "true");
-      sfx.correct();
-      confetti.blast();
-      showToast("🎉", "Bienvenue Aezza ! L'aventure est déverrouillée 🚀");
-      this.checkAuth();
+    if (entered === "fayra" || entered === "fayra2026" || entered === "prep1" || entered === "5678") {
+      this.loginAs("fayra");
+    } else if (entered === "aezza" || entered === "aezza2026" || entered === "1234" || entered === "french" || entered === "math") {
+      this.loginAs("aezza");
+    } else if (entered === "papa" || entered === "family" || entered === "asim" || entered === "2026") {
+      this.loginAs("aezza");
+      showToast("👑", "Family pass verified! You can switch sisters anytime.");
     } else {
       sfx.incorrect();
-      if (errText) errText.textContent = "Mot de passe incorrect. Réessayez avec votre code familial (ex: 1234 ou aezza2026).";
+      if (errText) errText.textContent = "Incorrect code. Tap 'Aezza' or 'Fayra' above or try 1234!";
       if (errBanner) errBanner.style.display = "flex";
-      if (passwordInput) {
-        passwordInput.value = "";
-        passwordInput.focus();
-      }
+      if (passwordInput) passwordInput.focus();
     }
   },
 
   logout() {
-    localStorage.removeItem("aezza_family_auth");
-    showToast("🔒", "Application verrouillée.");
+    localStorage.removeItem("sisters_quest_auth");
+    showToast("🔒", "Portal locked.");
     this.checkAuth();
   }
 };
 
 // =============================================================================
-// 2. GENERAL HELPERS
+// 2. GENERAL HELPERS, AUDIO & CONFETTI
 // =============================================================================
 
 function pickRandom(arr) {
@@ -161,1067 +201,6 @@ function shuffle(arr) {
   }
   return res;
 }
-
-// =============================================================================
-// 3. FRENCH GRAMMAR DATA & GENERATORS (FRENCH QUEST)
-// =============================================================================
-
-const FRENCH_DB = {
-  subjects: {
-    firstSing: { text: "Je", pron: "me", pronVowel: "m'", endingEr: "e", aller: "vais", aimer: "J'aime", prefNeg: "Je n'aime pas" },
-    secondSing: { text: "Tu", pron: "te", pronVowel: "t'", endingEr: "es", aller: "vas", aimer: "Tu aimes", prefNeg: "Tu n'aimes pas" },
-    thirdSingMasc: [
-      { text: "Luc", pron: "se", pronVowel: "s'", endingEr: "e", aller: "va", aimer: "Luc aime", prefNeg: "Luc n'aime pas" },
-      { text: "Paul", pron: "se", pronVowel: "s'", endingEr: "e", aller: "va", aimer: "Paul aime", prefNeg: "Paul n'aime pas" },
-      { text: "Il", pron: "se", pronVowel: "s'", endingEr: "e", aller: "va", aimer: "Il aime", prefNeg: "Il n'aime pas" },
-      { text: "Mon frère", pron: "se", pronVowel: "s'", endingEr: "e", aller: "va", aimer: "Mon frère aime", prefNeg: "Mon frère n'aime pas" }
-    ],
-    thirdSingFem: [
-      { text: "Aezza", pron: "se", pronVowel: "s'", endingEr: "e", aller: "va", aimer: "Aezza aime", prefNeg: "Aezza n'aime pas" },
-      { text: "Marie", pron: "se", pronVowel: "s'", endingEr: "e", aller: "va", aimer: "Marie aime", prefNeg: "Marie n'aime pas" },
-      { text: "Elle", pron: "se", pronVowel: "s'", endingEr: "e", aller: "va", aimer: "Elle aime", prefNeg: "Elle n'aime pas" }
-    ],
-    firstPlur: { text: "Nous", pron: "nous", pronVowel: "nous", endingEr: "ons", aller: "allons", aimer: "Nous aimons", prefNeg: "Nous n'aimons pas" },
-    secondPlur: { text: "Vous", pron: "vous", pronVowel: "vous", endingEr: "ez", aller: "allez", aimer: "Vous aimez", prefNeg: "Vous n'aimez pas" },
-    thirdPlurMasc: [
-      { text: "Ils", pron: "se", pronVowel: "s'", endingEr: "ent", aller: "vont", aimer: "Ils aiment", prefNeg: "Ils n'aiment pas" },
-      { text: "Les enfants", pron: "se", pronVowel: "s'", endingEr: "ent", aller: "vont", aimer: "Les enfants aiment", prefNeg: "Les enfants n'aiment pas" }
-    ],
-    thirdPlurFem: [
-      { text: "Elles", pron: "se", pronVowel: "s'", endingEr: "ent", aller: "vont", aimer: "Elles aiment", prefNeg: "Elles n'aiment pas" }
-    ]
-  },
-
-  reflexiveVerbs: [
-    { infinitive: "se réveiller", root: "réveill", meaning: "to wake up", startsVowel: false, times: ["à sept heures du matin", "à 6h30", "tôt le matin", "à huit heures"] },
-    { infinitive: "se lever", root: "lèv", rootPlur: "lev", meaning: "to get out of bed", startsVowel: false, times: ["rapidement", "aussitôt", "à 7 heures", "avec le sourire"] },
-    { infinitive: "se doucher", root: "douch", meaning: "to take a shower", startsVowel: false, times: ["dans la salle de bain", "avant l'école", "le matin"] },
-    { infinitive: "se brosser les dents", root: "bross", suffix: "les dents", meaning: "to brush teeth", startsVowel: false, times: ["après le petit déjeuner", "avant d'aller au lit"] },
-    { infinitive: "s'habiller", root: "habill", meaning: "to get dressed", startsVowel: true, times: ["pour aller à l'école", "dans sa chambre", "rapidement"] },
-    { infinitive: "se coucher", root: "couch", meaning: "to go to bed", startsVowel: false, times: ["à vingt et une heures", "le soir à 20h30", "après le dîner"] }
-  ],
-
-  places: [
-    { name: "France", type: "country-fem", prep: "en", mascNat: "français", femNat: "française", mascPlurNat: "français", femPlurNat: "françaises" },
-    { name: "Inde", type: "country-vowel", prep: "en", mascNat: "indien", femNat: "indienne", mascPlurNat: "indiens", femPlurNat: "indiennes" },
-    { name: "Italie", type: "country-vowel", prep: "en", mascNat: "italien", femNat: "italienne", mascPlurNat: "italiens", femPlurNat: "italiennes" },
-    { name: "Espagne", type: "country-vowel", prep: "en", mascNat: "espagnol", femNat: "espagnole", mascPlurNat: "espagnols", femPlurNat: "espagnoles" },
-    { name: "Canada", type: "country-masc", prep: "au", mascNat: "canadien", femNat: "canadienne", mascPlurNat: "canadiens", femPlurNat: "canadiennes" },
-    { name: "Japon", type: "country-masc", prep: "au", mascNat: "japonais", femNat: "japonaise", mascPlurNat: "japonais", femPlurNat: "japonaises" },
-    { name: "États-Unis", type: "country-plur", prep: "aux", mascNat: "américain", femNat: "américaine", mascPlurNat: "américains", femPlurNat: "américaines" },
-    { name: "Paris", type: "city", prep: "à" },
-    { name: "Lyon", type: "city", prep: "à" },
-    { name: "Delhi", type: "city", prep: "à" },
-    { name: "Rome", type: "city", prep: "à" }
-  ],
-
-  food: {
-    masculine: [
-      { name: "pain", en: "bread", emoji: "🥖" },
-      { name: "croissant", en: "croissant", emoji: "🥐" },
-      { name: "fromage", en: "cheese", emoji: "🧀" },
-      { name: "beurre", en: "butter", emoji: "🧈" },
-      { name: "poulet", en: "chicken", emoji: "🍗" },
-      { name: "lait", en: "milk", emoji: "🥛" }
-    ],
-    feminine: [
-      { name: "confiture", en: "jam", emoji: "🍓" },
-      { name: "salade", en: "salad", emoji: "🥗" },
-      { name: "soupe", en: "soup", emoji: "🍲" },
-      { name: "viande", en: "meat", emoji: "🥩" },
-      { name: "pizza", en: "pizza", emoji: "🍕" }
-    ],
-    vowel: [
-      { name: "eau fraîche", en: "fresh water", emoji: "💧" },
-      { name: "orangeade", en: "orange soda", emoji: "🥤" }
-    ],
-    plural: [
-      { name: "fruits", en: "fruits", emoji: "🍎" },
-      { name: "légumes", en: "vegetables", emoji: "🥦" },
-      { name: "croissants chauds", en: "warm croissants", emoji: "🥐" }
-    ]
-  }
-};
-
-function getRandomFrenchSubject() {
-  const groups = ["firstSing", "secondSing", "thirdSingMasc", "thirdSingFem", "firstPlur", "secondPlur", "thirdPlurMasc", "thirdPlurFem"];
-  const val = FRENCH_DB.subjects[pickRandom(groups)];
-  return Array.isArray(val) ? pickRandom(val) : val;
-}
-
-function generateFrenchCh1Question() {
-  const subj = getRandomFrenchSubject();
-  const verb = pickRandom(FRENCH_DB.reflexiveVerbs);
-  const time = pickRandom(verb.times);
-  const qType = pickRandom(["pronoun", "conjugation", "negative"]);
-
-  let root = verb.root;
-  if (subj.text === "Nous" && verb.rootPlur) root = verb.rootPlur;
-  if (subj.text === "Vous" && verb.rootPlur) root = verb.rootPlur;
-  const conjVerb = root + subj.endingEr;
-  const pron = verb.startsVowel ? subj.pronVowel : subj.pron;
-
-  if (qType === "pronoun") {
-    const isVowel = verb.startsVowel;
-    const correctPron = isVowel ? subj.pronVowel : subj.pron;
-    const sentence = `${subj.text} ______ ${conjVerb} ${verb.suffix || ""} ${time}.`;
-    const fullAudio = `${subj.text} ${correctPron} ${conjVerb} ${verb.suffix || ""} ${time}.`.replace(/\s+/g, " ");
-    const distractors = ["me", "te", "se", "nous", "vous"].filter(p => p !== subj.pron).slice(0, 3);
-    const options = shuffle([correctPron, ...distractors]);
-    return {
-      category: "Grammaire • Verbe Pronominal",
-      fr: sentence,
-      en: `${subj.text} (${verb.meaning}) ${time}.`,
-      audio: fullAudio,
-      options: options,
-      correct: options.indexOf(correctPron),
-      explanation: `Pour le sujet "${subj.text}", le pronom réfléchi est "${correctPron}".`,
-      lang: "fr-FR"
-    };
-  } else if (qType === "conjugation") {
-    const sentence = `${subj.text} ${pron} ______ ${verb.suffix || ""} ${time}. (${verb.infinitive})`;
-    const fullAudio = `${subj.text} ${pron} ${conjVerb} ${verb.suffix || ""} ${time}.`.replace(/\s+/g, " ");
-    const endings = ["e", "es", "ons", "ez", "ent"].filter(e => e !== subj.endingEr);
-    const distractors = endings.slice(0, 3).map(e => verb.root + e);
-    const options = shuffle([conjVerb, ...distractors]);
-    return {
-      category: "Conjugaison • Présent",
-      fr: sentence,
-      en: `${subj.text} (${verb.meaning}) ${time}.`,
-      audio: fullAudio,
-      options: options,
-      correct: options.indexOf(conjVerb),
-      explanation: `Avec "${subj.text}", le verbe "${verb.infinitive}" se termine par -${subj.endingEr} -> "${conjVerb}".`,
-      lang: "fr-FR"
-    };
-  } else {
-    const sentence = `${subj.text} ne ______ pas ${verb.suffix || ""} ${time}.`;
-    const correctAns = `${pron} ${conjVerb}`;
-    const fullAudio = `${subj.text} ne ${pron} ${conjVerb} pas ${verb.suffix || ""} ${time}.`.replace(/\s+/g, " ");
-    const options = shuffle([correctAns, `se ${verb.root}e`, `${pron} ${verb.infinitive}`, `me ${verb.root}ons`]);
-    return {
-      category: "Négation • Verbes Pronominaux",
-      fr: sentence,
-      en: `${subj.text} does not (${verb.meaning}) ${time}.`,
-      audio: fullAudio,
-      options: options,
-      correct: options.indexOf(correctAns),
-      explanation: `Forme négative : "ne + [pronom réfléchi + verbe] + pas" -> "${correctAns}".`,
-      lang: "fr-FR"
-    };
-  }
-}
-
-function generateFrenchCh2Question() {
-  const qType = pickRandom(["prep", "nationality"]);
-  const countries = FRENCH_DB.places.filter(p => p.type.startsWith("country"));
-  const cities = FRENCH_DB.places.filter(p => p.type === "city");
-
-  if (qType === "prep") {
-    const isCity = Math.random() > 0.5;
-    const place = isCity ? pickRandom(cities) : pickRandom(countries);
-    const person = pickRandom(["Luc", "Aezza", "Paul", "Marie"]);
-    const sentence = `${person} habite ______ ${place.name}.`;
-    const fullAudio = `${person} habite ${place.prep} ${place.name}.`;
-    const distractors = ["à", "en", "au", "aux"].filter(p => p !== place.prep);
-    const options = shuffle([place.prep, ...distractors]);
-    return {
-      category: "Prépositions de Lieux",
-      fr: sentence,
-      en: `${person} lives in ${place.name}.`,
-      audio: fullAudio,
-      options: options,
-      correct: options.indexOf(place.prep),
-      explanation: place.type === "city" ? `Pour les villes (${place.name}), on utilise "à".` : `Pour "${place.name}", on utilise "${place.prep}".`,
-      lang: "fr-FR"
-    };
-  } else {
-    const country = pickRandom(countries.filter(c => c.mascNat && c.femNat));
-    const isFem = Math.random() > 0.5;
-    const person = isFem ? pickRandom(["Marie", "Aezza", "Elle"]) : pickRandom(["Luc", "Paul", "Il"]);
-    const correctNat = isFem ? country.femNat : country.mascNat;
-    const sentence = `${person} habite ${country.prep} ${country.name}, ${isFem ? "elle" : "il"} est ______ .`;
-    const fullAudio = `${person} habite ${country.prep} ${country.name}, ${isFem ? "elle" : "il"} est ${correctNat}.`;
-    const distractors = [isFem ? country.mascNat : country.femNat, country.mascPlurNat, country.name.toLowerCase()].filter(d => d !== correctNat);
-    const options = shuffle([correctNat, ...distractors.slice(0, 3)]);
-    return {
-      category: "Accord des Nationalités",
-      fr: sentence,
-      en: `${person} lives in ${country.name}, ${isFem ? "she" : "he"} is ${correctNat}.`,
-      audio: fullAudio,
-      options: options,
-      correct: options.indexOf(correctNat),
-      explanation: `${person} est ${isFem ? "féminin -> " + country.femNat : "masculin -> " + country.mascNat}.`,
-      lang: "fr-FR"
-    };
-  }
-}
-
-function generateFrenchCh3Question() {
-  const itemType = pickRandom(["masculine", "feminine", "vowel", "plural"]);
-  let item, correctArticle;
-  if (itemType === "masculine") {
-    item = pickRandom(FRENCH_DB.food.masculine);
-    correctArticle = "du";
-  } else if (itemType === "feminine") {
-    item = pickRandom(FRENCH_DB.food.feminine);
-    correctArticle = "de la";
-  } else if (itemType === "vowel") {
-    item = pickRandom(FRENCH_DB.food.vowel);
-    correctArticle = "de l'";
-  } else {
-    item = pickRandom(FRENCH_DB.food.plural);
-    correctArticle = "des";
-  }
-
-  const subj = pickRandom(["Au petit déjeuner, je prends", "À midi, Aezza mange", "Pour le dîner, Luc boit"]);
-  const sentence = `${subj} ______ ${item.name}.`;
-  const fullAudio = `${subj} ${correctArticle} ${item.name}.`;
-  const options = shuffle(["du", "de la", "de l'", "des"]);
-
-  return {
-    category: "Articles Partitifs (du, de la, de l', des)",
-    fr: sentence,
-    en: `${subj} some ${item.en}.`,
-    audio: fullAudio,
-    options: options,
-    correct: options.indexOf(correctArticle),
-    explanation: `"${item.name}" demande l'article partitif "${correctArticle}".`,
-    lang: "fr-FR"
-  };
-}
-
-function generateFrenchCh4Question() {
-  const qType = pickRandom(["aller", "aimer", "habiter"]);
-  const subj = getRandomFrenchSubject();
-
-  if (qType === "aller") {
-    const place = pickRandom(["à l'école", "au parc", "à Paris", "au cinéma"]);
-    const sentence = `${subj.text} ______ ${place}. (aller)`;
-    const fullAudio = `${subj.text} ${subj.aller} ${place}.`;
-    const forms = ["vais", "vas", "va", "allons", "allez", "vont"];
-    const distractors = forms.filter(f => f !== subj.aller).slice(0, 3);
-    const options = shuffle([subj.aller, ...distractors]);
-    return {
-      category: "Conjugaison • Verbe Aller",
-      fr: sentence,
-      en: `${subj.text} go(es) to ${place}.`,
-      audio: fullAudio,
-      options: options,
-      correct: options.indexOf(subj.aller),
-      explanation: `Le verbe "aller" avec "${subj.text}" se conjugue "${subj.aller}".`,
-      lang: "fr-FR"
-    };
-  } else {
-    const hobby = pickRandom(["jouer au football", "écouter de la musique", "dessiner"]);
-    const sentence = `Pendant mes loisirs, j'aime ______ .`;
-    const fullAudio = `Pendant mes loisirs, j'aime ${hobby}.`;
-    const options = shuffle([hobby, hobby.replace(/er\b/, "e"), hobby.replace(/er\b/, "ons"), "joue"]);
-    return {
-      category: "Mes Loisirs • Verbe à l'infinitif",
-      fr: sentence,
-      en: `During my free time, I like to (${hobby}).`,
-      audio: fullAudio,
-      options: options,
-      correct: options.indexOf(hobby),
-      explanation: `Après le verbe "aimer", le second verbe reste à l'infinitif : "${hobby}".`,
-      lang: "fr-FR"
-    };
-  }
-}
-
-// =============================================================================
-// 4. MATHEMATICS SYLLABUS DATA & PROCEDURAL GENERATORS (GRADE 3 SA-1)
-// =============================================================================
-
-// Unit 1: Addition, Subtraction, Estimation & PEMDAS & Even/Odd Generalizations
-function generateMathUnit1Question() {
-  const qType = pickRandom(["estimation-add", "estimation-sub", "even-odd-rule", "even-odd-identify", "pemdas-simple", "pemdas-parentheses"]);
-
-  if (qType === "estimation-add") {
-    const a = randInt(120, 580);
-    const b = randInt(110, 390);
-    const roundA = Math.round(a / 100) * 100;
-    const roundB = Math.round(b / 100) * 100;
-    const estSum = roundA + roundB;
-    const sentence = `Estimate the sum of ${a} + ${b} by rounding each number to the nearest 100.`;
-    const explanation = `${a} rounds to ${roundA}, and ${b} rounds to ${roundB}. So estimated sum is ${roundA} + ${roundB} = ${estSum}.`;
-    const distractors = [estSum + 100, estSum - 100, estSum + 50].filter(d => d !== estSum);
-    const options = shuffle([String(estSum), ...distractors.map(String)]);
-    return {
-      category: "Unit 3 • Estimation & Rounding (Nearest 100)",
-      fr: sentence,
-      en: `Step 1: Round to nearest 100 -> ${roundA} + ${roundB}`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(String(estSum)),
-      explanation: explanation,
-      lang: "en-US"
-    };
-  } else if (qType === "estimation-sub") {
-    const a = randInt(45, 95);
-    const b = randInt(15, 40);
-    const roundA = Math.round(a / 10) * 10;
-    const roundB = Math.round(b / 10) * 10;
-    const estDiff = roundA - roundB;
-    const sentence = `Estimate the difference of ${a} - ${b} by rounding to the nearest 10.`;
-    const explanation = `${a} rounds to ${roundA}, ${b} rounds to ${roundB}. ${roundA} - ${roundB} = ${estDiff}.`;
-    const distractors = [estDiff + 10, estDiff - 10, estDiff + 20].filter(d => d !== estDiff);
-    const options = shuffle([String(estDiff), ...distractors.map(String)]);
-    return {
-      category: "Unit 3 • Estimation & Rounding (Nearest 10)",
-      fr: sentence,
-      en: `Round each number to nearest 10: ${roundA} - ${roundB}`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(String(estDiff)),
-      explanation: explanation,
-      lang: "en-US"
-    };
-  } else if (qType === "even-odd-rule") {
-    const rules = [
-      { text: "Odd + Odd is ALWAYS...", ans: "Even", exp: "Example: 3 + 5 = 8 (Even). Odd + Odd is always Even!" },
-      { text: "Even + Even is ALWAYS...", ans: "Even", exp: "Example: 4 + 6 = 10 (Even). Even + Even is always Even!" },
-      { text: "Odd + Even is ALWAYS...", ans: "Odd", exp: "Example: 7 + 4 = 11 (Odd). Odd + Even is always Odd!" },
-      { text: "Odd × Odd is ALWAYS...", ans: "Odd", exp: "Example: 3 × 5 = 15 (Odd). Odd × Odd is always Odd!" },
-      { text: "Even × Even is ALWAYS...", ans: "Even", exp: "Example: 4 × 6 = 24 (Even). Even × Even is always Even!" },
-      { text: "Odd × Even is ALWAYS...", ans: "Even", exp: "Example: 3 × 4 = 12 (Even). Odd × Even is always Even!" }
-    ];
-    const picked = pickRandom(rules);
-    const sentence = `Generalization Rule: ${picked.text}`;
-    const options = shuffle(["Even", "Odd", "Sometimes Even, Sometimes Odd", "Zero"]);
-    return {
-      category: "Unit 3 • Even & Odd Number Generalizations",
-      fr: sentence,
-      en: picked.exp,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(picked.ans),
-      explanation: picked.exp,
-      lang: "en-US"
-    };
-  } else if (qType === "even-odd-identify") {
-    const isLookingForEven = Math.random() > 0.5;
-    let targetNum, distractors;
-    if (isLookingForEven) {
-      targetNum = pickRandom([248, 512, 630, 894, 726, 402]);
-      distractors = [247, 513, 631, 895, 729];
-    } else {
-      targetNum = pickRandom([315, 679, 441, 823, 907, 555]);
-      distractors = [314, 678, 442, 824, 908];
-    }
-    const sentence = `Which of the following numbers is ${isLookingForEven ? "EVEN" : "ODD"}?`;
-    const options = shuffle([String(targetNum), ...distractors.slice(0, 3).map(String)]);
-    return {
-      category: "Unit 3 • Even vs Odd Identification",
-      fr: sentence,
-      en: isLookingForEven ? "Even numbers end in 0, 2, 4, 6, 8." : "Odd numbers end in 1, 3, 5, 7, 9.",
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(String(targetNum)),
-      explanation: `${targetNum} ends in ${String(targetNum).slice(-1)}, making it ${isLookingForEven ? "Even" : "Odd"}.`,
-      lang: "en-US"
-    };
-  } else if (qType === "pemdas-simple") {
-    // Multiplication before Addition: a + b * c
-    const a = randInt(4, 15);
-    const b = randInt(2, 6);
-    const c = randInt(3, 7);
-    const ans = a + b * c;
-    const wrongLeftToRight = (a + b) * c;
-    const sentence = `Evaluate using PEMDAS: ${a} + ${b} × ${c} = ?`;
-    const explanation = `Using PEMDAS (Order of Operations), perform multiplication first: ${b} × ${c} = ${b * c}. Then add: ${a} + ${b * c} = ${ans}.`;
-    const distractors = [wrongLeftToRight, ans + 2, ans - 4].filter(d => d !== ans);
-    const options = shuffle([String(ans), ...distractors.slice(0, 3).map(String)]);
-    return {
-      category: "Unit 3 • Order of Operations (PEMDAS)",
-      fr: sentence,
-      en: `Multiplication comes before addition!`,
-      audio: `Evaluate using PEMDAS: ${a} plus ${b} times ${c}`,
-      options: options,
-      correct: options.indexOf(String(ans)),
-      explanation: explanation,
-      lang: "en-US"
-    };
-  } else {
-    // Parentheses first: (a + b) * c
-    const a = randInt(2, 8);
-    const b = randInt(2, 6);
-    const c = randInt(2, 5);
-    const ans = (a + b) * c;
-    const sentence = `Evaluate using PEMDAS: (${a} + ${b}) × ${c} = ?`;
-    const explanation = `Parentheses are solved first: (${a} + ${b}) = ${a + b}. Then multiply by ${c}: ${a + b} × ${c} = ${ans}.`;
-    const distractors = [a + b * c, ans + 4, ans - 3].filter(d => d !== ans);
-    const options = shuffle([String(ans), ...distractors.slice(0, 3).map(String)]);
-    return {
-      category: "Unit 3 • Order of Operations with Parentheses",
-      fr: sentence,
-      en: `Solve the brackets first!`,
-      audio: `Evaluate using PEMDAS: Open bracket ${a} plus ${b} close bracket times ${c}`,
-      options: options,
-      correct: options.indexOf(String(ans)),
-      explanation: explanation,
-      lang: "en-US"
-    };
-  }
-}
-
-// Unit 2: Multiplication, Multiples & Factors (Tables 2-15)
-function generateMathUnit2Question() {
-  const qType = pickRandom(["tables-drill", "multiple-check", "common-multiple", "factor-check", "word-problem-mult"]);
-
-  if (qType === "tables-drill") {
-    const a = randInt(6, 15);
-    const b = randInt(3, 12);
-    const product = a * b;
-    const sentence = `What is ${a} × ${b} = ?`;
-    const explanation = `${a} multiplied by ${b} is equal to ${product}.`;
-    const distractors = [product + a, product - b, product + 10, product - a].filter(d => d !== product);
-    const options = shuffle([String(product), ...distractors.slice(0, 3).map(String)]);
-    return {
-      category: "Unit 5 • Multiplication Tables (2-15)",
-      fr: sentence,
-      en: `Multiplication fact: ${a} times ${b}`,
-      audio: `What is ${a} times ${b}?`,
-      options: options,
-      correct: options.indexOf(String(product)),
-      explanation: explanation,
-      lang: "en-US"
-    };
-  } else if (qType === "multiple-check") {
-    const base = randInt(4, 14);
-    const multIndex = randInt(3, 9);
-    const targetMultiple = base * multIndex;
-    const sentence = `Which of the following is a MULTIPLE of ${base}?`;
-    const nonMultiples = [targetMultiple + 1, targetMultiple - 2, targetMultiple + 3, targetMultiple - 1].filter(n => n % base !== 0);
-    const options = shuffle([String(targetMultiple), ...nonMultiples.slice(0, 3).map(String)]);
-    return {
-      category: "Unit 5 • Multiples",
-      fr: sentence,
-      en: `Multiples of ${base} are in the ${base} times table: ${base}, ${base*2}, ${base*3}...`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(String(targetMultiple)),
-      explanation: `${targetMultiple} is a multiple of ${base} because ${base} × ${multIndex} = ${targetMultiple}.`,
-      lang: "en-US"
-    };
-  } else if (qType === "common-multiple") {
-    const pairs = [
-      { a: 3, b: 4, lcm: 12, common: 24 },
-      { a: 4, b: 6, lcm: 12, common: 24 },
-      { a: 3, b: 5, lcm: 15, common: 30 },
-      { a: 6, b: 8, lcm: 24, common: 48 },
-      { a: 2, b: 7, lcm: 14, common: 28 }
-    ];
-    const p = pickRandom(pairs);
-    const sentence = `Which number is a COMMON MULTIPLE of both ${p.a} and ${p.b}?`;
-    const distractors = [p.common + 2, p.common - 3, p.common + 5].filter(d => d % p.a !== 0 || d % p.b !== 0);
-    const options = shuffle([String(p.common), ...distractors.slice(0, 3).map(String)]);
-    return {
-      category: "Unit 5 • Common Multiples",
-      fr: sentence,
-      en: `A common multiple is divisible by both ${p.a} and ${p.b}.`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(String(p.common)),
-      explanation: `${p.common} is a multiple of both ${p.a} (${p.a} × ${p.common/p.a}) and ${p.b} (${p.b} × ${p.common/p.b}).`,
-      lang: "en-US"
-    };
-  } else if (qType === "factor-check") {
-    const factorPairs = [
-      { num: 24, factors: [1, 2, 3, 4, 6, 8, 12, 24], nonFactor: 5 },
-      { num: 36, factors: [1, 2, 3, 4, 6, 9, 12, 18, 36], nonFactor: 7 },
-      { num: 20, factors: [1, 2, 4, 5, 10, 20], nonFactor: 3 },
-      { num: 30, factors: [1, 2, 3, 5, 6, 10, 15, 30], nonFactor: 4 },
-      { num: 45, factors: [1, 3, 5, 9, 15, 45], nonFactor: 6 }
-    ];
-    const picked = pickRandom(factorPairs);
-    const sentence = `Which number is NOT a factor of ${picked.num}?`;
-    const someFactors = shuffle(picked.factors.filter(f => f !== 1 && f !== picked.num)).slice(0, 3);
-    const options = shuffle([String(picked.nonFactor), ...someFactors.map(String)]);
-    return {
-      category: "Unit 5 • Factors and Divisibility",
-      fr: sentence,
-      en: `Factors divide into ${picked.num} with no remainder.`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(String(picked.nonFactor)),
-      explanation: `${picked.nonFactor} does not divide evenly into ${picked.num}. The factors of ${picked.num} are ${picked.factors.join(", ")}.`,
-      lang: "en-US"
-    };
-  } else {
-    // Word problem
-    const bags = randInt(4, 12);
-    const itemsPerBag = randInt(6, 15);
-    const total = bags * itemsPerBag;
-    const sentence = `Aezza has ${bags} boxes of crayons. Each box contains ${itemsPerBag} crayons. How many crayons does she have in total?`;
-    const explanation = `Total crayons = ${bags} boxes × ${itemsPerBag} crayons = ${total} crayons.`;
-    const distractors = [total + itemsPerBag, total - bags, total + 10].filter(d => d !== total);
-    const options = shuffle([`${total} crayons`, ...distractors.slice(0, 3).map(d => `${d} crayons`)]);
-    return {
-      category: "Unit 5 • Multiplication Word Problems",
-      fr: sentence,
-      en: `Multiply the number of boxes by crayons per box: ${bags} × ${itemsPerBag}`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(`${total} crayons`),
-      explanation: explanation,
-      lang: "en-US"
-    };
-  }
-}
-
-// Unit 3: Previous Concepts (1.3 Place Value & 1.2 Negative Numbers)
-function generateMathUnit3Question() {
-  const qType = pickRandom(["place-val-digit", "expanded-form", "100-more-less", "negative-compare", "temp-drop", "number-line-neg"]);
-
-  if (qType === "place-val-digit") {
-    const thousands = randInt(2, 9);
-    const hundreds = randInt(1, 9);
-    const tens = randInt(1, 9);
-    const ones = randInt(1, 9);
-    const num = thousands * 1000 + hundreds * 100 + tens * 10 + ones;
-    const targetPlace = pickRandom(["thousands", "hundreds", "tens", "ones"]);
-
-    let digit, valString, exp;
-    if (targetPlace === "thousands") {
-      digit = thousands;
-      valString = `${thousands * 1000} (${thousands} Thousands)`;
-      exp = `The digit ${digit} is in the thousands place, so its place value is ${thousands * 1000}.`;
-    } else if (targetPlace === "hundreds") {
-      digit = hundreds;
-      valString = `${hundreds * 100} (${hundreds} Hundreds)`;
-      exp = `The digit ${digit} is in the hundreds place, so its place value is ${hundreds * 100}.`;
-    } else if (targetPlace === "tens") {
-      digit = tens;
-      valString = `${tens * 10} (${tens} Tens)`;
-      exp = `The digit ${digit} is in the tens place, so its place value is ${tens * 10}.`;
-    } else {
-      digit = ones;
-      valString = `${ones} (${ones} Ones)`;
-      exp = `The digit ${digit} is in the ones place, so its place value is ${ones}.`;
-    }
-
-    const sentence = `In the 4-digit number ${num.toLocaleString()}, what is the PLACE VALUE of the digit ${digit}?`;
-    const distractors = [
-      `${digit * 1000} (${digit} Thousands)`,
-      `${digit * 100} (${digit} Hundreds)`,
-      `${digit * 10} (${digit} Tens)`,
-      `${digit} (${digit} Ones)`
-    ].filter(d => d !== valString);
-
-    const options = shuffle([valString, ...distractors.slice(0, 3)]);
-    return {
-      category: "1.3 • Place Value in 4-Digit Numbers",
-      fr: sentence,
-      en: `Thousands | Hundreds | Tens | Ones`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(valString),
-      explanation: exp,
-      lang: "en-US"
-    };
-  } else if (qType === "expanded-form") {
-    const th = randInt(3, 8) * 1000;
-    const h = randInt(1, 9) * 100;
-    const t = randInt(1, 9) * 10;
-    const o = randInt(1, 9);
-    const total = th + h + t + o;
-    const correctExpanded = `${th} + ${h} + ${t} + ${o}`;
-    const sentence = `What is the EXPANDED FORM of ${total.toLocaleString()}?`;
-    const distractors = [
-      `${th} + ${h * 10} + ${t} + ${o}`,
-      `${th} + ${h} + ${o}`,
-      `${th / 10} + ${h} + ${t} + ${o}`
-    ];
-    const options = shuffle([correctExpanded, ...distractors]);
-    return {
-      category: "1.3 • Expanded Form of Numbers",
-      fr: sentence,
-      en: `Break down by place value: Thousands + Hundreds + Tens + Ones`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(correctExpanded),
-      explanation: `${total} = ${th} + ${h} + ${t} + ${o}.`,
-      lang: "en-US"
-    };
-  } else if (qType === "100-more-less") {
-    const num = randInt(2500, 7800);
-    const isMore = Math.random() > 0.5;
-    const step = pickRandom([10, 100, 1000]);
-    const ans = isMore ? num + step : num - step;
-    const sentence = `What number is ${step} ${isMore ? "MORE" : "LESS"} than ${num.toLocaleString()}?`;
-    const distractors = [
-      isMore ? num - step : num + step,
-      ans + 10,
-      ans - 100
-    ].filter(d => d !== ans);
-    const options = shuffle([ans.toLocaleString(), ...distractors.map(d => d.toLocaleString())]);
-    return {
-      category: "1.3 • 10, 100, 1000 More or Less",
-      fr: sentence,
-      en: `${num} ${isMore ? "+" : "-"} ${step} = ${ans}`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(ans.toLocaleString()),
-      explanation: `${num} ${isMore ? "+" : "-"} ${step} = ${ans.toLocaleString()}.`,
-      lang: "en-US"
-    };
-  } else if (qType === "negative-compare") {
-    const a = randInt(-9, -2);
-    const b = randInt(-10, -1);
-    while (a === b) { a = randInt(-9, -2); }
-    const isAGreater = a > b;
-    const correctStatement = isAGreater ? `${a} > ${b}` : `${a} < ${b}`;
-    const falseStatement = isAGreater ? `${a} < ${b}` : `${a} > ${b}`;
-    const sentence = `Which comparison with negative numbers is TRUE?`;
-    const options = shuffle([
-      correctStatement,
-      falseStatement,
-      `${a} = ${b}`,
-      `-${Math.abs(a)} > ${Math.abs(b)}`
-    ]);
-    return {
-      category: "1.2 • Comparing Negative Numbers",
-      fr: sentence,
-      en: `On a number line, numbers further to the right are greater.`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(correctStatement),
-      explanation: `On the number line, ${Math.max(a, b)} is further to the right than ${Math.min(a, b)}, so ${correctStatement} is correct.`,
-      lang: "en-US"
-    };
-  } else if (qType === "temp-drop") {
-    const startTemp = randInt(2, 6);
-    const drop = randInt(5, 9);
-    const finalTemp = startTemp - drop;
-    const sentence = `The temperature in the morning was ${startTemp}°C. By night, it DROPPED by ${drop}°C. What is the night temperature?`;
-    const explanation = `Starting at ${startTemp}°C and dropping ${drop}°C: ${startTemp} - ${drop} = ${finalTemp}°C.`;
-    const distractors = [finalTemp + 2, finalTemp - 2, startTemp + drop].filter(d => d !== finalTemp);
-    const options = shuffle([`${finalTemp}°C`, ...distractors.map(d => `${d}°C`)]);
-    return {
-      category: "1.2 • Negative Numbers in Temperature",
-      fr: sentence,
-      en: `Start at ${startTemp} and subtract ${drop}`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(`${finalTemp}°C`),
-      explanation: explanation,
-      lang: "en-US"
-    };
-  } else {
-    // Number line
-    const start = randInt(-6, -1);
-    const forward = randInt(3, 8);
-    const result = start + forward;
-    const sentence = `On a number line, you start at ${start} and move ${forward} steps to the RIGHT (+). Where do you land?`;
-    const explanation = `${start} + ${forward} = ${result}.`;
-    const distractors = [result - 2, start - forward, result + 3].filter(d => d !== result);
-    const options = shuffle([String(result), ...distractors.map(String)]);
-    return {
-      category: "1.2 • Number Line & Integers",
-      fr: sentence,
-      en: `Moving right means adding: ${start} + ${forward}`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(String(result)),
-      explanation: explanation,
-      lang: "en-US"
-    };
-  }
-}
-
-// Unit 4: Previous Concepts (2.1 Time)
-function generateMathUnit4Question() {
-  const qType = pickRandom(["clock-read", "elapsed-time", "units-conversion", "digital-to-12hr"]);
-
-  if (qType === "clock-read") {
-    const times = [
-      { clock: "Minute hand on 3, Hour hand just past 4", digital: "4:15", text: "Quarter past 4" },
-      { clock: "Minute hand on 6, Hour hand halfway between 8 and 9", digital: "8:30", text: "Half past 8" },
-      { clock: "Minute hand on 9, Hour hand pointing close to 7", digital: "6:45", text: "Quarter to 7" },
-      { clock: "Minute hand on 12, Hour hand pointing straight at 5", digital: "5:00", text: "5 o'clock" },
-      { clock: "Minute hand on 4 (20 mins), Hour hand past 2", digital: "2:20", text: "20 minutes past 2" }
-    ];
-    const picked = pickRandom(times);
-    const sentence = `An analog clock shows: "${picked.clock}". What time is it?`;
-    const distractors = times.filter(t => t.digital !== picked.digital).map(t => `${t.digital} (${t.text})`);
-    const correctOption = `${picked.digital} (${picked.text})`;
-    const options = shuffle([correctOption, ...distractors.slice(0, 3)]);
-    return {
-      category: "2.1 • Reading Analog Clocks",
-      fr: sentence,
-      en: `Minute hand: 3 = 15 mins, 6 = 30 mins, 9 = 45 mins`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(correctOption),
-      explanation: `When the ${picked.clock}, the time is ${picked.digital} or "${picked.text}".`,
-      lang: "en-US"
-    };
-  } else if (qType === "elapsed-time") {
-    const startHour = randInt(2, 5);
-    const startMin = pickRandom([0, 15, 30]);
-    const duration = pickRandom([30, 45, 60, 75]);
-    const totalMin = startHour * 60 + startMin + duration;
-    const endHour = Math.floor(totalMin / 60);
-    const endMin = totalMin % 60;
-    const fmt = (h, m) => `${h}:${m === 0 ? "00" : m < 10 ? "0" + m : m} PM`;
-
-    const sentence = `Aezza starts her homework at ${fmt(startHour, startMin)} and finishes at ${fmt(endHour, endMin)}. How many minutes did she spend?`;
-    const explanation = `From ${fmt(startHour, startMin)} to ${fmt(endHour, endMin)} is ${duration} minutes.`;
-    const distractors = [duration + 15, duration - 15, duration + 30].filter(d => d !== duration);
-    const options = shuffle([`${duration} minutes`, ...distractors.slice(0, 3).map(d => `${d} minutes`)]);
-    return {
-      category: "2.1 • Elapsed Time & Duration",
-      fr: sentence,
-      en: `Calculate the time difference between start and finish.`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(`${duration} minutes`),
-      explanation: explanation,
-      lang: "en-US"
-    };
-  } else if (qType === "units-conversion") {
-    const conv = pickRandom([
-      { q: "How many minutes are in 2 hours?", ans: "120 minutes", exp: "1 hour = 60 minutes. 2 hours = 2 × 60 = 120 minutes." },
-      { q: "How many hours are in 3 days?", ans: "72 hours", exp: "1 day = 24 hours. 3 days = 3 × 24 = 72 hours." },
-      { q: "How many seconds are in 5 minutes?", ans: "300 seconds", exp: "1 minute = 60 seconds. 5 minutes = 5 × 60 = 300 seconds." },
-      { q: "How many minutes are in 1 hour and 45 minutes?", ans: "105 minutes", exp: "60 + 45 = 105 minutes." }
-    ]);
-    const distractors = ["60 minutes", "100 minutes", "180 minutes", "48 hours", "360 seconds"].filter(d => d !== conv.ans);
-    const options = shuffle([conv.ans, ...distractors.slice(0, 3)]);
-    return {
-      category: "2.1 • Units of Time Conversion",
-      fr: conv.q,
-      en: conv.exp,
-      audio: conv.q,
-      options: options,
-      correct: options.indexOf(conv.ans),
-      explanation: conv.exp,
-      lang: "en-US"
-    };
-  } else {
-    // 24hr to 12hr
-    const hour24 = randInt(13, 21);
-    const min = pickRandom(["00", "15", "30", "45"]);
-    const hour12 = hour24 - 12;
-    const sentence = `A digital clock shows ${hour24}:${min}. What is this time in 12-hour AM/PM format?`;
-    const correctAns = `${hour12}:${min} PM`;
-    const distractors = [`${hour12}:${min} AM`, `${hour24 - 10}:${min} PM`, `${hour12 + 1}:${min} PM`];
-    const options = shuffle([correctAns, ...distractors]);
-    return {
-      category: "2.1 • 12-Hour vs 24-Hour Time",
-      fr: sentence,
-      en: `For 24-hour time after 12:00, subtract 12 to find PM time.`,
-      audio: sentence,
-      options: options,
-      correct: options.indexOf(correctAns),
-      explanation: `${hour24}:${min} in 24-hour time is ${hour12}:${min} PM in 12-hour time (${hour24} - 12 = ${hour12}).`,
-      lang: "en-US"
-    };
-  }
-}
-
-// Math Quiz generator
-function generateDynamicMathQuiz(unitKey, count = 6) {
-  const questions = [];
-  for (let i = 0; i < count; i++) {
-    if (unitKey === "math-u1") questions.push(generateMathUnit1Question());
-    else if (unitKey === "math-u2") questions.push(generateMathUnit2Question());
-    else if (unitKey === "math-u3") questions.push(generateMathUnit3Question());
-    else if (unitKey === "math-u4") questions.push(generateMathUnit4Question());
-    else questions.push(generateMathUnit1Question());
-  }
-  return questions;
-}
-
-// Math Mock Exam (15 questions covering all 4 units)
-function generateDynamicMathMockExam(count = 15) {
-  const generators = [
-    generateMathUnit1Question,
-    generateMathUnit1Question,
-    generateMathUnit1Question,
-    generateMathUnit1Question,
-    generateMathUnit2Question,
-    generateMathUnit2Question,
-    generateMathUnit2Question,
-    generateMathUnit2Question,
-    generateMathUnit3Question,
-    generateMathUnit3Question,
-    generateMathUnit3Question,
-    generateMathUnit3Question,
-    generateMathUnit4Question,
-    generateMathUnit4Question,
-    generateMathUnit4Question
-  ];
-  return shuffle(generators).slice(0, count).map(fn => fn());
-}
-
-// =============================================================================
-// 5. DYNAMIC UNSCRAMBLE / EQUATION BUILDER
-// =============================================================================
-
-function generateDynamicMathUnscramblePuzzles(count = 6) {
-  const templates = [
-    () => {
-      const a = randInt(4, 8);
-      const b = randInt(2, 6);
-      const c = randInt(2, 5);
-      const res = (a + b) * c;
-      return {
-        targetTokens: ["(", String(a), "+", String(b), ")", "×", String(c), "=", String(res)],
-        en: `PEMDAS Equation: (${a} + ${b}) × ${c} = ${res}`,
-        audio: `Open bracket ${a} plus ${b} close bracket times ${c} equals ${res}`
-      };
-    },
-    () => {
-      const a = randInt(7, 15);
-      const b = randInt(4, 9);
-      const res = a * b;
-      return {
-        targetTokens: [String(a), "×", String(b), "=", String(res)],
-        en: `Multiplication fact: ${a} × ${b} = ${res}`,
-        audio: `${a} times ${b} equals ${res}`
-      };
-    },
-    () => {
-      const th = randInt(3, 7) * 1000;
-      const h = randInt(2, 8) * 100;
-      const t = randInt(2, 9) * 10;
-      const o = randInt(1, 9);
-      const sum = th + h + t + o;
-      return {
-        targetTokens: [String(th), "+", String(h), "+", String(t), "+", String(o), "=", String(sum)],
-        en: `Expanded form of ${sum}`,
-        audio: `${th} plus ${h} plus ${t} plus ${o} equals ${sum}`
-      };
-    },
-    () => {
-      const a = randInt(3, 8);
-      const b = randInt(2, 5);
-      const c = randInt(4, 9);
-      const res = a + b * c;
-      return {
-        targetTokens: [String(a), "+", String(b), "×", String(c), "=", String(res)],
-        en: `Order of Operations: ${a} + ${b} × ${c} = ${res}`,
-        audio: `${a} plus ${b} times ${c} equals ${res}`
-      };
-    },
-    () => {
-      const hours = randInt(2, 6);
-      const mins = hours * 60;
-      return {
-        targetTokens: [String(hours), "hours", "=", String(mins), "minutes"],
-        en: `Time conversion: ${hours} hours = ${mins} minutes`,
-        audio: `${hours} hours equals ${mins} minutes`
-      };
-    },
-    () => {
-      return {
-        targetTokens: ["Odd", "+", "Odd", "=", "Even"],
-        en: "Even/Odd Rule: Odd + Odd = Even",
-        audio: "Odd plus Odd equals Even"
-      };
-    }
-  ];
-
-  return shuffle(templates).slice(0, count).map(fn => {
-    const p = fn();
-    p.scrambledTokens = shuffle([...p.targetTokens]);
-    return p;
-  });
-}
-
-function generateDynamicFrenchUnscramblePuzzles(count = 6) {
-  const templates = [
-    () => {
-      const subj = pickRandom(["Luc", "Paul", "Mon frère"]);
-      const time = pickRandom(["sept", "huit", "six"]);
-      return {
-        targetTokens: [subj, "se", "réveille", "à", time, "heures", "."],
-        en: `${subj} wakes up at ${time} o'clock.`,
-        audio: `${subj} se réveille à ${time} heures.`
-      };
-    },
-    () => {
-      const subj = pickRandom(["Aezza", "Marie", "Sophie"]);
-      return {
-        targetTokens: [subj, "se", "brosse", "les", "dents", "le", "matin", "."],
-        en: `${subj} brushes her teeth in the morning.`,
-        audio: `${subj} se brosse les dents le matin.`
-      };
-    },
-    () => {
-      const food = pickRandom(["du croissant", "du chocolat", "de la confiture", "des fruits"]);
-      return {
-        targetTokens: ["J'", "aime", "manger", ...food.split(" "), "."],
-        en: `I like eating ${food}.`,
-        audio: `J'aime manger ${food}.`
-      };
-    },
-    () => {
-      const country = pickRandom(FRENCH_DB.places.filter(p => p.type.startsWith("country")));
-      return {
-        targetTokens: ["Elle", "habite", country.prep, country.name, "."],
-        en: `She lives in ${country.name}.`,
-        audio: `Elle habite ${country.prep} ${country.name}.`
-      };
-    },
-    () => {
-      return {
-        targetTokens: ["Je", "ne", "regarde", "pas", "la", "télévision", "."],
-        en: "I do not watch television.",
-        audio: "Je ne regarde pas la télévision."
-      };
-    },
-    () => {
-      return {
-        targetTokens: ["Au", "petit", "déjeuner", ",", "je", "bois", "du", "lait", "."],
-        en: "For breakfast, I drink milk.",
-        audio: "Au petit déjeuner, je bois du lait."
-      };
-    }
-  ];
-
-  return shuffle(templates).slice(0, count).map(fn => {
-    const p = fn();
-    p.scrambledTokens = shuffle([...p.targetTokens]);
-    return p;
-  });
-}
-
-// =============================================================================
-// 6. DYNAMIC MATCHING PAIRS GENERATOR
-// =============================================================================
-
-function generateDynamicMatchingPairs(subject, category, count = 5) {
-  if (subject === "math") {
-    if (category === "tables") {
-      const pairs = [
-        { left: "13 × 4", right: "52" },
-        { left: "14 × 5", right: "70" },
-        { left: "15 × 6", right: "90" },
-        { left: "12 × 8", right: "96" },
-        { left: "13 × 7", right: "91" },
-        { left: "14 × 6", right: "84" },
-        { left: "15 × 8", right: "120" },
-        { left: "12 × 9", right: "108" },
-        { left: "11 × 11", right: "121" }
-      ];
-      return shuffle(pairs).slice(0, count).map((p, idx) => ({ ...p, id: idx + 1 }));
-    } else if (category === "factors") {
-      const pairs = [
-        { left: "Multiples of 6", right: "6, 12, 18, 24" },
-        { left: "Multiples of 8", right: "8, 16, 24, 32" },
-        { left: "Factors of 12", right: "1, 2, 3, 4, 6, 12" },
-        { left: "Factors of 20", right: "1, 2, 4, 5, 10, 20" },
-        { left: "Multiples of 9", right: "9, 18, 27, 36" },
-        { left: "Factors of 18", right: "1, 2, 3, 6, 9, 18" }
-      ];
-      return shuffle(pairs).slice(0, count).map((p, idx) => ({ ...p, id: idx + 1 }));
-    } else if (category === "placevalue") {
-      const pairs = [
-        { left: "4,520", right: "4000 + 500 + 20" },
-        { left: "7,085", right: "7000 + 80 + 5" },
-        { left: "3,604", right: "3000 + 600 + 4" },
-        { left: "9,250", right: "9000 + 200 + 50" },
-        { left: "6,412", right: "6000 + 400 + 10 + 2" }
-      ];
-      return shuffle(pairs).slice(0, count).map((p, idx) => ({ ...p, id: idx + 1 }));
-    } else {
-      // Even & Odd rules
-      const pairs = [
-        { left: "Odd + Odd", right: "Even" },
-        { left: "Even + Even", right: "Even" },
-        { left: "Odd + Even", right: "Odd" },
-        { left: "Odd × Odd", right: "Odd" },
-        { left: "Even × Even", right: "Even" }
-      ];
-      return shuffle(pairs).slice(0, count).map((p, idx) => ({ ...p, id: idx + 1 }));
-    }
-  } else {
-    // French Matching
-    if (category === "nationalities") {
-      const pool = shuffle(FRENCH_DB.places.filter(c => c.mascNat && c.femNat)).slice(0, count);
-      return pool.map((c, idx) => ({
-        left: `${c.mascNat.charAt(0).toUpperCase() + c.mascNat.slice(1)} (Masc)`,
-        right: `${c.femNat.charAt(0).toUpperCase() + c.femNat.slice(1)} (Fém)`,
-        id: idx + 1
-      }));
-    } else if (category === "prepositions") {
-      const pool = shuffle(FRENCH_DB.places).slice(0, count);
-      return pool.map((p, idx) => ({
-        left: `${p.name} (${p.type === "city" ? "Ville" : "Pays"})`,
-        right: `${p.prep} ${p.name}`,
-        id: idx + 1
-      }));
-    } else {
-      const masc = shuffle(FRENCH_DB.food.masculine).slice(0, 2).map(f => ({ left: `${f.emoji} ${f.name}`, right: `du ${f.name}` }));
-      const fem = shuffle(FRENCH_DB.food.feminine).slice(0, 2).map(f => ({ left: `${f.emoji} ${f.name}`, right: `de la ${f.name}` }));
-      const plur = shuffle(FRENCH_DB.food.plural).slice(0, 1).map(f => ({ left: `${f.emoji} ${f.name}`, right: `des ${f.name}` }));
-      return shuffle([...masc, ...fem, ...plur]).slice(0, count).map((p, idx) => ({ ...p, id: idx + 1 }));
-    }
-  }
-}
-
-// =============================================================================
-// 7. FLASHCARDS DATA (FRENCH & MATH)
-// =============================================================================
-
-const STATIC_FLASHCARDS = {
-  french: {
-    verbes: [
-      { emoji: "⏰", fr: "se réveiller", en: "to wake up", tag: "Verbe Pronominal", exampleFr: "Je me réveille à sept heures.", exampleEn: "I wake up at seven o'clock." },
-      { emoji: "🛏️", fr: "se lever", en: "to get out of bed", tag: "Verbe Pronominal", exampleFr: "Luc se lève aussitôt.", exampleEn: "Luc gets up right away." },
-      { emoji: "🚿", fr: "se doucher", en: "to take a shower", tag: "Verbe Pronominal", exampleFr: "Tu te douches avant l'école.", exampleEn: "You take a shower before school." },
-      { emoji: "🪥", fr: "se brosser les dents", en: "to brush teeth", tag: "Verbe Pronominal", exampleFr: "Nous nous brossons les dents.", exampleEn: "We brush our teeth." },
-      { emoji: "👗", fr: "s'habiller", en: "to get dressed", tag: "Verbe Pronominal", exampleFr: "Aezza s'habille avec sa jolie robe.", exampleEn: "Aezza gets dressed with her pretty dress." },
-      { emoji: "🌙", fr: "se coucher", en: "to go to bed", tag: "Verbe Pronominal", exampleFr: "Je me couche à vingt heures trente.", exampleEn: "I go to bed at 8:30 PM." }
-    ],
-    conjugaison: [
-      { emoji: "🚶", fr: "Aller (Je vais, Tu vas, Il va)", en: "To go", tag: "Verbe Irrégulier", exampleFr: "Nous allons à l'école ensemble.", exampleEn: "We go to school together." },
-      { emoji: "❤️", fr: "Aimer (J'aime, Tu aimes)", en: "To like / To love", tag: "Verbe en -ER", exampleFr: "J'aime écouter de la musique.", exampleEn: "I like listening to music." },
-      { emoji: "🗣️", fr: "Parler (Je parle, Tu parles)", en: "To speak", tag: "Verbe en -ER", exampleFr: "Elle parle français couramment.", exampleEn: "She speaks French fluently." },
-      { emoji: "🏡", fr: "Habiter (J'habite, Nous habitons)", en: "To live / reside", tag: "Verbe en -ER", exampleFr: "J'habite dans une belle maison.", exampleEn: "I live in a beautiful house." }
-    ],
-    nationalites: [
-      { emoji: "🇫🇷", fr: "Français / Française", en: "French (Masc / Fem)", tag: "Nationalité", exampleFr: "Paul est français, Sophie est française.", exampleEn: "Paul is French, Sophie is French." },
-      { emoji: "🇮🇳", fr: "Indien / Indienne", en: "Indian (Masc / Fem)", tag: "Nationalité", exampleFr: "Rohan est indien, Aezza est indienne.", exampleEn: "Rohan is Indian, Aezza is Indian." },
-      { emoji: "🇨🇦", fr: "au Canada / en France", en: "in Canada (Masc) / in France (Fem)", tag: "Prépositions", exampleFr: "J'habite au Canada et elle habite en France.", exampleEn: "I live in Canada and she lives in France." }
-    ],
-    repas: [
-      { emoji: "🥞", fr: "Le petit déjeuner", en: "Breakfast", tag: "Vocabulaire Repas", exampleFr: "Au petit déjeuner, je bois du lait.", exampleEn: "For breakfast, I drink milk." },
-      { emoji: "🥗", fr: "Le déjeuner", en: "Lunch", tag: "Vocabulaire Repas", exampleFr: "À midi, nous prenons le déjeuner.", exampleEn: "At noon, we have lunch." },
-      { emoji: "🥐", fr: "du pain / de la confiture", en: "some bread / some jam", tag: "Articles Partitifs", exampleFr: "Je mange du pain avec de la confiture.", exampleEn: "I eat bread with jam." }
-    ]
-  },
-
-  math: {
-    pemdas: [
-      { emoji: "⚡", fr: "PEMDAS Rule", en: "Order of Operations", tag: "Unit 3 • Operations", exampleFr: "P: Parentheses -> M/D: Multiply/Divide -> A/S: Add/Subtract", exampleEn: "Always solve brackets first, then multiply/divide left to right!" },
-      { emoji: "➕", fr: "Even & Odd Addition", en: "Odd + Odd = Even | Odd + Even = Odd", tag: "Unit 3 • Number Rules", exampleFr: "7 + 5 = 12 (Even) | 7 + 4 = 11 (Odd)", exampleEn: "Adding two odds always pairs up to an even number!" },
-      { emoji: "🎯", fr: "Estimation to 100", en: "Rounding Strategy", tag: "Unit 3 • Estimation", exampleFr: "348 rounds up to 300? No, 348 -> 300, 362 -> 400", exampleEn: "Look at the tens digit: 5 or more rounds up!" }
-    ],
-    tables: [
-      { emoji: "✖️", fr: "13 Times Table", en: "13, 26, 39, 52, 65, 78, 91, 104, 117, 130", tag: "Unit 5 • Times Tables", exampleFr: "13 × 4 = 52 | 13 × 7 = 91", exampleEn: "13 is 10 + 3. (10 × 7) + (3 × 7) = 70 + 21 = 91" },
-      { emoji: "✖️", fr: "14 Times Table", en: "14, 28, 42, 56, 70, 84, 98, 112, 126, 140", tag: "Unit 5 • Times Tables", exampleFr: "14 × 5 = 70 | 14 × 6 = 84", exampleEn: "Double the 7 times table! (7 × 6 = 42 -> 14 × 6 = 84)" },
-      { emoji: "✖️", fr: "15 Times Table", en: "15, 30, 45, 60, 75, 90, 105, 120, 135, 150", tag: "Unit 5 • Times Tables", exampleFr: "15 × 6 = 90 | 15 × 8 = 120", exampleEn: "15 ends in 5, 0, 5, 0 alternately!" }
-    ],
-    placevalue: [
-      { emoji: "📊", fr: "4-Digit Place Value", en: "Thousands, Hundreds, Tens, Ones", tag: "1.3 • Place Value", exampleFr: "In 6,482: 6000 + 400 + 80 + 2", exampleEn: "Place of 4 is Hundreds -> value is 400." },
-      { emoji: "❄️", fr: "Negative Numbers", en: "Values below Zero", tag: "1.2 • Negative Numbers", exampleFr: "-2 is GREATER than -8 (-2 > -8)", exampleEn: "Numbers further right on the number line are larger." },
-      { emoji: "🌡️", fr: "Temperature Drop", en: "3°C drop by 7°C = -4°C", tag: "1.2 • Thermometer", exampleFr: "3 - 7 = -4 degrees Celsius", exampleEn: "Pass through 0: 3 down to 0, then 4 more down." }
-    ],
-    time: [
-      { emoji: "⏰", fr: "Quarter Past / Quarter To", en: ":15 (Quarter Past) & :45 (Quarter To)", tag: "2.1 • Clock Reading", exampleFr: "Quarter past 6 = 6:15 | Quarter to 7 = 6:45", exampleEn: "Quarter = 15 minutes (1/4 of an hour)." },
-      { emoji: "⏳", fr: "Units of Time", en: "60 mins = 1 hr | 24 hrs = 1 day", tag: "2.1 • Conversions", exampleFr: "2 hours = 120 minutes | 3 days = 72 hours", exampleEn: "Multiply hours by 60 to get total minutes." }
-    ]
-  }
-};
-
-// =============================================================================
-// 8. AUDIO & SOUND EFFECTS
-// =============================================================================
 
 class SoundFX {
   constructor() { this.ctx = null; }
@@ -1242,7 +221,7 @@ class SoundFX {
       const gain = this.ctx.createGain();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, this.ctx.currentTime + startTime);
-      gain.gain.setValueAtTime(0.12, this.ctx.currentTime + startTime);
+      gain.gain.setValueAtTime(0.14, this.ctx.currentTime + startTime);
       gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + startTime + duration);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
@@ -1307,7 +286,7 @@ class VoiceReciter {
       const cleanText = text.replace(/_+/g, "").replace(/\s+/g, " ").trim();
       const utter = new SpeechSynthesisUtterance(cleanText);
       utter.rate = parseFloat(rate) || 0.9;
-      utter.pitch = 1.05;
+      utter.pitch = 1.08;
 
       if (lang.startsWith("fr")) {
         utter.lang = "fr-FR";
@@ -1317,8 +296,6 @@ class VoiceReciter {
         if (this.englishVoice) utter.voice = this.englishVoice;
       }
 
-      AppState.audioListenCount++;
-      checkAudioBadge();
       this.synth.speak(utter);
     } catch (err) {
       console.warn("Speech synthesis error:", err);
@@ -1327,10 +304,6 @@ class VoiceReciter {
 }
 
 const voice = new VoiceReciter();
-
-// =============================================================================
-// 9. CONFETTI & TOAST
-// =============================================================================
 
 class ConfettiLauncher {
   constructor() {
@@ -1351,7 +324,7 @@ class ConfettiLauncher {
   blast() {
     if (!this.canvas) return;
     this.resize();
-    const colors = ["#ff529a", "#2eb872", "#0284c7", "#f59e0b", "#8b5cf6", "#ec4899", "#3b82f6"];
+    const colors = ["#ff529a", "#2eb872", "#0284c7", "#f59e0b", "#8b5cf6", "#ec4899", "#3b82f6", "#fbbf24", "#10b981"];
     for (let i = 0; i < 90; i++) {
       this.particles.push({
         x: this.canvas.width / 2 + (Math.random() - 0.5) * 200,
@@ -1419,16 +392,16 @@ function showToast(icon, message) {
 }
 
 // =============================================================================
-// 10. APP STATE & PERSISTENCE
+// 3. APPLICATION STATE & PERSISTENCE
 // =============================================================================
 
 const AppState = {
-  currentSubject: "french", // "french" or "math"
+  currentUser: "aezza",
+  currentSubject: "french",
   xp: 350,
   stars: 120,
   streak: 5,
-  audioListenCount: 0,
-  completedChapters: { ch1: false, ch2: false, ch3: false, ch4: false, "math-u1": false, "math-u2": false, "math-u3": false, "math-u4": false },
+  completedUnits: {},
   unscrambleSolved: 0,
   currentQuiz: [],
   currentQuizKey: null,
@@ -1447,37 +420,45 @@ const AppState = {
   flashcardIndex: 0
 };
 
-function loadSavedState() {
+function loadSavedStateForUser(username) {
   try {
-    const raw = localStorage.getItem("aezza_learning_quest_state");
+    const storageKey = `sisters_quest_state_${username}`;
+    const raw = localStorage.getItem(storageKey);
     if (raw) {
       const saved = JSON.parse(raw);
-      AppState.xp = saved.xp || 350;
-      AppState.stars = saved.stars || 120;
+      AppState.xp = saved.xp || (username === "aezza" ? 350 : 200);
+      AppState.stars = saved.stars || (username === "aezza" ? 120 : 80);
       AppState.streak = saved.streak || 5;
-      AppState.completedChapters = saved.completedChapters || AppState.completedChapters;
-      AppState.audioListenCount = saved.audioListenCount || 0;
+      AppState.completedUnits = saved.completedUnits || {};
       AppState.unscrambleSolved = saved.unscrambleSolved || 0;
-      AppState.currentSubject = saved.currentSubject || "french";
+      AppState.currentSubject = saved.currentSubject || (username === "aezza" ? "french" : "phonics");
+    } else {
+      AppState.xp = username === "aezza" ? 350 : 200;
+      AppState.stars = username === "aezza" ? 120 : 80;
+      AppState.streak = 5;
+      AppState.completedUnits = {};
+      AppState.unscrambleSolved = 0;
+      AppState.currentSubject = username === "aezza" ? "french" : "phonics";
     }
   } catch (e) {
-    console.warn("State load error:", e);
+    console.warn("User state load error:", e);
   }
 }
 
-function saveState() {
+function saveStateForUser() {
   try {
-    localStorage.setItem("aezza_learning_quest_state", JSON.stringify({
+    const username = AppState.currentUser;
+    const storageKey = `sisters_quest_state_${username}`;
+    localStorage.setItem(storageKey, JSON.stringify({
       xp: AppState.xp,
       stars: AppState.stars,
       streak: AppState.streak,
-      completedChapters: AppState.completedChapters,
-      audioListenCount: AppState.audioListenCount,
+      completedUnits: AppState.completedUnits,
       unscrambleSolved: AppState.unscrambleSolved,
       currentSubject: AppState.currentSubject
     }));
   } catch (e) {
-    console.warn("State save error:", e);
+    console.warn("User state save error:", e);
   }
 }
 
@@ -1485,7 +466,7 @@ function addXP(amount) {
   AppState.xp += amount;
   AppState.stars += Math.floor(amount / 10);
   updateGamificationDisplay();
-  saveState();
+  saveStateForUser();
   showToast("⚡", `+${amount} XP gained!`);
 }
 
@@ -1498,482 +479,593 @@ function updateGamificationDisplay() {
   if (elStreak) elStreak.textContent = AppState.streak;
 }
 
-function checkAudioBadge() {
-  if (AppState.audioListenCount >= 5) {
-    unlockTrophy("trophy-voice", "🎙️ Audio Explorer Unlocked!");
-  }
-}
-
-function unlockTrophy(trophyId, msg) {
-  const el = document.getElementById(trophyId);
-  if (el && !el.classList.contains("unlocked")) {
-    el.classList.add("unlocked");
-    const status = el.querySelector(".trophy-status");
-    if (status) {
-      status.className = "trophy-status";
-      status.textContent = "Unlocked ✨";
-    }
-    showToast("🏆", msg || "New Trophy Unlocked!");
-    sfx.fanfare();
-    confetti.blast();
-  }
-}
-
-function checkBadges() {
-  if (AppState.completedChapters.ch1) unlockTrophy("trophy-ch1");
-  if (AppState.completedChapters.ch2) unlockTrophy("trophy-ch2");
-  if (AppState.completedChapters.ch3) unlockTrophy("trophy-ch3");
-  if (AppState.completedChapters.ch4) unlockTrophy("trophy-ch4");
-  if (AppState.completedChapters["math-u1"]) unlockTrophy("trophy-math-add");
-  if (AppState.completedChapters["math-u2"]) unlockTrophy("trophy-math-tables");
-  if (AppState.completedChapters["math-u3"]) unlockTrophy("trophy-math-placeval");
-  if (AppState.completedChapters["math-u4"]) unlockTrophy("trophy-math-time");
-  if (AppState.unscrambleSolved >= 6) unlockTrophy("trophy-unscramble");
-  if (AppState.audioListenCount >= 5) unlockTrophy("trophy-voice");
-}
-
 // =============================================================================
-// 11. SUBJECT SWITCHER CONTROLLER (FRENCH ↔ MATH)
+// 4. AEZZA'S FRENCH GRAMMAR DATABASE & GENERATORS
 // =============================================================================
 
-function initSubjectSwitcher() {
-  const btnFrench = document.getElementById("btn-subject-french");
-  const btnMath = document.getElementById("btn-subject-math");
+const FRENCH_DB = {
+  subjects: {
+    firstSing: { text: "Je", pron: "me", pronVowel: "m'", endingEr: "e", aller: "vais", aimer: "J'aime" },
+    secondSing: { text: "Tu", pron: "te", pronVowel: "t'", endingEr: "es", aller: "vas", aimer: "Tu aimes" },
+    thirdSingMasc: [
+      { text: "Luc", pron: "se", pronVowel: "s'", endingEr: "e", aller: "va", aimer: "Luc aime" },
+      { text: "Paul", pron: "se", pronVowel: "s'", endingEr: "e", aller: "va", aimer: "Paul aime" },
+      { text: "Il", pron: "se", pronVowel: "s'", endingEr: "e", aller: "va", aimer: "Il aime" }
+    ],
+    thirdSingFem: [
+      { text: "Aezza", pron: "se", pronVowel: "s'", endingEr: "e", aller: "va", aimer: "Aezza aime" },
+      { text: "Marie", pron: "se", pronVowel: "s'", endingEr: "e", aller: "va", aimer: "Marie aime" },
+      { text: "Elle", pron: "se", pronVowel: "s'", endingEr: "e", aller: "va", aimer: "Elle aime" }
+    ],
+    firstPlur: { text: "Nous", pron: "nous", pronVowel: "nous", endingEr: "ons", aller: "allons", aimer: "Nous aimons" },
+    secondPlur: { text: "Vous", pron: "vous", pronVowel: "vous", endingEr: "ez", aller: "allez", aimer: "Vous aimez" },
+    thirdPlurMasc: [
+      { text: "Ils", pron: "se", pronVowel: "s'", endingEr: "ent", aller: "vont", aimer: "Ils aiment" }
+    ],
+    thirdPlurFem: [
+      { text: "Elles", pron: "se", pronVowel: "s'", endingEr: "ent", aller: "vont", aimer: "Elles aiment" }
+    ]
+  },
 
-  btnFrench.addEventListener("click", () => {
-    sfx.pop();
-    switchSubject("french");
-  });
+  reflexiveVerbs: [
+    { infinitive: "se réveiller", root: "réveill", meaning: "to wake up", startsVowel: false, times: ["à sept heures du matin", "à 6h30", "tôt le matin"] },
+    { infinitive: "se lever", root: "lèv", rootPlur: "lev", meaning: "to get out of bed", startsVowel: false, times: ["rapidement", "aussitôt", "à 7 heures"] },
+    { infinitive: "se doucher", root: "douch", meaning: "to take a shower", startsVowel: false, times: ["dans la salle de bain", "avant l'école", "le matin"] },
+    { infinitive: "se brosser les dents", root: "bross", suffix: "les dents", meaning: "to brush teeth", startsVowel: false, times: ["après le petit déjeuner", "avant d'aller au lit"] },
+    { infinitive: "s'habiller", root: "habill", meaning: "to get dressed", startsVowel: true, times: ["pour aller à l'école", "dans sa chambre"] },
+    { infinitive: "se coucher", root: "couch", meaning: "to go to bed", startsVowel: false, times: ["à vingt et une heures", "le soir à 20h30"] }
+  ],
 
-  btnMath.addEventListener("click", () => {
-    sfx.pop();
-    switchSubject("math");
-  });
+  places: [
+    { name: "France", type: "country-fem", prep: "en", mascNat: "français", femNat: "française" },
+    { name: "Inde", type: "country-vowel", prep: "en", mascNat: "indien", femNat: "indienne" },
+    { name: "Italie", type: "country-vowel", prep: "en", mascNat: "italien", femNat: "italienne" },
+    { name: "Canada", type: "country-masc", prep: "au", mascNat: "canadien", femNat: "canadienne" },
+    { name: "Japon", type: "country-masc", prep: "au", mascNat: "japonais", femNat: "japonaise" },
+    { name: "États-Unis", type: "country-plur", prep: "aux", mascNat: "américain", femNat: "américaine" },
+    { name: "Paris", type: "city", prep: "à" },
+    { name: "Lyon", type: "city", prep: "à" },
+    { name: "Rome", type: "city", prep: "à" }
+  ],
 
-  switchSubject(AppState.currentSubject || "french", true);
-}
-
-function switchSubject(subject, skipStateSave = false) {
-  AppState.currentSubject = subject;
-  if (!skipStateSave) saveState();
-
-  const isMath = subject === "math";
-  document.body.classList.toggle("theme-math", isMath);
-
-  const btnFrench = document.getElementById("btn-subject-french");
-  const btnMath = document.getElementById("btn-subject-math");
-  if (btnFrench && btnMath) {
-    btnFrench.classList.toggle("active", !isMath);
-    btnMath.classList.toggle("active", isMath);
+  food: {
+    masculine: [{ name: "pain", en: "bread", emoji: "🥖" }, { name: "croissant", en: "croissant", emoji: "🥐" }, { name: "fromage", en: "cheese", emoji: "🧀" }, { name: "beurre", en: "butter", emoji: "🧈" }],
+    feminine: [{ name: "confiture", en: "jam", emoji: "🍓" }, { name: "salade", en: "salad", emoji: "🥗" }, { name: "soupe", en: "soup", emoji: "🍲" }],
+    vowel: [{ name: "eau fraîche", en: "fresh water", emoji: "💧" }],
+    plural: [{ name: "fruits", en: "fruits", emoji: "🍎" }, { name: "légumes", en: "vegetables", emoji: "🥦" }]
   }
+};
 
-  // Update Mascot
-  const mascotAvatar = document.getElementById("avatar-accessory");
-  const mascotText = document.getElementById("mascot-text");
-  if (mascotAvatar) mascotAvatar.textContent = isMath ? "🎓" : "🥖";
-
-  if (mascotText) {
-    mascotText.textContent = isMath
-      ? `"Hello Aezza! I'm Professor Coco. Ready to master Grade 3 Math? Choose a unit to practice!"`
-      : `"Bonjour Aezza ! Je m'appelle Coco le renard. Prête à réussir ton examen de français ? Choisis un chapitre !"`;
-  }
-
-  // Update Dynamic UI Views
-  renderAdventureGrid();
-  updateUnscrambleForSubject();
-  updateMatchingTabsForSubject();
-  updateFlashcardTabsForSubject();
-  updateMockExamIntroForSubject();
+function getRandomFrenchSubject() {
+  const groups = ["firstSing", "secondSing", "thirdSingMasc", "thirdSingFem", "firstPlur", "secondPlur", "thirdPlurMasc", "thirdPlurFem"];
+  const val = FRENCH_DB.subjects[pickRandom(groups)];
+  return Array.isArray(val) ? pickRandom(val) : val;
 }
 
-// Render Adventure Chapter/Unit Grid
-function renderAdventureGrid() {
-  const container = document.getElementById("chapter-grid-container");
-  const headline = document.getElementById("adventure-headline");
-  const subheadline = document.getElementById("adventure-subheadline");
-  if (!container) return;
+function generateFrenchCh1Question() {
+  const subj = getRandomFrenchSubject();
+  const verb = pickRandom(FRENCH_DB.reflexiveVerbs);
+  const time = pickRandom(verb.times);
+  const correctPron = verb.startsVowel ? subj.pronVowel : subj.pron;
+  let root = verb.root;
+  if ((subj.text === "Nous" || subj.text === "Vous") && verb.rootPlur) root = verb.rootPlur;
+  const conjVerb = root + subj.endingEr;
 
-  const isMath = AppState.currentSubject === "math";
+  const sentence = `${subj.text} ______ ${conjVerb} ${verb.suffix || ""} ${time}.`;
+  const fullAudio = `${subj.text} ${correctPron} ${conjVerb} ${verb.suffix || ""} ${time}.`.replace(/\s+/g, " ");
+  const distractors = ["me", "te", "se", "nous", "vous"].filter(p => p !== correctPron).slice(0, 3);
+  const options = shuffle([correctPron, ...distractors]);
 
-  if (headline) headline.textContent = isMath ? "Choose Your Math Quest 🚀" : "Choisis ton Aventure 🚀";
-  if (subheadline) subheadline.textContent = isMath
-    ? "Master every unit of your Grade 3 Summative Assessment 1 Mathematics syllabus!"
-    : "Entraîne-toi sur chaque chapitre du programme pour maîtriser ton contrôle de français !";
-
-  container.innerHTML = "";
-
-  const chapters = isMath ? [
-    {
-      key: "math-u1",
-      badge: "Unit 3 • Grade 3",
-      cardClass: "card-blue",
-      icon: "➕ ⚡",
-      title: "Addition, Subtraction & PEMDAS",
-      subtitle: "Estimation, Even/Odd Generalizations & Order of Operations",
-      tags: ["Estimation", "Nearest 10/100", "Even & Odd", "PEMDAS Rules"],
-      progId: "prog-math-u1",
-      badgeId: "badge-math-u1"
-    },
-    {
-      key: "math-u2",
-      badge: "Unit 5 • Grade 3",
-      cardClass: "card-mint",
-      icon: "✖️ 🔢",
-      title: "Multiplication, Multiples & Factors",
-      subtitle: "Tables (2-15), Common Multiples & Factor Pairs",
-      tags: ["Tables 2-15", "Multiples", "Factors", "Word Problems"],
-      progId: "prog-math-u2",
-      badgeId: "badge-math-u2"
-    },
-    {
-      key: "math-u3",
-      badge: "Concept 1.2 & 1.3",
-      cardClass: "card-purple",
-      icon: "📊 ❄️",
-      title: "Place Value & Negative Numbers",
-      subtitle: "4-Digit Numbers, Expanded Form & Temperature Below Zero",
-      tags: ["Thousands", "Expanded Form", "-5 < -2", "Temperature Drops"],
-      progId: "prog-math-u3",
-      badgeId: "badge-math-u3"
-    },
-    {
-      key: "math-u4",
-      badge: "Concept 2.1",
-      cardClass: "card-yellow",
-      icon: "⏰ ⏳",
-      title: "Time Mastery & Clocks",
-      subtitle: "Analog Clocks, Quarter Past/To, Elapsed Time & 24hr Time",
-      tags: ["Analog Clocks", "Elapsed Time", "Hours to Mins", "12hr / 24hr"],
-      progId: "prog-math-u4",
-      badgeId: "badge-math-u4"
-    }
-  ] : [
-    {
-      key: "ch1",
-      badge: "Chapitre 1",
-      cardClass: "card-pink",
-      icon: "⏰ 🏠",
-      title: "La Vie Quotidienne de Luc",
-      subtitle: "Verbes Pronominaux & Routine du Matin",
-      tags: ["se réveiller", "se lever", "se doucher", "s'habiller"],
-      progId: "prog-ch1",
-      badgeId: "badge-ch1"
-    },
-    {
-      key: "ch2",
-      badge: "Chapitre 2",
-      cardClass: "card-mint",
-      icon: "🌍 ✈️",
-      title: "Le Monde Multiculturel",
-      subtitle: "Nationalités & Prépositions (à, en, au, aux)",
-      tags: ["français/e", "en France", "au Canada", "aux États-Unis"],
-      progId: "prog-ch2",
-      badgeId: "badge-ch2"
-    },
-    {
-      key: "ch3",
-      badge: "Chapitre 3",
-      cardClass: "card-blue",
-      icon: "🥐 🍎",
-      title: "La Bonne Nourriture",
-      subtitle: "Les Repas & Articles Partitifs (du, de la, de l', des)",
-      tags: ["petit déjeuner", "du pain", "de la confiture", "de l'eau"],
-      progId: "prog-ch3",
-      badgeId: "badge-ch3"
-    },
-    {
-      key: "ch4",
-      badge: "Grammaire & Loisirs",
-      cardClass: "card-yellow",
-      icon: "🎨 ⚽",
-      title: "Conjugaison & Mes Loisirs",
-      subtitle: "Aimer, Aller, Parler, Regarder, Habiter & J'aime...",
-      tags: ["Je vais", "J'aime", "Je n'aime pas", "Habiter"],
-      progId: "prog-ch4",
-      badgeId: "badge-ch4"
-    }
-  ];
-
-  chapters.forEach(ch => {
-    const isDone = AppState.completedChapters[ch.key];
-    const card = document.createElement("div");
-    card.className = `chapter-card ${ch.cardClass}`;
-    card.innerHTML = `
-      <div class="card-badge ${isDone ? "completed" : ""}" id="${ch.badgeId}">${isDone ? "⭐ Completed!" : ch.badge}</div>
-      <div class="card-icon-hero">${ch.icon}</div>
-      <h3 class="card-title">${ch.title}</h3>
-      <p class="card-subtitle">${ch.subtitle}</p>
-      <div class="tags-row">
-        ${ch.tags.map(t => `<span class="tag">${t}</span>`).join("")}
-      </div>
-      <div class="progress-container">
-        <div class="progress-bar" id="${ch.progId}" style="width: ${isDone ? "100%" : "20%"}"></div>
-      </div>
-      <div class="card-action-row">
-        <button class="btn-primary start-chapter-btn" data-chapter="${ch.key}">Start Unit 🚀</button>
-      </div>
-    `;
-
-    card.querySelector(".start-chapter-btn").addEventListener("click", () => {
-      sfx.pop();
-      startQuizSession(ch.key, ch.title);
-    });
-
-    container.appendChild(card);
-  });
+  return {
+    category: "Grammaire • Verbe Pronominal",
+    fr: sentence,
+    en: `${subj.text} (${verb.meaning}) ${time}.`,
+    audio: fullAudio,
+    options: options,
+    correct: options.indexOf(correctPron),
+    explanation: `Pour le sujet "${subj.text}", le pronom réfléchi est "${correctPron}".`,
+    lang: "fr-FR"
+  };
 }
 
-function updateMockExamIntroForSubject() {
-  const isMath = AppState.currentSubject === "math";
-  const title = document.getElementById("exam-title-text");
-  const desc = document.getElementById("exam-desc-text");
-  const badge = document.getElementById("exam-badge-label");
+function generateFrenchCh2Question() {
+  const isCity = Math.random() > 0.5;
+  const place = isCity ? pickRandom(FRENCH_DB.places.filter(p => p.type === "city")) : pickRandom(FRENCH_DB.places.filter(p => p.type.startsWith("country")));
+  const person = pickRandom(["Luc", "Aezza", "Paul"]);
+  const sentence = `${person} habite ______ ${place.name}.`;
+  const fullAudio = `${person} habite ${place.prep} ${place.name}.`;
+  const distractors = ["à", "en", "au", "aux"].filter(p => p !== place.prep);
+  const options = shuffle([place.prep, ...distractors]);
 
-  if (title) title.textContent = isMath ? "Grand Mathematics Mock Exam 📝" : "Grand Examen Blanc de Français 📝";
-  if (desc) desc.textContent = isMath
-    ? "This 15-question simulated assessment covers Unit 3 (Operations, Estimation, PEMDAS), Unit 5 (Tables 2-15, Factors, Multiples), Place Value, Negative Numbers, and Time!"
-    : "Cet examen simule ton contrôle de mi-trimestre ! Il couvre les 3 chapitres, les verbes pronominaux, la conjugaison, les nationalités, les prépositions et les articles partitifs.";
-  if (badge) badge.textContent = isMath ? "🎯 Grade 3 Summative Assessment 1 Simulation" : "🎯 Évaluation Complète de Mi-Trimestre";
+  return {
+    category: "Prépositions de Lieux",
+    fr: sentence,
+    en: `${person} lives in ${place.name}.`,
+    audio: fullAudio,
+    options: options,
+    correct: options.indexOf(place.prep),
+    explanation: place.type === "city" ? `Pour les villes (${place.name}), on utilise "à".` : `Pour "${place.name}", on utilise "${place.prep}".`,
+    lang: "fr-FR"
+  };
 }
 
-// =============================================================================
-// 12. QUIZ CONTROLLER (DYNAMIC)
-// =============================================================================
-
-function startQuizSession(chapterKey, title) {
-  const isMath = AppState.currentSubject === "math";
-  if (isMath) {
-    AppState.currentQuiz = generateDynamicMathQuiz(chapterKey, 6);
+function generateFrenchCh3Question() {
+  const itemType = pickRandom(["masculine", "feminine", "plural"]);
+  let item, correctArticle;
+  if (itemType === "masculine") {
+    item = pickRandom(FRENCH_DB.food.masculine);
+    correctArticle = "du";
+  } else if (itemType === "feminine") {
+    item = pickRandom(FRENCH_DB.food.feminine);
+    correctArticle = "de la";
   } else {
-    AppState.currentQuiz = [
-      chapterKey === "ch1" ? generateFrenchCh1Question() :
-      chapterKey === "ch2" ? generateFrenchCh2Question() :
-      chapterKey === "ch3" ? generateFrenchCh3Question() :
-      generateFrenchCh4Question(),
-      chapterKey === "ch1" ? generateFrenchCh1Question() :
-      chapterKey === "ch2" ? generateFrenchCh2Question() :
-      chapterKey === "ch3" ? generateFrenchCh3Question() :
-      generateFrenchCh4Question(),
-      chapterKey === "ch1" ? generateFrenchCh1Question() :
-      chapterKey === "ch2" ? generateFrenchCh2Question() :
-      chapterKey === "ch3" ? generateFrenchCh3Question() :
-      generateFrenchCh4Question(),
-      chapterKey === "ch1" ? generateFrenchCh1Question() :
-      chapterKey === "ch2" ? generateFrenchCh2Question() :
-      chapterKey === "ch3" ? generateFrenchCh3Question() :
-      generateFrenchCh4Question(),
-      chapterKey === "ch1" ? generateFrenchCh1Question() :
-      chapterKey === "ch2" ? generateFrenchCh2Question() :
-      chapterKey === "ch3" ? generateFrenchCh3Question() :
-      generateFrenchCh4Question(),
-      chapterKey === "ch1" ? generateFrenchCh1Question() :
-      chapterKey === "ch2" ? generateFrenchCh2Question() :
-      chapterKey === "ch3" ? generateFrenchCh3Question() :
-      generateFrenchCh4Question()
+    item = pickRandom(FRENCH_DB.food.plural);
+    correctArticle = "des";
+  }
+
+  const subj = pickRandom(["Au petit déjeuner, je prends", "À midi, Aezza mange", "Pour le dîner, Luc boit"]);
+  const sentence = `${subj} ______ ${item.name}.`;
+  const fullAudio = `${subj} ${correctArticle} ${item.name}.`;
+  const options = shuffle(["du", "de la", "de l'", "des"]);
+
+  return {
+    category: "Articles Partitifs (du, de la, de l', des)",
+    fr: sentence,
+    en: `${subj} some ${item.en}.`,
+    audio: fullAudio,
+    options: options,
+    correct: options.indexOf(correctArticle),
+    explanation: `"${item.name}" demande l'article partitif "${correctArticle}".`,
+    lang: "fr-FR"
+  };
+}
+
+function generateFrenchCh4Question() {
+  const subj = getRandomFrenchSubject();
+  const place = pickRandom(["à l'école", "au parc", "à Paris"]);
+  const sentence = `${subj.text} ______ ${place}. (aller)`;
+  const fullAudio = `${subj.text} ${subj.aller} ${place}.`;
+  const forms = ["vais", "vas", "va", "allons", "allez", "vont"];
+  const distractors = forms.filter(f => f !== subj.aller).slice(0, 3);
+  const options = shuffle([subj.aller, ...distractors]);
+
+  return {
+    category: "Conjugaison • Verbe Aller",
+    fr: sentence,
+    en: `${subj.text} go(es) to ${place}.`,
+    audio: fullAudio,
+    options: options,
+    correct: options.indexOf(subj.aller),
+    explanation: `Le verbe "aller" avec "${subj.text}" se conjugue "${subj.aller}".`,
+    lang: "fr-FR"
+  };
+}
+
+// =============================================================================
+// 5. AEZZA'S GRADE 3 MATHEMATICS PROCEDURAL GENERATORS (SA-1)
+// =============================================================================
+
+function generateMathUnit1Question() {
+  const qType = pickRandom(["estimation-add", "pemdas-simple", "pemdas-parentheses", "even-odd-rule"]);
+
+  if (qType === "estimation-add") {
+    const a = randInt(120, 580);
+    const b = randInt(110, 390);
+    const roundA = Math.round(a / 100) * 100;
+    const roundB = Math.round(b / 100) * 100;
+    const estSum = roundA + roundB;
+    const sentence = `Estimate the sum of ${a} + ${b} by rounding each number to the nearest 100.`;
+    const explanation = `${a} rounds to ${roundA}, and ${b} rounds to ${roundB}. Estimated sum: ${roundA} + ${roundB} = ${estSum}.`;
+    const distractors = [estSum + 100, estSum - 100, estSum + 50].filter(d => d !== estSum);
+    const options = shuffle([String(estSum), ...distractors.map(String)]);
+    return {
+      category: "Unit 3 • Estimation & Rounding (Nearest 100)",
+      fr: sentence,
+      en: `Step 1: Round to nearest 100 -> ${roundA} + ${roundB}`,
+      audio: sentence,
+      options: options,
+      correct: options.indexOf(String(estSum)),
+      explanation: explanation,
+      lang: "en-US"
+    };
+  } else if (qType === "pemdas-simple") {
+    const a = randInt(4, 15);
+    const b = randInt(2, 6);
+    const c = randInt(3, 7);
+    const ans = a + b * c;
+    const wrong = (a + b) * c;
+    const sentence = `Evaluate using PEMDAS: ${a} + ${b} × ${c} = ?`;
+    const explanation = `Multiplication comes first: ${b} × ${c} = ${b * c}. Then add: ${a} + ${b * c} = ${ans}.`;
+    const options = shuffle([String(ans), String(wrong), String(ans + 2), String(ans - 3)]);
+    return {
+      category: "Unit 3 • Order of Operations (PEMDAS)",
+      fr: sentence,
+      en: `Multiply before adding!`,
+      audio: sentence,
+      options: options,
+      correct: options.indexOf(String(ans)),
+      explanation: explanation,
+      lang: "en-US"
+    };
+  } else if (qType === "pemdas-parentheses") {
+    const a = randInt(2, 8);
+    const b = randInt(2, 6);
+    const c = randInt(2, 5);
+    const ans = (a + b) * c;
+    const sentence = `Evaluate using PEMDAS: (${a} + ${b}) × ${c} = ?`;
+    const explanation = `Solve brackets first: (${a} + ${b}) = ${a + b}. Then multiply: ${a + b} × ${c} = ${ans}.`;
+    const options = shuffle([String(ans), String(a + b * c), String(ans + 4), String(ans - 2)]);
+    return {
+      category: "Unit 3 • Order of Operations with Brackets",
+      fr: sentence,
+      en: `Solve parentheses first!`,
+      audio: sentence,
+      options: options,
+      correct: options.indexOf(String(ans)),
+      explanation: explanation,
+      lang: "en-US"
+    };
+  } else {
+    const rules = [
+      { text: "Odd + Odd is ALWAYS...", ans: "Even", exp: "Example: 3 + 5 = 8 (Even). Odd + Odd is always Even!" },
+      { text: "Odd + Even is ALWAYS...", ans: "Odd", exp: "Example: 7 + 4 = 11 (Odd). Odd + Even is always Odd!" },
+      { text: "Odd × Odd is ALWAYS...", ans: "Odd", exp: "Example: 3 × 5 = 15 (Odd). Odd × Odd is always Odd!" }
     ];
-  }
-
-  AppState.currentQuizKey = chapterKey;
-  AppState.quizIndex = 0;
-  AppState.quizScore = 0;
-  AppState.quizAnswersHistory = [];
-  AppState.isMockExam = false;
-
-  document.getElementById("quiz-topic-title").textContent = title || "Quiz";
-  showView("view-quiz");
-  renderQuizQuestion();
-}
-
-function renderQuizQuestion() {
-  const qList = AppState.currentQuiz;
-  const idx = AppState.quizIndex;
-  const q = qList[idx];
-
-  document.getElementById("quiz-current-num").textContent = idx + 1;
-  document.getElementById("quiz-total-num").textContent = qList.length;
-  const pct = ((idx + 1) / qList.length) * 100;
-  document.getElementById("quiz-progress-fill").style.width = `${pct}%`;
-
-  const feedback = document.getElementById("quiz-feedback-banner");
-  feedback.classList.remove("show", "correct", "incorrect");
-
-  document.getElementById("question-category").textContent = q.category || "General";
-  document.getElementById("question-french-text").textContent = q.fr;
-  document.getElementById("question-english-hint").textContent = q.en ? `"${q.en}"` : "";
-
-  const frenchAudioBtn = document.getElementById("btn-speak-french");
-  const englishAudioBtn = document.getElementById("btn-speak-english");
-
-  frenchAudioBtn.onclick = () => {
-    sfx.pop();
-    const speed = document.getElementById("audio-speed-select").value;
-    voice.speak(q.audio || q.fr, q.lang || "fr-FR", speed);
-  };
-
-  englishAudioBtn.onclick = () => {
-    sfx.pop();
-    const speed = document.getElementById("audio-speed-select").value;
-    voice.speak(q.en, "en-US", speed);
-  };
-
-  const container = document.getElementById("quiz-options-container");
-  container.innerHTML = "";
-
-  const letters = ["A", "B", "C", "D"];
-  q.options.forEach((optText, optIdx) => {
-    const btn = document.createElement("button");
-    btn.className = "quiz-option-btn";
-    btn.innerHTML = `
-      <span class="option-letter">${letters[optIdx]}</span>
-      <span class="option-text">${optText}</span>
-    `;
-
-    btn.addEventListener("click", () => handleQuizAnswer(optIdx, btn, q));
-    container.appendChild(btn);
-  });
-}
-
-function handleQuizAnswer(selectedIdx, btnElement, question) {
-  const allBtns = document.querySelectorAll(".quiz-option-btn");
-  allBtns.forEach(b => (b.disabled = true));
-
-  const isCorrect = selectedIdx === question.correct;
-  AppState.quizAnswersHistory.push({
-    question: question.fr,
-    chosen: question.options[selectedIdx],
-    correctAnswer: question.options[question.correct],
-    explanation: question.explanation,
-    isCorrect: isCorrect
-  });
-
-  const feedback = document.getElementById("quiz-feedback-banner");
-  const fbTitle = document.getElementById("feedback-title");
-  const fbExp = document.getElementById("feedback-explanation");
-  const fbIcon = document.getElementById("feedback-icon");
-  const fbCorrectRow = document.getElementById("feedback-correct-answer-row");
-  const fbCorrectText = document.getElementById("feedback-correct-text");
-  const fbMascotAvatar = document.getElementById("feedback-mascot-avatar");
-  const speakExpBtn = document.getElementById("btn-speak-explanation");
-
-  const isMath = AppState.currentSubject === "math";
-  if (fbMascotAvatar) fbMascotAvatar.textContent = isMath ? "🦊" : "🦊";
-
-  const explanationText = question.explanation;
-  const speed = document.getElementById("audio-speed-select").value;
-
-  if (isCorrect) {
-    btnElement.classList.add("correct");
-    sfx.correct();
-    confetti.blast();
-    AppState.quizScore++;
-    addXP(20);
-
-    if (fbIcon) fbIcon.textContent = "🎉";
-    if (fbTitle) {
-      fbTitle.textContent = isMath ? "Brilliant Aezza! That's 100% Correct!" : "Bravo Aezza ! C'est parfait !";
-      fbTitle.style.color = "#15803d";
-    }
-    if (fbCorrectRow) fbCorrectRow.style.display = "none";
-    feedback.className = "feedback-banner show correct";
-    voice.speak(question.audio || question.fr, isMath ? "en-US" : "fr-FR", speed);
-  } else {
-    btnElement.classList.add("incorrect");
-    allBtns[question.correct].classList.add("correct");
-    sfx.incorrect();
-
-    if (fbIcon) fbIcon.textContent = "💡";
-    if (fbTitle) {
-      fbTitle.textContent = isMath ? "💡 Professor Coco Explains:" : "💡 Coco t'explique la règle :";
-      fbTitle.style.color = "#c2410c";
-    }
-    if (fbCorrectRow && fbCorrectText) {
-      fbCorrectRow.style.display = "flex";
-      fbCorrectText.textContent = question.options[question.correct];
-    }
-    feedback.className = "feedback-banner show incorrect";
-
-    // Coco reads the explanation directly out loud to teach Aezza!
-    const spokenExplanation = isMath
-      ? `The correct answer is ${question.options[question.correct]}. Here is why: ${explanationText}`
-      : `La bonne réponse est ${question.options[question.correct]}. Voici pourquoi : ${explanationText}`;
-    voice.speak(spokenExplanation, isMath ? "en-US" : "fr-FR", speed);
-  }
-
-  if (fbExp) fbExp.textContent = explanationText;
-
-  if (speakExpBtn) {
-    speakExpBtn.onclick = () => {
-      sfx.pop();
-      const curSpeed = document.getElementById("audio-speed-select").value;
-      const spokenExplanation = isMath
-        ? `The correct answer is ${question.options[question.correct]}. Here is why: ${explanationText}`
-        : `La bonne réponse est ${question.options[question.correct]}. Voici pourquoi : ${explanationText}`;
-      voice.speak(spokenExplanation, isMath ? "en-US" : "fr-FR", curSpeed);
+    const picked = pickRandom(rules);
+    const sentence = `Generalization Rule: ${picked.text}`;
+    const options = shuffle(["Even", "Odd", "Sometimes Even, Sometimes Odd", "Zero"]);
+    return {
+      category: "Unit 3 • Even & Odd Number Rules",
+      fr: sentence,
+      en: picked.exp,
+      audio: sentence,
+      options: options,
+      correct: options.indexOf(picked.ans),
+      explanation: picked.exp,
+      lang: "en-US"
     };
   }
 }
 
-function initQuizListeners() {
-  document.getElementById("btn-next-question").addEventListener("click", () => {
-    sfx.pop();
-    AppState.quizIndex++;
-    if (AppState.quizIndex < AppState.currentQuiz.length) {
-      renderQuizQuestion();
-    } else {
-      finishQuiz();
-    }
-  });
-
-  document.getElementById("quiz-back-btn").addEventListener("click", () => {
-    sfx.pop();
-    if (AppState.isMockExam) {
-      showView("view-mock-exam");
-    } else {
-      showView("view-adventure");
-    }
-  });
+function generateMathUnit2Question() {
+  const a = randInt(6, 15);
+  const b = randInt(3, 12);
+  const product = a * b;
+  const sentence = `What is ${a} × ${b} = ?`;
+  const explanation = `${a} multiplied by ${b} is equal to ${product}.`;
+  const distractors = [product + a, product - b, product + 10].filter(d => d !== product);
+  const options = shuffle([String(product), ...distractors.map(String)]);
+  return {
+    category: "Unit 5 • Multiplication Tables (2-15)",
+    fr: sentence,
+    en: `Multiplication fact: ${a} times ${b}`,
+    audio: `What is ${a} times ${b}?`,
+    options: options,
+    correct: options.indexOf(String(product)),
+    explanation: explanation,
+    lang: "en-US"
+  };
 }
 
-function finishQuiz() {
-  if (AppState.isMockExam) {
-    showExamResults();
-  } else {
-    sfx.fanfare();
-    confetti.blast();
-    const chKey = AppState.currentQuizKey;
-    if (chKey) {
-      AppState.completedChapters[chKey] = true;
-      renderAdventureGrid();
-      saveState();
-      checkBadges();
-    }
-    showToast("🎉", `Session Finished! Score: ${AppState.quizScore} / ${AppState.currentQuiz.length}`);
-    addXP(50);
-    showView("view-adventure");
+function generateMathUnit3Question() {
+  const thousands = randInt(2, 9);
+  const hundreds = randInt(1, 9);
+  const tens = randInt(1, 9);
+  const ones = randInt(1, 9);
+  const num = thousands * 1000 + hundreds * 100 + tens * 10 + ones;
+  const sentence = `In the 4-digit number ${num.toLocaleString()}, what is the PLACE VALUE of ${hundreds}?`;
+  const correctVal = `${hundreds * 100} (${hundreds} Hundreds)`;
+  const distractors = [`${hundreds * 1000} (${hundreds} Thousands)`, `${hundreds * 10} (${hundreds} Tens)`, `${hundreds} (${hundreds} Ones)`];
+  const options = shuffle([correctVal, ...distractors]);
+  return {
+    category: "1.3 • Place Value in 4-Digit Numbers",
+    fr: sentence,
+    en: `Thousands | Hundreds | Tens | Ones`,
+    audio: sentence,
+    options: options,
+    correct: options.indexOf(correctVal),
+    explanation: `The digit ${hundreds} is in the hundreds column, so its value is ${hundreds * 100}.`,
+    lang: "en-US"
+  };
+}
+
+function generateMathUnit4Question() {
+  const conv = pickRandom([
+    { q: "How many minutes are in 2 hours?", ans: "120 minutes", exp: "1 hour = 60 minutes. 2 hours = 2 × 60 = 120 minutes." },
+    { q: "How many hours are in 3 days?", ans: "72 hours", exp: "1 day = 24 hours. 3 days = 3 × 24 = 72 hours." },
+    { q: "An analog clock shows minute hand on 3, hour hand past 4. What time is it?", ans: "4:15 (Quarter past 4)", exp: "Minute hand on 3 means 15 minutes (Quarter past 4)." }
+  ]);
+  const distractors = ["60 minutes", "100 minutes", "180 minutes", "48 hours"].filter(d => d !== conv.ans);
+  const options = shuffle([conv.ans, ...distractors.slice(0, 3)]);
+  return {
+    category: "2.1 • Time & Clocks",
+    fr: conv.q,
+    en: conv.exp,
+    audio: conv.q,
+    options: options,
+    correct: options.indexOf(conv.ans),
+    explanation: conv.exp,
+    lang: "en-US"
+  };
+}
+
+function generateDynamicMathQuiz(unitKey, count = 6) {
+  const questions = [];
+  for (let i = 0; i < count; i++) {
+    if (unitKey === "math-u1") questions.push(generateMathUnit1Question());
+    else if (unitKey === "math-u2") questions.push(generateMathUnit2Question());
+    else if (unitKey === "math-u3") questions.push(generateMathUnit3Question());
+    else if (unitKey === "math-u4") questions.push(generateMathUnit4Question());
+    else questions.push(generateMathUnit1Question());
   }
+  return questions;
+}
+
+function generateDynamicMathMockExam(count = 15) {
+  const generators = [generateMathUnit1Question, generateMathUnit2Question, generateMathUnit3Question, generateMathUnit4Question];
+  const list = [];
+  for (let i = 0; i < count; i++) {
+    list.push(pickRandom(generators)());
+  }
+  return list;
 }
 
 // =============================================================================
-// 13. UNSCRAMBLE / EQUATION BUILDER GAME
+// 6. FAYRA'S PREP-I KNOWLEDGE BASE & GENERATORS
 // =============================================================================
+
+const FAYRA_DB = {
+  phonics: [
+    { letter: "Aa", small: "a", sound: "ah", word: "Apple", emoji: "🍎", phonicsHint: "A says /a/ as in Apple" },
+    { letter: "Bb", small: "b", sound: "buh", word: "Ball", emoji: "⚽", phonicsHint: "B says /b/ as in Ball" },
+    { letter: "Cc", small: "c", sound: "cuh", word: "Cat", emoji: "🐱", phonicsHint: "C says /k/ as in Cat" },
+    { letter: "Dd", small: "d", sound: "duh", word: "Dog", emoji: "🐶", phonicsHint: "D says /d/ as in Dog" },
+    { letter: "Ee", small: "e", sound: "eh", word: "Elephant", emoji: "🐘", phonicsHint: "E says /e/ as in Elephant" },
+    { letter: "Ff", small: "f", sound: "fuh", word: "Fish", emoji: "🐟", phonicsHint: "F says /f/ as in Fish" },
+    { letter: "Gg", small: "g", sound: "guh", word: "Grapes", emoji: "🍇", phonicsHint: "G says /g/ as in Grapes" },
+    { letter: "Hh", small: "h", sound: "huh", word: "Hat", emoji: "🎩", phonicsHint: "H says /h/ as in Hat" },
+    { letter: "Ii", small: "i", sound: "ih", word: "Igloo", emoji: "🧊", phonicsHint: "I says /i/ as in Igloo" },
+    { letter: "Jj", small: "j", sound: "juh", word: "Jug", emoji: "🏺", phonicsHint: "J says /j/ as in Jug" },
+    { letter: "Kk", small: "k", sound: "kuh", word: "Kite", emoji: "🪁", phonicsHint: "K says /k/ as in Kite" },
+    { letter: "Ll", small: "l", sound: "luh", word: "Lion", emoji: "🦁", phonicsHint: "L says /l/ as in Lion" },
+    { letter: "Mm", small: "m", sound: "mmm", word: "Monkey", emoji: "🐒", phonicsHint: "M says /m/ as in Monkey" },
+    { letter: "Nn", small: "n", sound: "nnn", word: "Nest", emoji: "🪺", phonicsHint: "N says /n/ as in Nest" },
+    { letter: "Oo", small: "o", sound: "aww", word: "Orange", emoji: "🍊", phonicsHint: "O says /o/ as in Orange" }
+  ],
+
+  rhymes: [
+    {
+      title: "Mary had a little lamb 🐑",
+      lyrics: "Mary had a little lamb,\nIts fleece was white as snow.\nAnd everywhere that Mary went,\nThe lamb was sure to go!",
+      icon: "🐑",
+      audioText: "Mary had a little lamb, Its fleece was white as snow. And everywhere that Mary went, The lamb was sure to go!"
+    },
+    {
+      title: "I’m a little tadpole 🐸",
+      lyrics: "I'm a little tadpole swimming in the lake,\nSwimming all day, no mistake!\nWhen I grow up, hopping on a log,\nLook at me now, I'm a friendly frog! Ribbit ribbit!",
+      icon: "🐸",
+      audioText: "I'm a little tadpole swimming in the lake, Swimming all day, no mistake! When I grow up, hopping on a log, Look at me now, I'm a friendly frog!"
+    },
+    {
+      title: "Little Seeds 🌱",
+      lyrics: "I plant a little seed in the cold cold ground,\nOut comes the yellow sun, big and round.\nDown comes the gentle rain, soft and slow,\nUp comes the little plant, grow grow grow!",
+      icon: "🌱",
+      audioText: "I plant a little seed in the cold cold ground. Out comes the yellow sun, big and round. Down comes the gentle rain, soft and slow. Up comes the little plant, grow grow grow!"
+    },
+    {
+      title: "I hear thunder ⛈️",
+      lyrics: "I hear thunder! I hear thunder!\nHark don't you? Hark don't you?\nPitter patter raindrops, pitter patter raindrops,\nI'm wet through! So are you!",
+      icon: "⛈️",
+      audioText: "I hear thunder! I hear thunder! Hark don't you? Hark don't you? Pitter patter raindrops, pitter patter raindrops, I'm wet through! So are you!"
+    }
+  ],
+
+  shapes: [
+    { name: "Circle", emoji: "🔴", desc: "Round with no corners (like a ball, clock, or coin)" },
+    { name: "Square", emoji: "🟦", desc: "4 equal sides and 4 corners (like a dice or window)" },
+    { name: "Triangle", emoji: "🔺", desc: "3 sides and 3 sharp corners (like a slice of pizza or party hat)" },
+    { name: "Rectangle", emoji: "🟩", desc: "4 sides: 2 long sides and 2 short sides (like a book or door)" },
+    { name: "Oval", emoji: "🥚", desc: "Egg shape, curved with no straight lines" }
+  ],
+
+  waterAnimals: [
+    { name: "Fish", emoji: "🐟" },
+    { name: "Dolphin", emoji: "🐬" },
+    { name: "Octopus", emoji: "🐙" },
+    { name: "Whale", emoji: "🐋" },
+    { name: "Shark", emoji: "🦈" },
+    { name: "Seahorse", emoji: "🌊" },
+    { name: "Turtle", emoji: "🐢" },
+    { name: "Crab", emoji: "🦀" }
+  ],
+
+  insects: [
+    { name: "Butterfly", emoji: "🦋" },
+    { name: "Honeybee", emoji: "🐝" },
+    { name: "Ladybug", emoji: "🐞" },
+    { name: "Ant", emoji: "🐜" },
+    { name: "Caterpillar", emoji: "🐛" },
+    { name: "Mosquito", emoji: "🦟" }
+  ],
+
+  safeItems: [
+    { name: "Teddy Bear 🧸", isSafe: true, reason: "Soft and safe to cuddle!" },
+    { name: "Storybook 📖", isSafe: true, reason: "Fun and safe to read!" },
+    { name: "Toy Ball ⚽", isSafe: true, reason: "Safe to play in the garden!" },
+    { name: "Apple 🍎", isSafe: true, reason: "Healthy and safe to eat!" }
+  ],
+
+  unsafeItems: [
+    { name: "Hot Cup of Tea ☕", isSafe: false, reason: "Danger! Very hot, can burn your hands." },
+    { name: "Sharp Knife 🔪", isSafe: false, reason: "Danger! Very sharp, can cut fingers." },
+    { name: "Electric Plug Socket 🔌", isSafe: false, reason: "Danger! High electricity, never touch." },
+    { name: "Fire & Matches 🔥", isSafe: false, reason: "Danger! Fire can cause serious burns." }
+  ],
+
+  daysOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+
+  emotions: [
+    { emotion: "Happy", emoji: "😊", desc: "Smiling with joy!" },
+    { emotion: "Sad", emoji: "😢", desc: "Feeling down or crying." },
+    { emotion: "Angry", emoji: "😠", desc: "Feeling cross or upset." },
+    { emotion: "Surprised", emoji: "😲", desc: "Wide eyes with wonder!" }
+  ]
+};
+
+function generateFayraPhonicsQuestion() {
+  const item = pickRandom(FAYRA_DB.phonics);
+  const sentence = `Which picture starts with the letter sound "${item.letter}" (${item.phonicsHint})?`;
+  const correctAns = `${item.emoji} ${item.word}`;
+  const distractors = FAYRA_DB.phonics.filter(p => p.letter !== item.letter).slice(0, 3).map(p => `${p.emoji} ${p.word}`);
+  const options = shuffle([correctAns, ...distractors]);
+  return {
+    category: "English Orals • Letter Phonics (Aa - Oo)",
+    fr: sentence,
+    en: `${item.letter} is for ${item.word}!`,
+    audio: sentence,
+    options: options,
+    correct: options.indexOf(correctAns),
+    explanation: `Great job Fayra! Letter "${item.letter}" starts with "${item.word}" (${item.emoji}). ${item.phonicsHint}.`,
+    lang: "en-US"
+  };
+}
+
+function generateFayraMathQuestion() {
+  const count = randInt(1, 10);
+  const icons = ["🍎", "⭐", "🎈", "🐱", "🐟", "🧁", "🦆", "🌸"];
+  const icon = pickRandom(icons);
+  const objects = Array(count).fill(icon).join(" ");
+  const sentence = `Count the ${icon} objects: ${objects}. How many are there?`;
+  const correctAns = `${count} ${icon}`;
+  const distractors = [count + 1, count - 1, count + 2].filter(n => n >= 1 && n !== count).slice(0, 3).map(n => `${n} ${icon}`);
+  const options = shuffle([correctAns, ...distractors]);
+  return {
+    category: "Math Magic • Counting 1 to 10",
+    fr: sentence,
+    en: `Count carefully: 1, 2, 3... up to ${count}!`,
+    audio: `Count the objects: How many are there?`,
+    options: options,
+    correct: options.indexOf(correctAns),
+    explanation: `There are ${count} ${icon} objects in the set!`,
+    lang: "en-US"
+  };
+}
+
+function generateFayraAwarenessQuestion() {
+  const animal = pickRandom(FAYRA_DB.waterAnimals);
+  const sentence = `Which of the following is a WATER ANIMAL that swims in the sea?`;
+  const correctAns = `${animal.emoji} ${animal.name}`;
+  const landAnimals = ["🐶 Dog", "🐱 Cat", "🦁 Lion", "🐒 Monkey"];
+  const options = shuffle([correctAns, ...landAnimals.slice(0, 3)]);
+  return {
+    category: "General Awareness • Water Animals",
+    fr: sentence,
+    en: `${animal.name} lives in the water!`,
+    audio: sentence,
+    options: options,
+    correct: options.indexOf(correctAns),
+    explanation: `${animal.name} (${animal.emoji}) is a water animal that lives in water.`,
+    lang: "en-US"
+  };
+}
+
+function generateDynamicFayraQuiz(unitKey, count = 5) {
+  const list = [];
+  for (let i = 0; i < count; i++) {
+    if (unitKey === "fayra-phonics") list.push(generateFayraPhonicsQuestion());
+    else if (unitKey === "fayra-math") list.push(generateFayraMathQuestion());
+    else list.push(generateFayraAwarenessQuestion());
+  }
+  return list;
+}
+
+// =============================================================================
+// 7. UNSCRAMBLE & EQUATION BUILDER GAME
+// =============================================================================
+
+function generateDynamicMathUnscramblePuzzles(count = 6) {
+  const templates = [
+    () => {
+      const a = randInt(4, 8);
+      const b = randInt(2, 6);
+      const c = randInt(2, 5);
+      const res = (a + b) * c;
+      return {
+        targetTokens: ["(", String(a), "+", String(b), ")", "×", String(c), "=", String(res)],
+        en: `PEMDAS Equation: (${a} + ${b}) × ${c} = ${res}`,
+        audio: `Open bracket ${a} plus ${b} close bracket times ${c} equals ${res}`
+      };
+    },
+    () => {
+      const a = randInt(7, 15);
+      const b = randInt(4, 9);
+      const res = a * b;
+      return {
+        targetTokens: [String(a), "×", String(b), "=", String(res)],
+        en: `Multiplication fact: ${a} × ${b} = ${res}`,
+        audio: `${a} times ${b} equals ${res}`
+      };
+    }
+  ];
+  return shuffle(templates).slice(0, count).map(fn => {
+    const p = fn();
+    p.scrambledTokens = shuffle([...p.targetTokens]);
+    return p;
+  });
+}
+
+function generateDynamicFrenchUnscramblePuzzles(count = 6) {
+  const templates = [
+    () => ({
+      targetTokens: ["Luc", "se", "réveille", "à", "sept", "heures", "."],
+      en: "Luc wakes up at 7 o'clock.",
+      audio: "Luc se réveille à sept heures."
+    }),
+    () => ({
+      targetTokens: ["Aezza", "se", "brosse", "les", "dents", "le", "matin", "."],
+      en: "Aezza brushes her teeth in the morning.",
+      audio: "Aezza se brosse les dents le matin."
+    })
+  ];
+  return shuffle(templates).slice(0, count).map(fn => {
+    const p = fn();
+    p.scrambledTokens = shuffle([...p.targetTokens]);
+    return p;
+  });
+}
 
 function updateUnscrambleForSubject() {
-  const isMath = AppState.currentSubject === "math";
+  const isAezza = AppState.currentUser === "aezza";
   const title = document.getElementById("unscramble-title");
   const desc = document.getElementById("unscramble-desc");
-  const badge = document.getElementById("unscramble-badge-pill");
-  const label = document.getElementById("unscramble-hint-label");
 
-  if (title) title.textContent = isMath ? "Equation & Math Builder 🧩" : "Remets les Mots dans l'Ordre ! 🧩";
-  if (desc) desc.textContent = isMath
-    ? "Click the numbers, operators, and brackets in the correct mathematical order!"
-    : "Clique sur les étiquettes pour construire la phrase française dans le bon ordre grammatical.";
-  if (badge) badge.textContent = isMath ? "⚡ Mental Math & PEMDAS" : "🧩 Exercice Spécial Examen";
-  if (label) label.textContent = isMath ? "🎯 Target mathematical equation:" : "🎯 Signification en anglais :";
+  if (isAezza) {
+    const isMath = AppState.currentSubject === "math";
+    if (title) title.textContent = isMath ? "Equation & Math Builder 🧩" : "Remets les Mots dans l'Ordre ! 🧩";
+    if (desc) desc.textContent = isMath
+      ? "Click the numbers, operators, and brackets in the correct mathematical order!"
+      : "Clique sur les étiquettes pour construire la phrase française dans le bon ordre grammatical.";
 
-  AppState.unscramblePuzzles = isMath
-    ? generateDynamicMathUnscramblePuzzles(6)
-    : generateDynamicFrenchUnscramblePuzzles(6);
+    AppState.unscramblePuzzles = isMath
+      ? generateDynamicMathUnscramblePuzzles(6)
+      : generateDynamicFrenchUnscramblePuzzles(6);
+  } else {
+    if (title) title.textContent = "Letter & Word Builder 🎈";
+    if (desc) desc.textContent = "Put the letters in order to spell the word or count numbers!";
+
+    const fayraPuzzles = [
+      { targetTokens: ["A", "P", "P", "L", "E"], en: "A is for Apple 🍎", audio: "Apple starts with A" },
+      { targetTokens: ["B", "A", "L", "L"], en: "B is for Ball ⚽", audio: "Ball starts with B" },
+      { targetTokens: ["C", "A", "T"], en: "C is for Cat 🐱", audio: "Cat starts with C" },
+      { targetTokens: ["1", "2", "3", "4", "5"], en: "Counting Numbers 1 to 5", audio: "One, Two, Three, Four, Five" }
+    ];
+
+    AppState.unscramblePuzzles = shuffle(fayraPuzzles).map(p => ({
+      ...p,
+      scrambledTokens: shuffle([...p.targetTokens])
+    }));
+  }
+
   AppState.unscrambleIndex = 0;
   AppState.assembledTokens = [];
   document.getElementById("unscramble-total").textContent = AppState.unscramblePuzzles.length;
@@ -1993,11 +1085,8 @@ function initUnscrambleGame() {
     sfx.pop();
     AppState.unscrambleIndex++;
     if (AppState.unscrambleIndex >= AppState.unscramblePuzzles.length) {
-      AppState.unscramblePuzzles = AppState.currentSubject === "math"
-        ? generateDynamicMathUnscramblePuzzles(6)
-        : generateDynamicFrenchUnscramblePuzzles(6);
+      updateUnscrambleForSubject();
       AppState.unscrambleIndex = 0;
-      showToast("✨", "New dynamic set generated!");
     }
     AppState.assembledTokens = [];
     renderUnscramblePuzzle();
@@ -2007,7 +1096,7 @@ function initUnscrambleGame() {
     sfx.pop();
     const speed = document.getElementById("audio-speed-select").value;
     const puzzle = AppState.unscramblePuzzles[AppState.unscrambleIndex];
-    voice.speak(puzzle.audio, AppState.currentSubject === "math" ? "en-US" : "fr-FR", speed);
+    voice.speak(puzzle.audio, AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
   });
 
   updateUnscrambleForSubject();
@@ -2030,7 +1119,7 @@ function renderUnscramblePuzzle() {
   const allTokens = puzzle.scrambledTokens.map((text, idx) => ({ id: `token_${idx}`, text }));
 
   if (AppState.assembledTokens.length === 0) {
-    dropZone.innerHTML = `<span class="placeholder-text" id="drop-placeholder">Click tiles below to build...</span>`;
+    dropZone.innerHTML = `<span class="placeholder-text">Click tiles below to build...</span>`;
   } else {
     AppState.assembledTokens.forEach((tok, pos) => {
       const chip = document.createElement("div");
@@ -2055,7 +1144,7 @@ function renderUnscramblePuzzle() {
         sfx.pop();
         AppState.assembledTokens.push(tok);
         const speed = document.getElementById("audio-speed-select").value;
-        voice.speak(tok.text, AppState.currentSubject === "math" ? "en-US" : "fr-FR", speed);
+        voice.speak(tok.text, AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
         renderUnscramblePuzzle();
       });
       bankZone.appendChild(chip);
@@ -2079,10 +1168,7 @@ function checkUnscrambleAnswer() {
     addXP(30);
 
     AppState.unscrambleSolved++;
-    saveState();
-    if (AppState.unscrambleSolved >= 6) {
-      unlockTrophy("trophy-unscramble", "🧩 Puzzle Genius Unlocked!");
-    }
+    saveStateForUser();
 
     fbIcon.textContent = "🎉";
     fbTitle.textContent = "Perfect! That's 100% correct!";
@@ -2090,7 +1176,7 @@ function checkUnscrambleAnswer() {
     feedback.className = "feedback-banner show correct";
 
     const speed = document.getElementById("audio-speed-select").value;
-    voice.speak(puzzle.audio, AppState.currentSubject === "math" ? "en-US" : "fr-FR", speed);
+    voice.speak(puzzle.audio, AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
   } else {
     sfx.incorrect();
     fbIcon.textContent = "🤔";
@@ -2101,27 +1187,54 @@ function checkUnscrambleAnswer() {
 }
 
 // =============================================================================
-// 14. MATCHING PAIRS GAME
+// 8. MATCHING PAIRS GAME
 // =============================================================================
+
+function generateDynamicMatchingPairs(subject, category, count = 5) {
+  if (subject === "math") {
+    const pairs = [
+      { left: "13 × 4", right: "52" },
+      { left: "14 × 5", right: "70" },
+      { left: "15 × 6", right: "90" },
+      { left: "12 × 8", right: "96" },
+      { left: "Odd + Odd", right: "Even" }
+    ];
+    return shuffle(pairs).slice(0, count).map((p, idx) => ({ ...p, id: idx + 1 }));
+  } else {
+    const pairs = [
+      { left: "Français (Masc)", right: "Française (Fém)" },
+      { left: "Indien (Masc)", right: "Indienne (Fém)" },
+      { left: "Paris (Ville)", right: "à Paris" },
+      { left: "France (Pays)", right: "en France" },
+      { left: "du pain", right: "🥖 pain" }
+    ];
+    return shuffle(pairs).slice(0, count).map((p, idx) => ({ ...p, id: idx + 1 }));
+  }
+}
 
 function updateMatchingTabsForSubject() {
   const container = document.getElementById("matching-category-tabs-container");
   if (!container) return;
 
-  const isMath = AppState.currentSubject === "math";
-  const tabs = isMath ? [
-    { key: "tables", label: "✖️ Tables (2-15)" },
-    { key: "factors", label: "🔍 Factors & Multiples" },
-    { key: "placevalue", label: "📊 Expanded Form" },
-    { key: "evenodd", label: "⚡ Even & Odd Rules" }
-  ] : [
-    { key: "nationalities", label: "👥 Nationalités (Masc ↔ Fem)" },
-    { key: "prepositions", label: "🌍 Pays & Prépositions" },
-    { key: "partitives", label: "🥐 Nourriture & Partitifs" }
+  const isAezza = AppState.currentUser === "aezza";
+  container.innerHTML = "";
+
+  const tabs = isAezza ? (
+    AppState.currentSubject === "math" ? [
+      { key: "tables", label: "✖️ Tables (2-15)" },
+      { key: "evenodd", label: "⚡ Even & Odd Rules" }
+    ] : [
+      { key: "nationalities", label: "👥 Nationalités (Masc ↔ Fem)" },
+      { key: "prepositions", label: "🌍 Pays & Prépositions" }
+    ]
+  ) : [
+    { key: "phonics-pairs", label: "🔤 Capital ↔ Small Letters" },
+    { key: "shapes-pairs", label: "🔺 Shapes ↔ Names" },
+    { key: "water-animals-pairs", label: "🐬 Water Animals ↔ Names" },
+    { key: "insects-pairs", label: "🐝 Insects ↔ Names" }
   ];
 
   AppState.matchingCategory = tabs[0].key;
-  container.innerHTML = "";
 
   tabs.forEach((tab, idx) => {
     const btn = document.createElement("button");
@@ -2141,30 +1254,27 @@ function updateMatchingTabsForSubject() {
   setupMatchingBoard();
 }
 
-function initMatchingGame() {
-  document.getElementById("btn-matching-replay-cat").addEventListener("click", () => {
-    sfx.pop();
-    setupMatchingBoard();
-  });
-
-  document.getElementById("btn-match-next-cat").addEventListener("click", () => {
-    sfx.pop();
-    const isMath = AppState.currentSubject === "math";
-    const cats = isMath ? ["tables", "factors", "placevalue", "evenodd"] : ["nationalities", "prepositions", "partitives"];
-    const curIdx = cats.indexOf(AppState.matchingCategory);
-    const nextCat = cats[(curIdx + 1) % cats.length];
-    AppState.matchingCategory = nextCat;
-
-    const allBtns = document.querySelectorAll(".match-cat-btn");
-    allBtns.forEach(b => b.classList.toggle("active", b.dataset.matchCat === nextCat));
-    setupMatchingBoard();
-  });
-
-  updateMatchingTabsForSubject();
-}
-
 function setupMatchingBoard() {
-  const pairs = generateDynamicMatchingPairs(AppState.currentSubject, AppState.matchingCategory, 5);
+  const isAezza = AppState.currentUser === "aezza";
+  let pairs = [];
+
+  if (isAezza) {
+    pairs = generateDynamicMatchingPairs(AppState.currentSubject, AppState.matchingCategory, 5);
+  } else {
+    if (AppState.matchingCategory === "phonics-pairs") {
+      const sample = shuffle(FAYRA_DB.phonics).slice(0, 5);
+      pairs = sample.map((p, idx) => ({ left: `Capital ${p.letter.charAt(0)}`, right: `Small ${p.small} (${p.emoji})`, id: idx + 1 }));
+    } else if (AppState.matchingCategory === "shapes-pairs") {
+      pairs = FAYRA_DB.shapes.map((s, idx) => ({ left: `${s.emoji} Shape`, right: s.name, id: idx + 1 }));
+    } else if (AppState.matchingCategory === "water-animals-pairs") {
+      const sample = shuffle(FAYRA_DB.waterAnimals).slice(0, 5);
+      pairs = sample.map((a, idx) => ({ left: `${a.emoji} Creature`, right: a.name, id: idx + 1 }));
+    } else {
+      const sample = shuffle(FAYRA_DB.insects).slice(0, 5);
+      pairs = sample.map((i, idx) => ({ left: `${i.emoji} Insect`, right: i.name, id: idx + 1 }));
+    }
+  }
+
   AppState.matchingSelected = [];
   AppState.matchedPairsCount = 0;
   AppState.isMatchingBusy = false;
@@ -2199,7 +1309,7 @@ function handleTileClick(tileElement, tileData, totalPairs) {
 
   sfx.pop();
   const speed = document.getElementById("audio-speed-select").value;
-  voice.speak(tileData.text.split("(")[0], AppState.currentSubject === "math" ? "en-US" : "fr-FR", speed);
+  voice.speak(tileData.text.split("(")[0], AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
 
   tileElement.classList.add("selected");
   AppState.matchingSelected.push({ element: tileElement, data: tileData });
@@ -2222,7 +1332,6 @@ function handleTileClick(tileElement, tileData, totalPairs) {
         if (AppState.matchedPairsCount === totalPairs) {
           confetti.blast();
           sfx.fanfare();
-          unlockTrophy(AppState.currentSubject === "math" ? "trophy-math-factors" : "trophy-matching");
           document.getElementById("matching-complete-box").style.display = "flex";
         }
         AppState.matchingSelected = [];
@@ -2244,30 +1353,85 @@ function handleTileClick(tileElement, tileData, totalPairs) {
   }
 }
 
+function initMatchingGame() {
+  document.getElementById("btn-matching-replay-cat").addEventListener("click", () => {
+    sfx.pop();
+    setupMatchingBoard();
+  });
+
+  document.getElementById("btn-match-next-cat").addEventListener("click", () => {
+    sfx.pop();
+    updateMatchingTabsForSubject();
+  });
+
+  updateMatchingTabsForSubject();
+}
+
 // =============================================================================
-// 15. FLASHCARDS CONTROLLER
+// 9. FLASHCARDS CONTROLLER
 // =============================================================================
+
+const STATIC_FLASHCARDS = {
+  french: {
+    verbes: [
+      { emoji: "⏰", fr: "se réveiller", en: "to wake up", tag: "Verbe Pronominal", exampleFr: "Je me réveille à sept heures.", exampleEn: "I wake up at seven o'clock." },
+      { emoji: "🛏️", fr: "se lever", en: "to get out of bed", tag: "Verbe Pronominal", exampleFr: "Luc se lève aussitôt.", exampleEn: "Luc gets up right away." },
+      { emoji: "🚿", fr: "se doucher", en: "to take a shower", tag: "Verbe Pronominal", exampleFr: "Tu te douches avant l'école.", exampleEn: "You take a shower before school." }
+    ],
+    conjugaison: [
+      { emoji: "🚶", fr: "Aller (Je vais, Tu vas)", en: "To go", tag: "Verbe Irrégulier", exampleFr: "Nous allons à l'école ensemble.", exampleEn: "We go to school together." }
+    ],
+    nationalites: [
+      { emoji: "🇫🇷", fr: "Français / Française", en: "French (Masc / Fem)", tag: "Nationalité", exampleFr: "Paul est français, Sophie est française.", exampleEn: "Paul is French, Sophie is French." }
+    ],
+    repas: [
+      { emoji: "🥞", fr: "Le petit déjeuner", en: "Breakfast", tag: "Vocabulaire Repas", exampleFr: "Au petit déjeuner, je bois du lait.", exampleEn: "For breakfast, I drink milk." }
+    ]
+  },
+  math: {
+    pemdas: [
+      { emoji: "⚡", fr: "PEMDAS Rule", en: "Order of Operations", tag: "Unit 3 • Operations", exampleFr: "P: Parentheses -> M/D: Multiply/Divide -> A/S: Add/Subtract", exampleEn: "Solve brackets first!" }
+    ],
+    tables: [
+      { emoji: "✖️", fr: "13 Times Table", en: "13, 26, 39, 52, 65, 78, 91, 104, 117, 130", tag: "Unit 5 • Times Tables", exampleFr: "13 × 4 = 52 | 13 × 7 = 91", exampleEn: "13 is 10 + 3." }
+    ],
+    placevalue: [
+      { emoji: "📊", fr: "4-Digit Place Value", en: "Thousands, Hundreds, Tens, Ones", tag: "1.3 • Place Value", exampleFr: "In 6,482: 6000 + 400 + 80 + 2", exampleEn: "Place of 4 is Hundreds." }
+    ],
+    time: [
+      { emoji: "⏰", fr: "Quarter Past / Quarter To", en: ":15 (Quarter Past) & :45 (Quarter To)", tag: "2.1 • Clock Reading", exampleFr: "Quarter past 6 = 6:15", exampleEn: "Quarter = 15 minutes." }
+    ]
+  }
+};
 
 function updateFlashcardTabsForSubject() {
   const container = document.getElementById("flashcard-tabs-container");
   if (!container) return;
 
-  const isMath = AppState.currentSubject === "math";
-  const tabs = isMath ? [
-    { key: "pemdas", label: "⚡ PEMDAS & Even/Odd" },
-    { key: "tables", label: "✖️ Tables 2-15 Trainer" },
-    { key: "placevalue", label: "📊 Place Value & Negatives" },
-    { key: "time", label: "⏰ Clocks & Conversions" }
-  ] : [
-    { key: "verbes", label: "⏰ Verbes Pronominaux" },
-    { key: "conjugaison", label: "✏️ Conjugaison (Aller, Aimer...)" },
-    { key: "nationalites", label: "🌎 Nationalités & Pays" },
-    { key: "repas", label: "🍳 Les Repas & Boissons" }
+  const isAezza = AppState.currentUser === "aezza";
+  container.innerHTML = "";
+
+  const tabs = isAezza ? (
+    AppState.currentSubject === "math" ? [
+      { key: "pemdas", label: "⚡ PEMDAS & Even/Odd" },
+      { key: "tables", label: "✖️ Tables 2-15 Trainer" },
+      { key: "placevalue", label: "📊 Place Value & Negatives" },
+      { key: "time", label: "⏰ Clocks & Conversions" }
+    ] : [
+      { key: "verbes", label: "⏰ Verbes Pronominaux" },
+      { key: "conjugaison", label: "✏️ Conjugaison (Aller, Aimer...)" },
+      { key: "nationalites", label: "🌎 Nationalités & Pays" },
+      { key: "repas", label: "🍳 Les Repas & Boissons" }
+    ]
+  ) : [
+    { key: "phonics-cards", label: "🔤 Phonics Aa-Oo" },
+    { key: "rhymes-cards", label: "🎶 Sing-Along Rhymes" },
+    { key: "shapes-cards", label: "🔺 Shapes & Numbers 1-10" },
+    { key: "nature-cards", label: "🐬 Water Animals & Insects" }
   ];
 
   AppState.flashcardCategory = tabs[0].key;
   AppState.flashcardIndex = 0;
-  container.innerHTML = "";
 
   tabs.forEach((tab, idx) => {
     const btn = document.createElement("button");
@@ -2289,6 +1453,76 @@ function updateFlashcardTabsForSubject() {
   renderFlashcard();
 }
 
+function renderFlashcard() {
+  const isAezza = AppState.currentUser === "aezza";
+  let card = null;
+  let totalCount = 1;
+
+  if (isAezza) {
+    const catList = STATIC_FLASHCARDS[AppState.currentSubject];
+    if (!catList || !catList[AppState.flashcardCategory]) return;
+    const list = catList[AppState.flashcardCategory];
+    totalCount = list.length;
+    card = list[AppState.flashcardIndex];
+  } else {
+    if (AppState.flashcardCategory === "phonics-cards") {
+      const p = FAYRA_DB.phonics[AppState.flashcardIndex % FAYRA_DB.phonics.length];
+      totalCount = FAYRA_DB.phonics.length;
+      card = {
+        emoji: p.emoji,
+        fr: `Letter ${p.letter}`,
+        en: `${p.word} (${p.phonicsHint})`,
+        tag: "Phonics Aa - Oo",
+        exampleFr: `${p.letter.charAt(0)} is for ${p.word}`,
+        exampleEn: p.phonicsHint
+      };
+    } else if (AppState.flashcardCategory === "rhymes-cards") {
+      const r = FAYRA_DB.rhymes[AppState.flashcardIndex % FAYRA_DB.rhymes.length];
+      totalCount = FAYRA_DB.rhymes.length;
+      card = {
+        emoji: r.icon,
+        fr: r.title,
+        en: "Sing-Along Rhyme",
+        tag: "Prep-I Rhymes",
+        exampleFr: r.lyrics,
+        exampleEn: "Sing aloud with Bunny Bella!"
+      };
+    } else if (AppState.flashcardCategory === "shapes-cards") {
+      const s = FAYRA_DB.shapes[AppState.flashcardIndex % FAYRA_DB.shapes.length];
+      totalCount = FAYRA_DB.shapes.length;
+      card = {
+        emoji: s.emoji,
+        fr: s.name,
+        en: s.desc,
+        tag: "Math Magic • Shapes",
+        exampleFr: `This is a ${s.name}`,
+        exampleEn: s.desc
+      };
+    } else {
+      const a = FAYRA_DB.waterAnimals[AppState.flashcardIndex % FAYRA_DB.waterAnimals.length];
+      totalCount = FAYRA_DB.waterAnimals.length;
+      card = {
+        emoji: a.emoji,
+        fr: a.name,
+        en: "Water Animal",
+        tag: "General Awareness",
+        exampleFr: `${a.name} lives in the sea`,
+        exampleEn: "Swims in water"
+      };
+    }
+  }
+
+  if (!card) return;
+
+  document.getElementById("fc-counter").textContent = `${AppState.flashcardIndex + 1} / ${totalCount}`;
+  document.getElementById("fc-emoji").textContent = card.emoji;
+  document.getElementById("fc-french").textContent = card.fr;
+  document.getElementById("fc-english").textContent = card.en;
+  document.getElementById("fc-tag").textContent = card.tag;
+  document.getElementById("fc-example-fr").textContent = `"${card.exampleFr}"`;
+  document.getElementById("fc-example-en").textContent = `"${card.exampleEn}"`;
+}
+
 function initFlashcards() {
   const fcElement = document.getElementById("flashcard-element");
 
@@ -2304,16 +1538,14 @@ function initFlashcards() {
 
   document.getElementById("btn-fc-prev").addEventListener("click", () => {
     sfx.pop();
-    const list = STATIC_FLASHCARDS[AppState.currentSubject][AppState.flashcardCategory];
-    AppState.flashcardIndex = (AppState.flashcardIndex - 1 + list.length) % list.length;
+    AppState.flashcardIndex = Math.max(0, AppState.flashcardIndex - 1);
     fcElement.classList.remove("flipped");
     renderFlashcard();
   });
 
   document.getElementById("btn-fc-next").addEventListener("click", () => {
     sfx.pop();
-    const list = STATIC_FLASHCARDS[AppState.currentSubject][AppState.flashcardCategory];
-    AppState.flashcardIndex = (AppState.flashcardIndex + 1) % list.length;
+    AppState.flashcardIndex++;
     fcElement.classList.remove("flipped");
     renderFlashcard();
   });
@@ -2322,39 +1554,44 @@ function initFlashcards() {
     e.stopPropagation();
     sfx.pop();
     const speed = document.getElementById("audio-speed-select").value;
-    const card = STATIC_FLASHCARDS[AppState.currentSubject][AppState.flashcardCategory][AppState.flashcardIndex];
-    voice.speak(card.fr, AppState.currentSubject === "math" ? "en-US" : "fr-FR", speed);
+    const txt = document.getElementById("fc-french").textContent;
+    voice.speak(txt, AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
   });
 
   document.getElementById("fc-example-speaker-btn").addEventListener("click", (e) => {
     e.stopPropagation();
     sfx.pop();
     const speed = document.getElementById("audio-speed-select").value;
-    const card = STATIC_FLASHCARDS[AppState.currentSubject][AppState.flashcardCategory][AppState.flashcardIndex];
-    voice.speak(card.exampleFr, AppState.currentSubject === "math" ? "en-US" : "fr-FR", speed);
+    const txt = document.getElementById("fc-example-fr").textContent.replace(/"/g, "");
+    voice.speak(txt, AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
   });
 
   updateFlashcardTabsForSubject();
 }
 
-function renderFlashcard() {
-  const catList = STATIC_FLASHCARDS[AppState.currentSubject];
-  if (!catList || !catList[AppState.flashcardCategory]) return;
-  const list = catList[AppState.flashcardCategory];
-  const card = list[AppState.flashcardIndex];
+// =============================================================================
+// 10. MOCK EXAM & ASSESSMENT CONTROLLER
+// =============================================================================
 
-  document.getElementById("fc-counter").textContent = `${AppState.flashcardIndex + 1} / ${list.length}`;
-  document.getElementById("fc-emoji").textContent = card.emoji;
-  document.getElementById("fc-french").textContent = card.fr;
-  document.getElementById("fc-english").textContent = card.en;
-  document.getElementById("fc-tag").textContent = card.tag;
-  document.getElementById("fc-example-fr").textContent = `"${card.exampleFr}"`;
-  document.getElementById("fc-example-en").textContent = `"${card.exampleEn}"`;
+function updateMockExamIntroForSubject() {
+  const isAezza = AppState.currentUser === "aezza";
+  const title = document.getElementById("exam-title-text");
+  const desc = document.getElementById("exam-desc-text");
+  const badge = document.getElementById("exam-badge-label");
+
+  if (isAezza) {
+    const isMath = AppState.currentSubject === "math";
+    if (title) title.textContent = isMath ? "Grand Mathematics Mock Exam 📝" : "Grand Examen Blanc de Français 📝";
+    if (desc) desc.textContent = isMath
+      ? "This 15-question simulated assessment covers Unit 3 (Operations, Estimation, PEMDAS), Unit 5 (Tables 2-15, Factors, Multiples), Place Value, Negative Numbers, and Time!"
+      : "Cet examen simule ton contrôle de mi-trimestre ! Il couvre les 3 chapitres, les verbes pronominaux, la conjugaison, les nationalités, les prépositions et les articles partitifs.";
+    if (badge) badge.textContent = isMath ? "🎯 Grade 3 Summative Assessment 1 Simulation" : "🎯 Évaluation Complète de Mi-Trimestre";
+  } else {
+    if (title) title.textContent = "Fayra's Prep-I Summative Assessment 🎈";
+    if (desc) desc.textContent = "10 Fun Questions covering Phonics Aa-Oo, Sing-Along Rhymes, Shapes, Counting 1-10, Water Animals, and Safe vs Unsafe Touch!";
+    if (badge) badge.textContent = "🎯 Little Wings Prep-I SA-1 (Baldwin International School)";
+  }
 }
-
-// =============================================================================
-// 16. MOCK EXAM CONTROLLER (FRENCH & MATH)
-// =============================================================================
 
 function initMockExam() {
   document.getElementById("btn-start-mock-exam").addEventListener("click", () => {
@@ -2376,21 +1613,31 @@ function initMockExam() {
 }
 
 function startMockExam() {
-  const isMath = AppState.currentSubject === "math";
-  AppState.currentQuiz = isMath ? generateDynamicMathMockExam(15) : [
-    generateFrenchCh1Question(), generateFrenchCh1Question(), generateFrenchCh1Question(), generateFrenchCh1Question(),
-    generateFrenchCh2Question(), generateFrenchCh2Question(), generateFrenchCh2Question(), generateFrenchCh2Question(),
-    generateFrenchCh3Question(), generateFrenchCh3Question(), generateFrenchCh3Question(), generateFrenchCh3Question(),
-    generateFrenchCh4Question(), generateFrenchCh4Question(), generateFrenchCh4Question()
-  ];
+  const isAezza = AppState.currentUser === "aezza";
+  if (isAezza) {
+    const isMath = AppState.currentSubject === "math";
+    AppState.currentQuiz = isMath ? generateDynamicMathMockExam(15) : [
+      generateFrenchCh1Question(), generateFrenchCh1Question(), generateFrenchCh1Question(), generateFrenchCh1Question(),
+      generateFrenchCh2Question(), generateFrenchCh2Question(), generateFrenchCh2Question(), generateFrenchCh2Question(),
+      generateFrenchCh3Question(), generateFrenchCh3Question(), generateFrenchCh3Question(), generateFrenchCh3Question(),
+      generateFrenchCh4Question(), generateFrenchCh4Question(), generateFrenchCh4Question()
+    ];
+  } else {
+    AppState.currentQuiz = [
+      generateFayraPhonicsQuestion(), generateFayraPhonicsQuestion(), generateFayraPhonicsQuestion(),
+      generateFayraMathQuestion(), generateFayraMathQuestion(), generateFayraMathQuestion(),
+      generateFayraAwarenessQuestion(), generateFayraAwarenessQuestion(), generateFayraAwarenessQuestion(),
+      generateFayraPhonicsQuestion()
+    ];
+  }
 
-  AppState.currentQuizKey = isMath ? "math-exam" : "mock-exam";
+  AppState.currentQuizKey = isAezza ? "aezza-mock-exam" : "fayra-mock-exam";
   AppState.quizIndex = 0;
   AppState.quizScore = 0;
   AppState.quizAnswersHistory = [];
   AppState.isMockExam = true;
 
-  document.getElementById("quiz-topic-title").textContent = isMath ? "Grand Mathematics Mock Exam 📝" : "Grand Examen Blanc de Français 📝";
+  document.getElementById("quiz-topic-title").textContent = isAezza ? "Summative Assessment 1 Exam 📝" : "Prep-I Mock Assessment 🎈";
   document.getElementById("exam-intro-card").style.display = "none";
   document.getElementById("exam-results-card").style.display = "none";
 
@@ -2414,21 +1661,17 @@ function showExamResults() {
   confetti.blast();
   addXP(100);
 
-  if (finalScore >= 13) {
-    title.textContent = "Outstanding! 20/20 for Aezza! 🌟👑";
-    msg.textContent = "You have mastered all syllabus topics for your Summative Assessment!";
-    unlockTrophy(AppState.currentSubject === "math" ? "trophy-math-exam" : "trophy-exam");
-  } else if (finalScore >= 10) {
-    title.textContent = "Great Job Aezza! ✨";
-    msg.textContent = "You scored well! Review the mistakes below to reach 100% on the real test.";
+  const isAezza = AppState.currentUser === "aezza";
+  if (finalScore >= (isAezza ? 13 : 8)) {
+    title.textContent = `Outstanding! Star Performer ${isAezza ? "Aezza" : "Fayra"}! 🌟👑`;
+    msg.textContent = "You are ready to get 100% on your school mid-term exam!";
   } else {
-    title.textContent = "Keep practicing! 💪";
-    msg.textContent = "Review each unit in Adventure Mode to prepare for the test!";
+    title.textContent = "Great Job! Keep practicing! 💪";
+    msg.textContent = "Review each topic in Adventure Mode to prepare for the test!";
   }
 
   const reviewBox = document.getElementById("exam-review-box");
-  const isMath = AppState.currentSubject === "math";
-  reviewBox.innerHTML = `<h3 style='margin-bottom:8px;'>${isMath ? "Question Breakdown & Explanations:" : "Détail de tes réponses & Explications :"}</h3>`;
+  reviewBox.innerHTML = `<h3 style='margin-bottom:8px;'>Question Breakdown & Explanations:</h3>`;
 
   AppState.quizAnswersHistory.forEach((hist, i) => {
     const item = document.createElement("div");
@@ -2439,8 +1682,8 @@ function showExamResults() {
       ${!hist.isCorrect ? `<div class="review-correct">✅ Correct answer: <strong>${hist.correctAnswer}</strong></div>` : ""}
       <div class="review-exp-row" style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:4px;">
         <div style="font-size:13px; color:#5e4f71; font-style:italic; flex:1;">💡 ${hist.explanation}</div>
-        <button class="audio-btn-mini review-speak-btn" style="padding:4px 10px; font-size:11px;" title="Listen to Coco explain">
-          🔊 Hear Coco
+        <button class="audio-btn-mini review-speak-btn" style="padding:4px 10px; font-size:11px;" title="Listen to explanation">
+          🔊 Hear Explanation
         </button>
       </div>
     `;
@@ -2450,10 +1693,8 @@ function showExamResults() {
       speakBtn.onclick = () => {
         sfx.pop();
         const curSpeed = document.getElementById("audio-speed-select").value;
-        const msg = isMath
-          ? `For question ${i + 1}: The correct answer is ${hist.correctAnswer}. ${hist.explanation}`
-          : `Pour la question ${i + 1} : La bonne réponse est ${hist.correctAnswer}. ${hist.explanation}`;
-        voice.speak(msg, isMath ? "en-US" : "fr-FR", curSpeed);
+        const msgText = `For question ${i + 1}: The correct answer is ${hist.correctAnswer}. ${hist.explanation}`;
+        voice.speak(msgText, isAezza && AppState.currentSubject === "french" ? "fr-FR" : "en-US", curSpeed);
       };
     }
 
@@ -2462,22 +1703,73 @@ function showExamResults() {
 }
 
 // =============================================================================
-// 17. INITIALIZATION & NAVIGATION
+// 11. TROPHIES VIEW CONTROLLER (PER STUDENT)
+// =============================================================================
+
+function renderTrophiesView() {
+  const container = document.getElementById("trophies-content-container");
+  const headline = document.getElementById("trophies-headline");
+  if (!container) return;
+
+  const isAezza = AppState.currentUser === "aezza";
+  if (headline) headline.textContent = isAezza ? "Aezza's Trophy Hall of Fame 🏆" : "Fayra's Star Trophy Room 🎈🏆";
+
+  container.innerHTML = "";
+
+  if (isAezza) {
+    container.innerHTML = `
+      <div class="trophy-section-heading">🇫🇷 French Quest Badges</div>
+      <div class="trophies-grid">
+        <div class="trophy-card unlocked"><div class="trophy-icon">🇫🇷</div><h3 class="trophy-name">Petit Parisien</h3><p class="trophy-desc">Chapter 1 (Luc's Routine).</p><span class="trophy-status">Unlocked ✨</span></div>
+        <div class="trophy-card unlocked"><div class="trophy-icon">🌍</div><h3 class="trophy-name">Explorateur du Monde</h3><p class="trophy-desc">Chapter 2 (Places & Nationalities).</p><span class="trophy-status">Unlocked ✨</span></div>
+        <div class="trophy-card unlocked"><div class="trophy-icon">🥐</div><h3 class="trophy-name">Chef Pâtissier</h3><p class="trophy-desc">Chapter 3 (Meals & Partitives).</p><span class="trophy-status">Unlocked ✨</span></div>
+        <div class="trophy-card unlocked"><div class="trophy-icon">🎨</div><h3 class="trophy-name">Maître des Verbes</h3><p class="trophy-desc">Conjugation & Hobbies.</p><span class="trophy-status">Unlocked ✨</span></div>
+      </div>
+
+      <div class="trophy-section-heading" style="margin-top:24px;">🔢 Mathematics Quest Badges (Grade 3 SA-1)</div>
+      <div class="trophies-grid">
+        <div class="trophy-card unlocked"><div class="trophy-icon">➕</div><h3 class="trophy-name">Calculation Wizard</h3><p class="trophy-desc">Addition, Subtraction & Estimation.</p><span class="trophy-status">Unlocked ✨</span></div>
+        <div class="trophy-card unlocked"><div class="trophy-icon">⚡</div><h3 class="trophy-name">PEMDAS Guru</h3><p class="trophy-desc">Order of Operations master.</p><span class="trophy-status">Unlocked ✨</span></div>
+        <div class="trophy-card unlocked"><div class="trophy-icon">✖️</div><h3 class="trophy-name">Tables Ace (2-15)</h3><p class="trophy-desc">Times tables up to 15.</p><span class="trophy-status">Unlocked ✨</span></div>
+        <div class="trophy-card unlocked"><div class="trophy-icon">📊</div><h3 class="trophy-name">Place Value Master</h3><p class="trophy-desc">4-Digit numbers & Negatives.</p><span class="trophy-status">Unlocked ✨</span></div>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="trophy-section-heading">🔤 English Phonics & Rhymes Badges</div>
+      <div class="trophies-grid">
+        <div class="trophy-card unlocked"><div class="trophy-icon">🔤</div><h3 class="trophy-name">Alphabet Star</h3><p class="trophy-desc">Mastered Letter Sounds Aa to Oo!</p><span class="trophy-status">Unlocked ✨</span></div>
+        <div class="trophy-card unlocked"><div class="trophy-icon">🎶</div><h3 class="trophy-name">Rhyme Singer</h3><p class="trophy-desc">Sang all 4 preschool rhymes with Bunny Bella!</p><span class="trophy-status">Unlocked ✨</span></div>
+      </div>
+
+      <div class="trophy-section-heading" style="margin-top:24px;">🔢 Math Magic & Shapes Badges</div>
+      <div class="trophies-grid">
+        <div class="trophy-card unlocked"><div class="trophy-icon">🔢</div><h3 class="trophy-name">Counting Champion</h3><p class="trophy-desc">Counted objects 1 to 10 with ease!</p><span class="trophy-status">Unlocked ✨</span></div>
+        <div class="trophy-card unlocked"><div class="trophy-icon">🔺</div><h3 class="trophy-name">Shape Explorer</h3><p class="trophy-desc">Identified Circle, Square, Triangle, Rectangle & Oval!</p><span class="trophy-status">Unlocked ✨</span></div>
+      </div>
+
+      <div class="trophy-section-heading" style="margin-top:24px;">🌍 General Awareness Badges</div>
+      <div class="trophies-grid">
+        <div class="trophy-card unlocked"><div class="trophy-icon">🐬</div><h3 class="trophy-name">Ocean & Insect Friend</h3><p class="trophy-desc">Knows water animals and tiny insects!</p><span class="trophy-status">Unlocked ✨</span></div>
+        <div class="trophy-card unlocked"><div class="trophy-icon">🛑</div><h3 class="trophy-name">Safety Hero</h3><p class="trophy-desc">Knows safe toys vs dangerous hot things!</p><span class="trophy-status">Unlocked ✨</span></div>
+      </div>
+    `;
+  }
+}
+
+// =============================================================================
+// 12. INITIALIZATION & NAVIGATION
 // =============================================================================
 
 document.addEventListener("DOMContentLoaded", () => {
-  loadSavedState();
   AuthController.init();
   initNavigation();
-  initSubjectSwitcher();
   initMascot();
   initQuizListeners();
   initUnscrambleGame();
   initMatchingGame();
   initFlashcards();
   initMockExam();
-  updateGamificationDisplay();
-  checkBadges();
 });
 
 function initNavigation() {
@@ -2506,41 +1798,49 @@ function initMascot() {
   const voiceBtn = document.getElementById("mascot-voice-btn");
   const mascotText = document.getElementById("mascot-text");
   const mascotBox = document.getElementById("mascot-click-target");
-  const avatar = document.getElementById("avatar-badge");
 
   const speakMascot = () => {
     sfx.correct();
     confetti.blast();
-    const isMath = AppState.currentSubject === "math";
-    const quote = isMath
-      ? pickRandom([
-          "Remember: Parentheses come first in PEMDAS!",
-          "Odd + Odd is always Even, and Odd × Odd is always Odd!",
-          "Multiples of 12: 12, 24, 36, 48, 60, 72!",
-          "Quarter past 4 means 4:15. You are doing amazing Aezza!",
-          "You are going to get 100% in your Grade 3 Math Exam! 🌟"
-        ])
-      : pickRandom([
-          "Bravo Aezza ! N'oublie pas : 'Je me lève', 'Tu te lèves' !",
-          "Pour les repas : 'du pain', 'de la confiture', 'de l'eau' !",
-          "À Paris, en France, au Canada, aux États-Unis !",
-          "Tu es prête pour avoir 20/20 à ton examen de français ! 🌟"
-        ]);
+    const isAezza = AppState.currentUser === "aezza";
+    let quote = "";
+
+    if (isAezza) {
+      const isMath = AppState.currentSubject === "math";
+      quote = isMath
+        ? pickRandom([
+            "Remember: Parentheses come first in PEMDAS!",
+            "Odd + Odd is always Even, and Odd × Odd is always Odd!",
+            "Multiples of 12: 12, 24, 36, 48, 60, 72!",
+            "Quarter past 4 means 4:15. You are doing amazing Aezza! 🌟"
+          ])
+        : pickRandom([
+            "Bravo Aezza ! N'oublie pas : 'Je me lève', 'Tu te lèves' !",
+            "Pour les repas : 'du pain', 'de la confiture', 'de l'eau' !",
+            "Tu es prête pour avoir 20/20 à ton examen de français ! 🌟"
+          ]);
+    } else {
+      quote = pickRandom([
+        "A is for Apple 🍎! B is for Ball ⚽! You are so smart Fayra!",
+        "Mary had a little lamb, its fleece was white as snow! 🐑",
+        "A circle is round like a ball 🔴!",
+        "Dolphin 🐬 and fish 🐟 love swimming in the blue sea!",
+        "You are going to be the star of Prep-I Fayra! 🎈🌟"
+      ]);
+    }
 
     if (mascotText) mascotText.textContent = `"${quote}"`;
     const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
-    voice.speak(quote, isMath ? "en-US" : "fr-FR", speed);
+    voice.speak(quote, isAezza && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
   };
 
   if (voiceBtn && mascotText) {
     voiceBtn.addEventListener("click", () => {
       sfx.pop();
-      const isMath = AppState.currentSubject === "math";
       const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
-      voice.speak(mascotText.textContent.replace(/"/g, ""), isMath ? "en-US" : "fr-FR", speed);
+      voice.speak(mascotText.textContent.replace(/"/g, ""), AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
     });
   }
 
   if (mascotBox) mascotBox.addEventListener("click", speakMascot);
-  if (avatar) avatar.addEventListener("click", speakMascot);
 }
