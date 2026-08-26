@@ -82,6 +82,11 @@ const AuthController = {
     if (subjSwitcher) subjSwitcher.style.display = "flex";
 
     const isAezza = this.currentUser === "aezza";
+    const navBtnRhymes = document.getElementById("nav-btn-rhymes");
+    if (navBtnRhymes) {
+      navBtnRhymes.style.display = isAezza ? "none" : "flex";
+    }
+
     if (headerAvatar) headerAvatar.textContent = isAezza ? "🌟" : "🎈";
     if (headerLabel) headerLabel.textContent = isAezza ? "Aezza (Grade 3)" : "Fayra (Prep-I)";
     if (displayName) displayName.textContent = isAezza ? "Aezza 🌟" : "Fayra 🎈";
@@ -94,7 +99,7 @@ const AuthController = {
     if (mascotText) {
       mascotText.textContent = isAezza
         ? `"Bonjour Aezza ! Je m'appelle Coco le renard. Prête à réussir ton examen ? Choisis un chapitre !"`
-        : `"Hello Fayra ! I'm Bella Bunny 🐰. Let's learn Phonics, Rhymes and Math Magic together !"`;
+        : `"Hello Fayra ! I'm Bella Bunny 🐰. Let's sing Rhymes, learn Phonics and Math Magic together !"`;
     }
 
     document.body.classList.toggle("user-fayra", !isAezza);
@@ -110,6 +115,10 @@ const AuthController = {
     updateMockExamIntroForSubject();
     renderTrophiesView();
     updateGamificationDisplay();
+
+    if (RhymesStudio && typeof RhymesStudio.init === "function") {
+      RhymesStudio.init();
+    }
 
     showView("view-adventure");
   },
@@ -902,14 +911,21 @@ function renderAdventureGrid() {
         <div class="progress-bar" style="width: ${progressVal}"></div>
       </div>
       <button type="button" class="btn-primary btn-start-unit" data-unit="${unit.key}" data-title="${unit.title}">
-        ${isCompleted ? "Practice Again 🔄" : "Start Unit 🚀"}
+        ${unit.key === "fayra-phonics-4" ? "Sing Rhymes 🎶" : (isCompleted ? "Practice Again 🔄" : "Start Unit 🚀")}
       </button>
     `;
 
     const startBtn = card.querySelector(".btn-start-unit");
     startBtn.addEventListener("click", () => {
       sfx.pop();
-      startChapterQuiz(unit.key, unit.title);
+      if (unit.key === "fayra-phonics-4") {
+        showView("view-rhymes");
+        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+        const navBtnRhymes = document.getElementById("nav-btn-rhymes");
+        if (navBtnRhymes) navBtnRhymes.classList.add("active");
+      } else {
+        startChapterQuiz(unit.key, unit.title);
+      }
     });
 
     container.appendChild(card);
@@ -2604,6 +2620,115 @@ function renderTrophiesView() {
 }
 
 // =============================================================================
+// 14.5 SING-ALONG RHYMES STUDIO CONTROLLER (PREP-I)
+// =============================================================================
+
+const RhymesStudio = {
+  activeRhymeIndex: 0,
+
+  init() {
+    this.renderTabs();
+    this.renderActiveRhyme();
+    this.bindEvents();
+  },
+
+  renderTabs() {
+    const container = document.getElementById("rhymes-nav-tabs");
+    if (!container) return;
+    container.innerHTML = "";
+
+    FAYRA_DB.rhymes.forEach((r, idx) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `rhyme-tab-btn ${idx === this.activeRhymeIndex ? "active" : ""}`;
+      btn.innerHTML = `<span class="rhyme-tab-icon">${r.icon}</span> <span>${r.title.split(" ")[0]} ${r.title.split(" ")[1] || ""}</span>`;
+      btn.addEventListener("click", () => {
+        sfx.pop();
+        container.querySelectorAll(".rhyme-tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        this.activeRhymeIndex = idx;
+        this.renderActiveRhyme();
+      });
+      container.appendChild(btn);
+    });
+  },
+
+  renderActiveRhyme() {
+    const r = FAYRA_DB.rhymes[this.activeRhymeIndex];
+    if (!r) return;
+
+    const heroIcon = document.getElementById("rhyme-hero-icon");
+    const title = document.getElementById("rhyme-display-title");
+    const linesContainer = document.getElementById("rhyme-lines-container");
+
+    if (heroIcon) heroIcon.textContent = r.icon;
+    if (title) title.textContent = r.title;
+
+    if (linesContainer) {
+      linesContainer.innerHTML = "";
+      const lines = r.lyrics.split("\n");
+      lines.forEach(lineText => {
+        const lineEl = document.createElement("div");
+        lineEl.className = "rhyme-karaoke-line";
+        lineEl.innerHTML = `
+          <span>${lineText}</span>
+          <span class="line-speaker-icon" title="Tap to hear this line">🔊</span>
+        `;
+        lineEl.addEventListener("click", () => {
+          sfx.pop();
+          linesContainer.querySelectorAll(".rhyme-karaoke-line").forEach(l => l.classList.remove("active-spoken"));
+          lineEl.classList.add("active-spoken");
+          const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
+          voice.speak(lineText, "en-US", speed, lineEl);
+          setTimeout(() => lineEl.classList.remove("active-spoken"), 3500);
+        });
+        linesContainer.appendChild(lineEl);
+      });
+    }
+  },
+
+  bindEvents() {
+    const playBtn = document.getElementById("btn-play-rhyme-main");
+    const slowBtn = document.getElementById("btn-play-rhyme-slow");
+    const stopBtn = document.getElementById("btn-stop-rhyme");
+    const challengeBtn = document.getElementById("btn-rhyme-challenge");
+
+    if (playBtn) {
+      playBtn.addEventListener("click", () => {
+        sfx.pop();
+        const r = FAYRA_DB.rhymes[this.activeRhymeIndex];
+        voice.speak(r.audioText, "en-US", 0.9, playBtn);
+        showToast(r.icon, `Singing ${r.title} with Bella 🐰🎶`);
+      });
+    }
+
+    if (slowBtn) {
+      slowBtn.addEventListener("click", () => {
+        sfx.pop();
+        const r = FAYRA_DB.rhymes[this.activeRhymeIndex];
+        voice.speak(r.audioText, "en-US", 0.72, slowBtn);
+        showToast("🐢", `Slow tempo: sing along line by line!`);
+      });
+    }
+
+    if (stopBtn) {
+      stopBtn.addEventListener("click", () => {
+        sfx.pop();
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        showToast("🛑", `Audio stopped.`);
+      });
+    }
+
+    if (challengeBtn) {
+      challengeBtn.addEventListener("click", () => {
+        sfx.pop();
+        startChapterQuiz("fayra-phonics-4", `Rhyme Challenge: ${FAYRA_DB.rhymes[this.activeRhymeIndex].title}`);
+      });
+    }
+  }
+};
+
+// =============================================================================
 // 15. INITIALIZATION & NAVIGATION
 // =============================================================================
 
@@ -2616,6 +2741,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initMatchingGame();
   initFlashcards();
   initMockExam();
+  RhymesStudio.init();
 });
 
 function initNavigation() {

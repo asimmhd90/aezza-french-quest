@@ -77,6 +77,10 @@
         <span class="nav-icon" aria-hidden="true">🗺️</span>
         <span id="nav-label-adventure">Aventure / Units</span>
       </button>
+      <button type="button" class="nav-btn" data-tab="rhymes" id="nav-btn-rhymes" style="display: none;" aria-label="Sing-Along Rhymes Studio">
+        <span class="nav-icon" aria-hidden="true">🎶</span>
+        <span id="nav-label-rhymes">Rhymes Studio</span>
+      </button>
       <button type="button" class="nav-btn" data-tab="unscramble" aria-label="Word and Equation Builder">
         <span class="nav-icon" aria-hidden="true">🧩</span>
         <span id="nav-label-unscramble">Mots / Equations</span>
@@ -273,6 +277,57 @@
               <div class="feedback-action-wrap">
                 <button type="button" class="btn-primary" id="btn-next-question">Next ➡️</button>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2.5 DEDICATED SING-ALONG RHYMES STUDIO (PREP-I) -->
+      <section id="view-rhymes" class="view-panel" aria-label="Sing-Along Rhymes Studio">
+        <div class="section-title-wrap">
+          <div class="badge-pill">🎶 Little Wings Prep-I Rhymes</div>
+          <h1 class="section-title">Sing-Along Rhymes Studio 🎶🎈</h1>
+          <p class="section-desc">Sing along with Bunny Bella! Tap any rhyme below to listen, sing karaoke, and practice!</p>
+        </div>
+
+        <!-- 4 Prescribed Rhymes Tabs -->
+        <div class="rhymes-nav-tabs" id="rhymes-nav-tabs" role="tablist">
+          <!-- Dynamically generated rhyme tabs (Lamb, Tadpole, Seeds, Thunder) -->
+        </div>
+
+        <!-- Karaoke Theater Player Stage -->
+        <div class="rhyme-theater-wrapper">
+          <div class="rhyme-theater-card" id="rhyme-theater-card">
+            <div class="rhyme-card-header">
+              <div class="rhyme-hero-icon" id="rhyme-hero-icon">🐑</div>
+              <div class="rhyme-title-wrap">
+                <h2 class="rhyme-title" id="rhyme-display-title">Mary Had a Little Lamb</h2>
+                <span class="rhyme-badge" id="rhyme-display-badge">Sing-Along Karaoke 🎶</span>
+              </div>
+            </div>
+
+            <!-- Visual Big Lyrics Karaoke Box -->
+            <div class="rhyme-karaoke-stage" id="rhyme-karaoke-stage">
+              <div class="rhyme-lines-container" id="rhyme-lines-container">
+                <!-- Lines populated dynamically with interactive line-by-line speaker triggers -->
+              </div>
+            </div>
+
+            <!-- Audio Player Controls -->
+            <div class="rhyme-player-controls">
+              <button type="button" class="btn-primary btn-large rhyme-play-btn" id="btn-play-rhyme-main">
+                <span class="play-icon">▶️</span>
+                <span>Sing Along with Bella 🎶</span>
+              </button>
+              <button type="button" class="btn-secondary" id="btn-play-rhyme-slow" title="Slow Tempo for Singing">
+                <span>🐢 Slow Sing (0.75x)</span>
+              </button>
+              <button type="button" class="btn-secondary" id="btn-stop-rhyme" title="Stop Audio">
+                <span>🛑 Stop</span>
+              </button>
+              <button type="button" class="btn-primary btn-fayra-accent" id="btn-rhyme-challenge" title="Test your memory of this rhyme!">
+                <span>🌟 Take Rhyme Challenge (+30 XP)</span>
+              </button>
             </div>
           </div>
         </div>
