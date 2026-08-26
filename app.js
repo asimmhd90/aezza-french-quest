@@ -7,12 +7,26 @@
  */
 
 // =============================================================================
-// 1. GITHUB AUTHENTICATION CONTROLLER
+// 1. FAMILY AUTHENTICATION CONTROLLER (PIN / PASSWORD)
 // =============================================================================
 
 const AuthController = {
   isLoggedIn: false,
-  user: null,
+
+  // Recognized Family Passcodes (case-insensitive)
+  validPasscodes: [
+    "1234",
+    "aezza",
+    "aezza2026",
+    "french2026",
+    "math2026",
+    "papa",
+    "asim",
+    "secret",
+    "quest",
+    "aezzaquest",
+    "2026"
+  ],
 
   init() {
     this.checkAuth();
@@ -21,19 +35,17 @@ const AuthController = {
 
   checkAuth() {
     try {
-      const raw = localStorage.getItem("aezza_github_auth");
-      if (raw) {
-        this.user = JSON.parse(raw);
+      const isAuth = localStorage.getItem("aezza_family_auth");
+      if (isAuth === "true") {
         this.isLoggedIn = true;
         this.renderAuthenticatedUI();
         return true;
       }
     } catch (e) {
-      console.warn("Auth parse error:", e);
+      console.warn("Auth check error:", e);
     }
 
     this.isLoggedIn = false;
-    this.user = null;
     this.renderLockedUI();
     return false;
   },
@@ -42,23 +54,16 @@ const AuthController = {
     const mainNav = document.getElementById("main-nav");
     const mascotBar = document.getElementById("mascot-bar");
     const authStats = document.getElementById("header-authenticated-stats");
-    const ghPill = document.getElementById("github-profile-pill");
-    const ghAvatar = document.getElementById("github-user-avatar");
-    const ghHandle = document.getElementById("github-user-handle");
+    const profilePill = document.getElementById("github-profile-pill");
     const displayName = document.getElementById("display-user-name");
     const subjSwitcher = document.getElementById("subject-switcher-container");
 
     if (mainNav) mainNav.style.display = "flex";
     if (mascotBar) mascotBar.style.display = "flex";
     if (authStats) authStats.style.display = "flex";
-    if (ghPill) ghPill.style.display = "flex";
+    if (profilePill) profilePill.style.display = "flex";
     if (subjSwitcher) subjSwitcher.style.display = "flex";
-
-    if (this.user) {
-      if (ghAvatar) ghAvatar.src = this.user.avatar_url || "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
-      if (ghHandle) ghHandle.textContent = `@${this.user.login}`;
-      if (displayName) displayName.textContent = `Aezza & ${this.user.name ? this.user.name.split(" ")[0] : this.user.login} 🌟`;
-    }
+    if (displayName) displayName.textContent = "Aezza 🌟";
 
     showView("view-adventure");
   },
@@ -67,29 +72,29 @@ const AuthController = {
     const mainNav = document.getElementById("main-nav");
     const mascotBar = document.getElementById("mascot-bar");
     const authStats = document.getElementById("header-authenticated-stats");
-    const ghPill = document.getElementById("github-profile-pill");
+    const profilePill = document.getElementById("github-profile-pill");
     const displayName = document.getElementById("display-user-name");
     const subjSwitcher = document.getElementById("subject-switcher-container");
 
     if (mainNav) mainNav.style.display = "none";
     if (mascotBar) mascotBar.style.display = "none";
     if (authStats) authStats.style.display = "none";
-    if (ghPill) ghPill.style.display = "none";
+    if (profilePill) profilePill.style.display = "none";
     if (subjSwitcher) subjSwitcher.style.display = "none";
-    if (displayName) displayName.textContent = "Secure Access 🔒";
+    if (displayName) displayName.textContent = "Accès Protégé 🔒";
 
     showView("view-login");
   },
 
   bindEvents() {
-    const loginForm = document.getElementById("github-login-form");
+    const loginForm = document.getElementById("family-login-form");
     const logoutBtn = document.getElementById("btn-logout");
 
     if (loginForm) {
-      loginForm.addEventListener("submit", async (e) => {
+      loginForm.addEventListener("submit", (e) => {
         e.preventDefault();
         sfx.pop();
-        await this.handleLoginSubmit();
+        this.handleLoginSubmit();
       });
     }
 
@@ -101,99 +106,37 @@ const AuthController = {
     }
   },
 
-  async handleLoginSubmit() {
-    const submitBtn = document.getElementById("btn-submit-login");
+  handleLoginSubmit() {
     const errBanner = document.getElementById("login-error-banner");
     const errText = document.getElementById("login-error-text");
-    const usernameInput = document.getElementById("gh-username");
-    const tokenInput = document.getElementById("gh-token");
-    const pinInput = document.getElementById("quick-parent-pin");
+    const passwordInput = document.getElementById("family-password");
+    const entered = passwordInput ? passwordInput.value.trim().toLowerCase() : "";
 
     if (errBanner) errBanner.style.display = "none";
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = "<span>Verifying with GitHub... ⏳</span>";
-    }
 
-    const username = usernameInput ? usernameInput.value.trim() : "";
-    const token = tokenInput ? tokenInput.value.trim() : "";
-    const pin = pinInput ? pinInput.value.trim() : "";
+    const customPin = localStorage.getItem("aezza_custom_family_pin");
+    const isCustomMatch = customPin && entered === customPin.toLowerCase();
 
-    // 1. Quick Family Passcode
-    if (pin === "1234" || pin === "aezza2026" || pin === "french2026" || pin === "math2026" || pin === "papa") {
-      const demoAuth = {
-        login: username || "asimmhd90",
-        name: "Asim",
-        avatar_url: `https://github.com/${username || "asimmhd90"}.png`,
-        token: "PIN_AUTHENTICATED"
-      };
-      localStorage.setItem("aezza_github_auth", JSON.stringify(demoAuth));
+    if (this.validPasscodes.includes(entered) || isCustomMatch) {
+      localStorage.setItem("aezza_family_auth", "true");
       sfx.correct();
       confetti.blast();
-      showToast("🔐", "Family passcode verified!");
+      showToast("🎉", "Bienvenue Aezza ! L'aventure est déverrouillée 🚀");
       this.checkAuth();
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = "<span>Verify & Unlock 🚀</span>";
-      }
-      return;
-    }
-
-    // 2. Real GitHub Token Verification via REST API
-    try {
-      const response = await fetch("https://api.github.com/user", {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Accept": "application/vnd.github.v3+json"
-        }
-      });
-
-      if (response.ok) {
-        const ghUser = await response.json();
-        if (ghUser.login.toLowerCase() === username.toLowerCase() || username.toLowerCase() === "asimmhd90") {
-          const authData = {
-            login: ghUser.login,
-            name: ghUser.name || ghUser.login,
-            avatar_url: ghUser.avatar_url,
-            token: token
-          };
-          localStorage.setItem("aezza_github_auth", JSON.stringify(authData));
-          sfx.correct();
-          confetti.blast();
-          showToast("🎉", `Welcome @${ghUser.login}!`);
-          this.checkAuth();
-        } else {
-          this.showError(`Token belongs to @${ghUser.login}, but you typed @${username}.`);
-        }
-      } else {
-        if (response.status === 401) {
-          this.showError("Invalid or expired GitHub token (Error 401).");
-        } else {
-          this.showError(`GitHub verification error (${response.status}).`);
-        }
-      }
-    } catch (err) {
-      console.error("Auth fetch error:", err);
-      this.showError("Unable to reach GitHub API. Check your connection.");
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = "<span>Verify & Unlock 🚀</span>";
+    } else {
+      sfx.incorrect();
+      if (errText) errText.textContent = "Mot de passe incorrect. Réessayez avec votre code familial (ex: 1234 ou aezza2026).";
+      if (errBanner) errBanner.style.display = "flex";
+      if (passwordInput) {
+        passwordInput.value = "";
+        passwordInput.focus();
       }
     }
-  },
-
-  showError(msg) {
-    sfx.incorrect();
-    const errBanner = document.getElementById("login-error-banner");
-    const errText = document.getElementById("login-error-text");
-    if (errText) errText.textContent = msg;
-    if (errBanner) errBanner.style.display = "flex";
   },
 
   logout() {
-    localStorage.removeItem("aezza_github_auth");
-    showToast("🚪", "You have signed out.");
+    localStorage.removeItem("aezza_family_auth");
+    showToast("🔒", "Application verrouillée.");
     this.checkAuth();
   }
 };

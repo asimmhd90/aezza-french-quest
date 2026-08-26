@@ -50,11 +50,11 @@
           </div>
         </div>
 
-        <!-- GitHub User Pill & Logout -->
+        <!-- Family Profile Pill & Logout -->
         <div class="github-profile-pill" id="github-profile-pill">
-          <img src="" alt="GitHub Avatar" class="github-user-avatar" id="github-user-avatar" />
-          <span class="github-user-handle" id="github-user-handle">@asimmhd90</span>
-          <button class="btn-logout" id="btn-logout" title="Sign out">🚪 Logout</button>
+          <span class="family-badge-icon">🌟</span>
+          <span class="github-user-handle" id="github-user-handle">Famille d'Aezza</span>
+          <button class="btn-logout" id="btn-logout" title="Lock App / Se Déconnecter">🔒 Verrouiller</button>
         </div>
       </div>
     </header>
@@ -123,59 +123,35 @@
     <!-- MAIN CONTENT VIEWPORTS -->
     <main id="main-content">
 
-      <!-- 0. GITHUB AUTH / LOGIN VIEW (ACTIVE BY DEFAULT IF NOT LOGGED IN) -->
+      <!-- 0. FAMILY PASSWORD / LOGIN VIEW (ACTIVE BY DEFAULT IF NOT LOGGED IN) -->
       <section id="view-login" class="view-panel active">
         <div class="login-wrapper">
           <div class="login-card">
             <div class="login-header">
               <div class="octocat-badge">
-                <svg height="44" viewBox="0 0 16 16" width="44" fill="#1f005f">
-                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
-                </svg>
-                <span class="octocat-beret">🥖</span>
+                <span style="font-size: 38px;">🔑</span>
+                <span class="octocat-beret">🦊</span>
               </div>
-              <h1 class="login-title">Aezza's Learning Portal 🌟</h1>
-              <p class="login-sub">Secure access with your GitHub credentials or Family PIN.</p>
+              <h1 class="login-title">Espace Secret d'Aezza 🌟</h1>
+              <p class="login-sub">Entrez le mot de passe familial pour déverrouiller l'aventure !</p>
             </div>
 
-            <form id="github-login-form" class="login-form">
+            <form id="family-login-form" class="login-form">
               <div class="form-group">
-                <label for="gh-username">GitHub Username:</label>
+                <label for="family-password">Mot de passe familial :</label>
                 <div class="input-with-icon">
-                  <span class="input-icon">👤</span>
-                  <input type="text" id="gh-username" placeholder="e.g. asimmhd90" value="asimmhd90" required autocomplete="username" />
+                  <span class="input-icon">🔐</span>
+                  <input type="password" id="family-password" placeholder="Entrez le mot de passe (ex: 1234 ou aezza2026)" required autocomplete="current-password" autofocus />
                 </div>
-              </div>
-
-              <div class="form-group">
-                <label for="gh-token">GitHub Personal Access Token (PAT):</label>
-                <div class="input-with-icon">
-                  <span class="input-icon">🔑</span>
-                  <input type="password" id="gh-token" placeholder="ghp_... or github_pat_..." required autocomplete="current-password" />
-                </div>
-                <div class="token-hint-text">
-                  <span>💡 <strong>Tip:</strong> Create a token with <code>read:user</code> scope in <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">GitHub Settings ↗</a></span>
-                </div>
-              </div>
-
-              <!-- Quick Demo / Parent Bypass Option -->
-              <div class="form-group quick-pass-toggle">
-                <details>
-                  <summary>🔒 Or use Aezza & Dad Passcode</summary>
-                  <div class="quick-pass-box">
-                    <label for="quick-parent-pin">Family PIN:</label>
-                    <input type="password" id="quick-parent-pin" placeholder="Enter secret code" />
-                  </div>
-                </details>
               </div>
 
               <div class="login-error-banner" id="login-error-banner" style="display: none;">
                 <span class="error-icon">⚠️</span>
-                <span id="login-error-text">Invalid GitHub credentials. Please check your username and token.</span>
+                <span id="login-error-text">Mot de passe incorrect. Réessayez !</span>
               </div>
 
               <button type="submit" class="btn-primary btn-large btn-login" id="btn-submit-login">
-                <span>Verify & Unlock 🚀</span>
+                <span>Déverrouiller l'Aventure 🚀</span>
               </button>
             </form>
           </div>

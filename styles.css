@@ -264,31 +264,26 @@ body {
   opacity: 0.8;
 }
 
-/* GitHub Profile Badge & Logout */
+/* Family Profile Badge & Logout */
 .github-profile-pill {
   display: none;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   background: #f8f1ff;
   border: 2px solid #ede4ff;
-  padding: 4px 8px 4px 6px;
+  padding: 6px 12px 6px 10px;
   border-radius: var(--radius-full);
 }
 
-.github-user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-full);
-  border: 2px solid #82737a;
-  object-fit: cover;
-  background: #fff;
+.family-badge-icon {
+  font-size: 18px;
 }
 
 .github-user-handle {
   font-family: var(--font-headline);
   font-weight: 800;
   font-size: 13px;
-  color: var(--text-dark);
+  color: var(--text-purple);
 }
 
 .btn-logout {
