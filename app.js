@@ -47,8 +47,13 @@ const AuthController = {
     this.currentUser = username;
     this.isLoggedIn = true;
     AppState.currentUser = username;
-    localStorage.setItem("sisters_quest_auth", "true");
-    localStorage.setItem("sisters_quest_active_user", username);
+    AppState.currentSubject = username === "aezza" ? "french" : "phonics";
+    try {
+      localStorage.setItem("sisters_quest_auth", "true");
+      localStorage.setItem("sisters_quest_active_user", username);
+    } catch (e) {
+      console.warn("LocalStorage save error:", e);
+    }
     sfx.correct();
     confetti.blast();
     showToast(username === "aezza" ? "🌟" : "🎈", `Welcome ${username === "aezza" ? "Aezza (Grade 3)" : "Fayra (Prep-I)"}!`);
@@ -63,7 +68,12 @@ const AuthController = {
     const headerAvatar = document.getElementById("header-user-avatar");
     const headerLabel = document.getElementById("header-user-label");
     const displayName = document.getElementById("display-user-name");
+    const greetingSub = document.getElementById("greeting-sub");
     const subjSwitcher = document.getElementById("subject-switcher-container");
+    const avatarEmoji = document.getElementById("avatar-emoji");
+    const avatarAccessory = document.getElementById("avatar-accessory");
+    const mascotAvatar = document.getElementById("mascot-avatar-emoji");
+    const mascotText = document.getElementById("mascot-text");
 
     if (mainNav) mainNav.style.display = "flex";
     if (mascotBar) mascotBar.style.display = "flex";
@@ -75,13 +85,29 @@ const AuthController = {
     if (headerAvatar) headerAvatar.textContent = isAezza ? "🌟" : "🎈";
     if (headerLabel) headerLabel.textContent = isAezza ? "Aezza (Grade 3)" : "Fayra (Prep-I)";
     if (displayName) displayName.textContent = isAezza ? "Aezza 🌟" : "Fayra 🎈";
+    if (greetingSub) greetingSub.textContent = isAezza ? "Bienvenue !" : "Welcome Little Star!";
+
+    if (avatarEmoji) avatarEmoji.textContent = isAezza ? "🦊" : "🐰";
+    if (avatarAccessory) avatarAccessory.textContent = isAezza ? "🥖" : "🎈";
+    if (mascotAvatar) mascotAvatar.textContent = isAezza ? "🦊" : "🐰";
+
+    if (mascotText) {
+      mascotText.textContent = isAezza
+        ? `"Bonjour Aezza ! Je m'appelle Coco le renard. Prête à réussir ton examen ? Choisis un chapitre !"`
+        : `"Hello Fayra ! I'm Bella Bunny 🐰. Let's learn Phonics, Rhymes and Math Magic together !"`;
+    }
 
     document.body.classList.toggle("user-fayra", !isAezza);
     document.body.classList.toggle("user-aezza", isAezza);
 
     loadSavedStateForUser(this.currentUser);
+    applyThemeForCurrentSubject();
     renderSubjectSwitcherButtons();
     renderAdventureGrid();
+    updateUnscrambleForSubject();
+    updateMatchingTabsForSubject();
+    updateFlashcardTabsForSubject();
+    updateMockExamIntroForSubject();
     renderTrophiesView();
     updateGamificationDisplay();
 
@@ -94,6 +120,7 @@ const AuthController = {
     const authStats = document.getElementById("header-authenticated-stats");
     const profilePill = document.getElementById("github-profile-pill");
     const displayName = document.getElementById("display-user-name");
+    const greetingSub = document.getElementById("greeting-sub");
     const subjSwitcher = document.getElementById("subject-switcher-container");
 
     if (mainNav) mainNav.style.display = "none";
@@ -102,6 +129,7 @@ const AuthController = {
     if (profilePill) profilePill.style.display = "none";
     if (subjSwitcher) subjSwitcher.style.display = "none";
     if (displayName) displayName.textContent = "Select Profile 👑";
+    if (greetingSub) greetingSub.textContent = "Sisters' Quest";
 
     showView("view-login");
   },
@@ -163,7 +191,7 @@ const AuthController = {
       this.loginAs("fayra");
     } else if (entered === "aezza" || entered === "aezza2026" || entered === "1234" || entered === "french" || entered === "math") {
       this.loginAs("aezza");
-    } else if (entered === "papa" || entered === "family" || entered === "asim" || entered === "2026") {
+    } else if (entered === "papa" || entered === "family" || entered === "asim" || entered === "2026" || entered === "quest") {
       this.loginAs("aezza");
       showToast("👑", "Family pass verified! You can switch sisters anytime.");
     } else {
@@ -175,7 +203,11 @@ const AuthController = {
   },
 
   logout() {
-    localStorage.removeItem("sisters_quest_auth");
+    try {
+      localStorage.removeItem("sisters_quest_auth");
+    } catch (e) {
+      console.warn("Storage removal error:", e);
+    }
     showToast("🔒", "Portal locked.");
     this.checkAuth();
   }
@@ -260,6 +292,7 @@ class VoiceReciter {
     this.synth = window.speechSynthesis;
     this.frenchVoice = null;
     this.englishVoice = null;
+    this.activeTriggerBtn = null;
     this.initVoices();
   }
 
@@ -267,7 +300,7 @@ class VoiceReciter {
     if (!this.synth) return;
     const findVoices = () => {
       const voices = this.synth.getVoices();
-      this.frenchVoice = voices.find(v => v.lang.startsWith("fr") || v.name.toLowerCase().includes("french")) || null;
+      this.frenchVoice = voices.find(v => v.lang.startsWith("fr") || v.name.toLowerCase().includes("french") || v.name.toLowerCase().includes("français")) || null;
       this.englishVoice = voices.find(v => v.lang.startsWith("en") || v.name.toLowerCase().includes("english")) || null;
     };
     findVoices();
@@ -276,17 +309,28 @@ class VoiceReciter {
     }
   }
 
-  speak(text, lang = "fr-FR", rate = 0.9) {
+  speak(text, lang = "fr-FR", rate = 0.9, triggerElement = null) {
     if (!this.synth) return;
     try {
       if (this.synth.paused) this.synth.resume();
       this.synth.cancel();
 
+      if (this.activeTriggerBtn) {
+        this.activeTriggerBtn.classList.remove("audio-playing");
+      }
+
+      if (triggerElement) {
+        this.activeTriggerBtn = triggerElement;
+        this.activeTriggerBtn.classList.add("audio-playing");
+      }
+
       this.initVoices();
-      const cleanText = text.replace(/_+/g, "").replace(/\s+/g, " ").trim();
+      const cleanText = text.replace(/_+/g, "").replace(/[\(\)]/g, " ").replace(/\s+/g, " ").trim();
+      if (!cleanText) return;
+
       const utter = new SpeechSynthesisUtterance(cleanText);
       utter.rate = parseFloat(rate) || 0.9;
-      utter.pitch = 1.08;
+      utter.pitch = 1.05;
 
       if (lang.startsWith("fr")) {
         utter.lang = "fr-FR";
@@ -296,9 +340,20 @@ class VoiceReciter {
         if (this.englishVoice) utter.voice = this.englishVoice;
       }
 
+      utter.onend = () => {
+        if (triggerElement) triggerElement.classList.remove("audio-playing");
+        if (this.activeTriggerBtn === triggerElement) this.activeTriggerBtn = null;
+      };
+
+      utter.onerror = () => {
+        if (triggerElement) triggerElement.classList.remove("audio-playing");
+        if (this.activeTriggerBtn === triggerElement) this.activeTriggerBtn = null;
+      };
+
       this.synth.speak(utter);
     } catch (err) {
       console.warn("Speech synthesis error:", err);
+      if (triggerElement) triggerElement.classList.remove("audio-playing");
     }
   }
 }
@@ -324,17 +379,17 @@ class ConfettiLauncher {
   blast() {
     if (!this.canvas) return;
     this.resize();
-    const colors = ["#ff529a", "#2eb872", "#0284c7", "#f59e0b", "#8b5cf6", "#ec4899", "#3b82f6", "#fbbf24", "#10b981"];
+    const colors = ["#ff529a", "#2eb872", "#0284c7", "#f59e0b", "#8b5cf6", "#ec4899", "#3b82f6", "#fbbf24", "#10b981", "#ff7eb3"];
     for (let i = 0; i < 90; i++) {
       this.particles.push({
-        x: this.canvas.width / 2 + (Math.random() - 0.5) * 200,
-        y: this.canvas.height / 2 + 50,
+        x: this.canvas.width / 2 + (Math.random() - 0.5) * 260,
+        y: this.canvas.height / 2 + 30,
         r: Math.random() * 8 + 4,
         color: colors[Math.floor(Math.random() * colors.length)],
         tilt: Math.floor(Math.random() * 10) - 10,
         tiltAngleInc: Math.random() * 0.07 + 0.05,
         tiltAngle: 0,
-        vx: (Math.random() - 0.5) * 16,
+        vx: (Math.random() - 0.5) * 18,
         vy: (Math.random() - 0.8) * 18 - 6,
         gravity: 0.35
       });
@@ -405,6 +460,7 @@ const AppState = {
   unscrambleSolved: 0,
   currentQuiz: [],
   currentQuizKey: null,
+  currentQuizTitle: "",
   quizIndex: 0,
   quizScore: 0,
   quizAnswersHistory: [],
@@ -480,7 +536,388 @@ function updateGamificationDisplay() {
 }
 
 // =============================================================================
-// 4. AEZZA'S FRENCH GRAMMAR DATABASE & GENERATORS
+// 4. SUBJECT SWITCHER CONTROLLER & THEME APPLIER
+// =============================================================================
+
+function applyThemeForCurrentSubject() {
+  const isAezza = AppState.currentUser === "aezza";
+  document.body.classList.remove("theme-french", "theme-math", "theme-phonics", "theme-math-magic", "theme-awareness");
+
+  if (isAezza) {
+    if (AppState.currentSubject === "math") {
+      document.body.classList.add("theme-math");
+    } else {
+      document.body.classList.add("theme-french");
+    }
+  } else {
+    if (AppState.currentSubject === "math-magic") {
+      document.body.classList.add("theme-math-magic");
+    } else if (AppState.currentSubject === "awareness") {
+      document.body.classList.add("theme-awareness");
+    } else {
+      document.body.classList.add("theme-phonics");
+    }
+  }
+
+  // Update navigation labels based on active user/subject
+  const navAdv = document.getElementById("nav-label-adventure");
+  const navUnscramble = document.getElementById("nav-label-unscramble");
+  const navMatching = document.getElementById("nav-label-matching");
+  const navFlashcards = document.getElementById("nav-label-flashcards");
+  const navExam = document.getElementById("nav-label-exam");
+
+  if (isAezza) {
+    const isMath = AppState.currentSubject === "math";
+    if (navAdv) navAdv.textContent = isMath ? "Math Units 🗺️" : "Aventure / Units 🗺️";
+    if (navUnscramble) navUnscramble.textContent = isMath ? "Equation Builder 🧩" : "Mots en Ordre 🧩";
+    if (navMatching) navMatching.textContent = isMath ? "Number Pairs 🎯" : "Paires Magiques 🎯";
+    if (navFlashcards) navFlashcards.textContent = isMath ? "Formulas / Memo 🎴" : "Cartes Mémo 🎴";
+    if (navExam) navExam.textContent = isMath ? "Math SA-1 Exam 📝" : "Examen Blanc 📝";
+  } else {
+    if (navAdv) navAdv.textContent = "Learning Units 🎈";
+    if (navUnscramble) navUnscramble.textContent = "Word Builder 🧩";
+    if (navMatching) navMatching.textContent = "Magic Pairs 🎯";
+    if (navFlashcards) navFlashcards.textContent = "Picture Cards 🎴";
+    if (navExam) navExam.textContent = "Prep-I Star Quiz ⭐";
+  }
+}
+
+function renderSubjectSwitcherButtons() {
+  const container = document.getElementById("subject-switcher-buttons");
+  if (!container) return;
+
+  const isAezza = AppState.currentUser === "aezza";
+  container.innerHTML = "";
+
+  let subjects = [];
+
+  if (isAezza) {
+    subjects = [
+      {
+        id: "french",
+        icon: "🇫🇷",
+        title: "Français",
+        sub: "La Vie de Luc & Grammaire"
+      },
+      {
+        id: "math",
+        icon: "🔢",
+        title: "Mathematics",
+        sub: "Grade 3 SA-1 Syllabus"
+      }
+    ];
+  } else {
+    subjects = [
+      {
+        id: "phonics",
+        icon: "🔤",
+        title: "Phonics & Rhymes",
+        sub: "Letters Aa-Oo & 4 Songs"
+      },
+      {
+        id: "math-magic",
+        icon: "🔢",
+        title: "Math Magic",
+        sub: "Numbers 1-30 & Shapes"
+      },
+      {
+        id: "awareness",
+        icon: "🌍",
+        title: "General Awareness",
+        sub: "Water Animals & Safety"
+      }
+    ];
+  }
+
+  // Ensure currentSubject is valid for current user
+  const validIds = subjects.map(s => s.id);
+  if (!validIds.includes(AppState.currentSubject)) {
+    AppState.currentSubject = validIds[0];
+  }
+
+  subjects.forEach(subj => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `subject-pill-btn ${subj.id === AppState.currentSubject ? "active" : ""}`;
+    btn.id = `btn-subject-${subj.id}`;
+    btn.innerHTML = `
+      <span class="subj-icon">${subj.icon}</span>
+      <div class="subj-text-wrap">
+        <span class="subj-title">${subj.title}</span>
+        <span class="subj-sub">${subj.sub}</span>
+      </div>
+    `;
+
+    btn.addEventListener("click", () => {
+      sfx.pop();
+      AppState.currentSubject = subj.id;
+      saveStateForUser();
+      applyThemeForCurrentSubject();
+      renderSubjectSwitcherButtons();
+      renderAdventureGrid();
+      updateUnscrambleForSubject();
+      updateMatchingTabsForSubject();
+      updateFlashcardTabsForSubject();
+      updateMockExamIntroForSubject();
+      showToast(subj.icon, `Switched to ${subj.title}!`);
+    });
+
+    container.appendChild(btn);
+  });
+}
+
+// =============================================================================
+// 5. ADVENTURE MODE CHAPTER GRID GENERATOR
+// =============================================================================
+
+function renderAdventureGrid() {
+  const container = document.getElementById("chapter-grid-container");
+  const headline = document.getElementById("adventure-headline");
+  const subheadline = document.getElementById("adventure-subheadline");
+  if (!container) return;
+
+  const isAezza = AppState.currentUser === "aezza";
+  container.innerHTML = "";
+
+  let units = [];
+
+  if (isAezza) {
+    if (AppState.currentSubject === "math") {
+      if (headline) headline.textContent = "Mathematics Adventure 🔢";
+      if (subheadline) subheadline.textContent = "Master Grade 3 SA-1 topics: Operations, Estimation, PEMDAS, Tables 2-15 & Time!";
+      units = [
+        {
+          key: "math-u1",
+          badge: "Unit 3 • Operations & Estimation",
+          colorClass: "card-blue",
+          icon: "➕",
+          title: "Operations, PEMDAS & Estimation",
+          desc: "4-Digit addition/subtraction, rounding to nearest 100, PEMDAS bracket rules, and Even/Odd patterns.",
+          tags: ["4-Digit Math", "Estimation", "PEMDAS", "Even & Odd"]
+        },
+        {
+          key: "math-u2",
+          badge: "Unit 5 • Times Tables",
+          colorClass: "card-mint",
+          icon: "✖️",
+          title: "Multiplication Tables (2 to 15)",
+          desc: "Master times tables 2-15, factors, multiples, doubling and halving strategies for instant recall.",
+          tags: ["Tables 2-15", "Factors", "Multiples", "Mental Math"]
+        },
+        {
+          key: "math-u3",
+          badge: "1.3 • Place Value",
+          colorClass: "card-purple",
+          icon: "📊",
+          title: "Place Value & Negative Numbers",
+          desc: "4-Digit place value (Thousands, Hundreds, Tens, Ones), comparing numbers, and negative number lines.",
+          tags: ["Place Value", "4 Digits", "Negatives", "Ordering"]
+        },
+        {
+          key: "math-u4",
+          badge: "2.1 • Measurement",
+          colorClass: "card-yellow",
+          icon: "⏰",
+          title: "Time, Clocks & Conversions",
+          desc: "Read analog clocks, Quarter past & Quarter to, 12h/24h formats, and Days-to-Hours conversions.",
+          tags: ["Analog Clock", "Quarter Past/To", "Hours to Min", "Conversions"]
+        }
+      ];
+    } else {
+      if (headline) headline.textContent = "Choisis ton Aventure de Français 🇫🇷";
+      if (subheadline) subheadline.textContent = "Entraîne-toi sur chaque chapitre du programme pour maîtriser ton contrôle !";
+      units = [
+        {
+          key: "french-ch1",
+          badge: "Chapitre 1 • Routine",
+          colorClass: "card-pink",
+          icon: "⏰",
+          title: "La Vie Quotidienne de Luc",
+          desc: "Verbes pronominaux (se réveiller, se lever, se doucher, s'habiller), l'heure et la routine du matin.",
+          tags: ["Pronominal", "Routine", "Conjugaison", "Audio 🇫🇷"]
+        },
+        {
+          key: "french-ch2",
+          badge: "Chapitre 2 • Géographie",
+          colorClass: "card-blue",
+          icon: "🌍",
+          title: "Le Monde Multiculturel",
+          desc: "Les prépositions de lieux (à Paris, en France, au Canada, aux États-Unis) et les nationalités.",
+          tags: ["Prépositions", "Villes & Pays", "Nationalités", "Accords"]
+        },
+        {
+          key: "french-ch3",
+          badge: "Chapitre 3 • Alimentation",
+          colorClass: "card-yellow",
+          icon: "🥐",
+          title: "La Nourriture & Les Repas",
+          desc: "Articles partitifs (du, de la, de l', des), le petit-déjeuner, le déjeuner et le dîner.",
+          tags: ["Articles Partitifs", "Repas", "Boissons", "Vocabulaire"]
+        },
+        {
+          key: "french-ch4",
+          badge: "Chapitre 4 • Grammaire",
+          colorClass: "card-purple",
+          icon: "🎨",
+          title: "Conjugaison & Loisirs",
+          desc: "Conjugaison du verbe Aller et Aimer au présent, sports, loisirs et activités du weekend.",
+          tags: ["Verbe Aller", "Verbe Aimer", "Sports", "Loisirs"]
+        }
+      ];
+    }
+  } else {
+    // FAYRA PREP-I
+    if (AppState.currentSubject === "phonics") {
+      if (headline) headline.textContent = "Fayra's Phonics & Rhymes 🔤🎶";
+      if (subheadline) subheadline.textContent = "Sing along with Bella Bunny and learn letters Aa to Oo!";
+      units = [
+        {
+          key: "fayra-phonics-1",
+          badge: "Unit 1 • Letters Aa - Ee",
+          colorClass: "card-pink",
+          icon: "🍎",
+          title: "Letter Sounds Aa to Ee",
+          desc: "Apple 🍎, Ball ⚽, Cat 🐱, Dog 🐶, and Elephant 🐘 picture sounds!",
+          tags: ["Aa - Ee", "Phonics Sounds", "Pictures", "Voice 🔊"]
+        },
+        {
+          key: "fayra-phonics-2",
+          badge: "Unit 2 • Letters Ff - Jj",
+          colorClass: "card-mint",
+          icon: "🐟",
+          title: "Letter Sounds Ff to Jj",
+          desc: "Fish 🐟, Grapes 🍇, Hat 🎩, Igloo 🧊, and Jug 🏺 picture sounds!",
+          tags: ["Ff - Jj", "Letter Sounds", "Word Match", "Fun"]
+        },
+        {
+          key: "fayra-phonics-3",
+          badge: "Unit 3 • Letters Kk - Oo",
+          colorClass: "card-yellow",
+          icon: "🪁",
+          title: "Letter Sounds Kk to Oo",
+          desc: "Kite 🪁, Lion 🦁, Monkey 🐒, Nest 🪺, and Orange 🍊 sounds!",
+          tags: ["Kk - Oo", "Orals", "Pictures", "Star 🌟"]
+        },
+        {
+          key: "fayra-phonics-4",
+          badge: "Unit 4 • Sing-Along Rhymes",
+          colorClass: "card-purple",
+          icon: "🎶",
+          title: "4 Little Wings Sing-Along Rhymes",
+          desc: "Mary had a little lamb 🐑, Tadpole 🐸, Little Seeds 🌱, and I hear thunder ⛈️!",
+          tags: ["Sing-Along", "4 Rhymes", "Little Wings", "Karaoke"]
+        }
+      ];
+    } else if (AppState.currentSubject === "math-magic") {
+      if (headline) headline.textContent = "Fayra's Math Magic & Shapes 🔢🔺";
+      if (subheadline) subheadline.textContent = "Count colorful objects 1 to 10 and explore wonderful shapes!";
+      units = [
+        {
+          key: "fayra-math-1",
+          badge: "Unit 1 • Numbers 1 to 10",
+          colorClass: "card-yellow",
+          icon: "🔢",
+          title: "Counting Objects 1 to 10",
+          desc: "Count apples, stars, cupcakes, and puppies with Bella Bunny!",
+          tags: ["Counting", "1 to 10", "Touch & Count", "Stars ⭐"]
+        },
+        {
+          key: "fayra-math-2",
+          badge: "Unit 2 • Numbers 11 to 30",
+          colorClass: "card-blue",
+          icon: "🚀",
+          title: "Rocket Numbers 11 to 30",
+          desc: "Recognize numbers 11 through 30 and practice forward counting!",
+          tags: ["11 to 30", "Rocket Count", "Number Match", "Magic"]
+        },
+        {
+          key: "fayra-math-3",
+          badge: "Unit 3 • Shapes Explorer",
+          colorClass: "card-mint",
+          icon: "🔺",
+          title: "Super Shapes Explorer",
+          desc: "Identify Circle 🔴, Square 🟦, Triangle 🔺, Rectangle 🟩, and Oval 🥚!",
+          tags: ["Circle", "Square", "Triangle", "Rectangle", "Oval"]
+        }
+      ];
+    } else {
+      if (headline) headline.textContent = "Fayra's General Awareness 🌍✨";
+      if (subheadline) subheadline.textContent = "Explore water animals, tiny insects, safety rules, and emotions!";
+      units = [
+        {
+          key: "fayra-aware-1",
+          badge: "Unit 1 • Sea Life",
+          colorClass: "card-blue",
+          icon: "🐬",
+          title: "Water Animals & Ocean Friends",
+          desc: "Fish 🐟, Dolphin 🐬, Octopus 🐙, Whale 🐋, Shark 🦈, and Turtle 🐢!",
+          tags: ["Water Animals", "Ocean", "Creatures", "Sounds"]
+        },
+        {
+          key: "fayra-aware-2",
+          badge: "Unit 2 • Nature & Bugs",
+          colorClass: "card-mint",
+          icon: "🐝",
+          title: "Insects & Tiny Garden Bugs",
+          desc: "Butterfly 🦋, Honeybee 🐝, Ladybug 🐞, Ant 🐜, and Caterpillar 🐛!",
+          tags: ["Insects", "Butterflies", "Nature", "Garden"]
+        },
+        {
+          key: "fayra-aware-3",
+          badge: "Unit 3 • Safety First",
+          colorClass: "card-pink",
+          icon: "🛑",
+          title: "Safe vs Unsafe Choices",
+          desc: "Learn safe cuddly toys & books vs hot tea, sharp knives & electric sockets!",
+          tags: ["Safety Rules", "Smart Kid", "Safe Touch", "Awareness"]
+        },
+        {
+          key: "fayra-aware-4",
+          badge: "Unit 4 • Days & Feelings",
+          colorClass: "card-purple",
+          icon: "😊",
+          title: "Days of Week & Emotions",
+          desc: "Monday to Sunday names, Happy 😊, Sad 😢, and Surprised 😲 emotions!",
+          tags: ["Days of Week", "Emotions", "Feelings", "Daily"]
+        }
+      ];
+    }
+  }
+
+  units.forEach(unit => {
+    const isCompleted = AppState.completedUnits[unit.key] !== undefined;
+    const progressVal = isCompleted ? "100%" : "0%";
+
+    const card = document.createElement("div");
+    card.className = `chapter-card ${unit.colorClass}`;
+    card.innerHTML = `
+      <div class="card-badge ${isCompleted ? "completed" : ""}">${isCompleted ? "✨ COMPLETED" : unit.badge}</div>
+      <div class="card-icon-hero">${unit.icon}</div>
+      <h3 class="card-title">${unit.title}</h3>
+      <p class="card-subtitle">${unit.desc}</p>
+      <div class="tags-row">
+        ${unit.tags.map(t => `<span class="tag">${t}</span>`).join("")}
+      </div>
+      <div class="progress-container">
+        <div class="progress-bar" style="width: ${progressVal}"></div>
+      </div>
+      <button type="button" class="btn-primary btn-start-unit" data-unit="${unit.key}" data-title="${unit.title}">
+        ${isCompleted ? "Practice Again 🔄" : "Start Unit 🚀"}
+      </button>
+    `;
+
+    const startBtn = card.querySelector(".btn-start-unit");
+    startBtn.addEventListener("click", () => {
+      sfx.pop();
+      startChapterQuiz(unit.key, unit.title);
+    });
+
+    container.appendChild(card);
+  });
+}
+
+// =============================================================================
+// 6. AEZZA'S FRENCH GRAMMAR DATABASE & GENERATORS
 // =============================================================================
 
 const FRENCH_DB = {
@@ -563,7 +1000,7 @@ function generateFrenchCh1Question() {
     audio: fullAudio,
     options: options,
     correct: options.indexOf(correctPron),
-    explanation: `Pour le sujet "${subj.text}", le pronom réfléchi est "${correctPron}".`,
+    explanation: `Pour le sujet "${subj.text}", le pronom réfléchi correspondant est "${correctPron}".`,
     lang: "fr-FR"
   };
 }
@@ -578,13 +1015,13 @@ function generateFrenchCh2Question() {
   const options = shuffle([place.prep, ...distractors]);
 
   return {
-    category: "Prépositions de Lieux",
+    category: "Prépositions de Lieux (à, en, au, aux)",
     fr: sentence,
     en: `${person} lives in ${place.name}.`,
     audio: fullAudio,
     options: options,
     correct: options.indexOf(place.prep),
-    explanation: place.type === "city" ? `Pour les villes (${place.name}), on utilise "à".` : `Pour "${place.name}", on utilise "${place.prep}".`,
+    explanation: place.type === "city" ? `Pour les villes comme "${place.name}", on utilise toujours la préposition "à".` : `Pour "${place.name}", on utilise la préposition "${place.prep}".`,
     lang: "fr-FR"
   };
 }
@@ -603,7 +1040,7 @@ function generateFrenchCh3Question() {
     correctArticle = "des";
   }
 
-  const subj = pickRandom(["Au petit déjeuner, je prends", "À midi, Aezza mange", "Pour le dîner, Luc boit"]);
+  const subj = pickRandom(["Au petit déjeuner, je prends", "À midi, Aezza mange", "Pour le dîner, Luc prend"]);
   const sentence = `${subj} ______ ${item.name}.`;
   const fullAudio = `${subj} ${correctArticle} ${item.name}.`;
   const options = shuffle(["du", "de la", "de l'", "des"]);
@@ -615,14 +1052,14 @@ function generateFrenchCh3Question() {
     audio: fullAudio,
     options: options,
     correct: options.indexOf(correctArticle),
-    explanation: `"${item.name}" demande l'article partitif "${correctArticle}".`,
+    explanation: `"${item.name}" est un nom ${itemType === "masculine" ? "masculin singulier" : (itemType === "feminine" ? "féminin singulier" : "pluriel")}, donc on emploie "${correctArticle}".`,
     lang: "fr-FR"
   };
 }
 
 function generateFrenchCh4Question() {
   const subj = getRandomFrenchSubject();
-  const place = pickRandom(["à l'école", "au parc", "à Paris"]);
+  const place = pickRandom(["à l'école", "au parc", "à Paris", "au supermarché"]);
   const sentence = `${subj.text} ______ ${place}. (aller)`;
   const fullAudio = `${subj.text} ${subj.aller} ${place}.`;
   const forms = ["vais", "vas", "va", "allons", "allez", "vont"];
@@ -630,19 +1067,31 @@ function generateFrenchCh4Question() {
   const options = shuffle([subj.aller, ...distractors]);
 
   return {
-    category: "Conjugaison • Verbe Aller",
+    category: "Conjugaison • Verbe Aller au Présent",
     fr: sentence,
     en: `${subj.text} go(es) to ${place}.`,
     audio: fullAudio,
     options: options,
     correct: options.indexOf(subj.aller),
-    explanation: `Le verbe "aller" avec "${subj.text}" se conjugue "${subj.aller}".`,
+    explanation: `Le verbe "aller" avec le sujet "${subj.text}" se conjugue "${subj.aller}".`,
     lang: "fr-FR"
   };
 }
 
+function generateFrenchQuizForUnit(unitKey, count = 5) {
+  const list = [];
+  for (let i = 0; i < count; i++) {
+    if (unitKey === "french-ch1") list.push(generateFrenchCh1Question());
+    else if (unitKey === "french-ch2") list.push(generateFrenchCh2Question());
+    else if (unitKey === "french-ch3") list.push(generateFrenchCh3Question());
+    else if (unitKey === "french-ch4") list.push(generateFrenchCh4Question());
+    else list.push(generateFrenchCh1Question());
+  }
+  return list;
+}
+
 // =============================================================================
-// 5. AEZZA'S GRADE 3 MATHEMATICS PROCEDURAL GENERATORS (SA-1)
+// 7. AEZZA'S GRADE 3 MATHEMATICS PROCEDURAL GENERATORS (SA-1)
 // =============================================================================
 
 function generateMathUnit1Question() {
@@ -655,7 +1104,7 @@ function generateMathUnit1Question() {
     const roundB = Math.round(b / 100) * 100;
     const estSum = roundA + roundB;
     const sentence = `Estimate the sum of ${a} + ${b} by rounding each number to the nearest 100.`;
-    const explanation = `${a} rounds to ${roundA}, and ${b} rounds to ${roundB}. Estimated sum: ${roundA} + ${roundB} = ${estSum}.`;
+    const explanation = `${a} rounds to ${roundA}, and ${b} rounds to ${roundB}. Estimated sum = ${roundA} + ${roundB} = ${estSum}.`;
     const distractors = [estSum + 100, estSum - 100, estSum + 50].filter(d => d !== estSum);
     const options = shuffle([String(estSum), ...distractors.map(String)]);
     return {
@@ -675,7 +1124,7 @@ function generateMathUnit1Question() {
     const ans = a + b * c;
     const wrong = (a + b) * c;
     const sentence = `Evaluate using PEMDAS: ${a} + ${b} × ${c} = ?`;
-    const explanation = `Multiplication comes first: ${b} × ${c} = ${b * c}. Then add: ${a} + ${b * c} = ${ans}.`;
+    const explanation = `Multiplication comes before Addition: First calculate ${b} × ${c} = ${b * c}. Then add: ${a} + ${b * c} = ${ans}.`;
     const options = shuffle([String(ans), String(wrong), String(ans + 2), String(ans - 3)]);
     return {
       category: "Unit 3 • Order of Operations (PEMDAS)",
@@ -693,12 +1142,12 @@ function generateMathUnit1Question() {
     const c = randInt(2, 5);
     const ans = (a + b) * c;
     const sentence = `Evaluate using PEMDAS: (${a} + ${b}) × ${c} = ?`;
-    const explanation = `Solve brackets first: (${a} + ${b}) = ${a + b}. Then multiply: ${a + b} × ${c} = ${ans}.`;
+    const explanation = `Parentheses (Brackets) must be solved first: (${a} + ${b}) = ${a + b}. Then multiply: ${a + b} × ${c} = ${ans}.`;
     const options = shuffle([String(ans), String(a + b * c), String(ans + 4), String(ans - 2)]);
     return {
       category: "Unit 3 • Order of Operations with Brackets",
       fr: sentence,
-      en: `Solve parentheses first!`,
+      en: `Solve brackets first!`,
       audio: sentence,
       options: options,
       correct: options.indexOf(String(ans)),
@@ -773,7 +1222,7 @@ function generateMathUnit4Question() {
   const conv = pickRandom([
     { q: "How many minutes are in 2 hours?", ans: "120 minutes", exp: "1 hour = 60 minutes. 2 hours = 2 × 60 = 120 minutes." },
     { q: "How many hours are in 3 days?", ans: "72 hours", exp: "1 day = 24 hours. 3 days = 3 × 24 = 72 hours." },
-    { q: "An analog clock shows minute hand on 3, hour hand past 4. What time is it?", ans: "4:15 (Quarter past 4)", exp: "Minute hand on 3 means 15 minutes (Quarter past 4)." }
+    { q: "An analog clock shows the minute hand on 3 and hour hand past 4. What time is it?", ans: "4:15 (Quarter past 4)", exp: "Minute hand pointing to 3 represents 15 minutes (Quarter past 4)." }
   ]);
   const distractors = ["60 minutes", "100 minutes", "180 minutes", "48 hours"].filter(d => d !== conv.ans);
   const options = shuffle([conv.ans, ...distractors.slice(0, 3)]);
@@ -789,7 +1238,7 @@ function generateMathUnit4Question() {
   };
 }
 
-function generateDynamicMathQuiz(unitKey, count = 6) {
+function generateDynamicMathQuiz(unitKey, count = 5) {
   const questions = [];
   for (let i = 0; i < count; i++) {
     if (unitKey === "math-u1") questions.push(generateMathUnit1Question());
@@ -811,7 +1260,7 @@ function generateDynamicMathMockExam(count = 15) {
 }
 
 // =============================================================================
-// 6. FAYRA'S PREP-I KNOWLEDGE BASE & GENERATORS
+// 8. FAYRA'S PREP-I KNOWLEDGE BASE & GENERATORS
 // =============================================================================
 
 const FAYRA_DB = {
@@ -886,29 +1335,6 @@ const FAYRA_DB = {
     { name: "Ant", emoji: "🐜" },
     { name: "Caterpillar", emoji: "🐛" },
     { name: "Mosquito", emoji: "🦟" }
-  ],
-
-  safeItems: [
-    { name: "Teddy Bear 🧸", isSafe: true, reason: "Soft and safe to cuddle!" },
-    { name: "Storybook 📖", isSafe: true, reason: "Fun and safe to read!" },
-    { name: "Toy Ball ⚽", isSafe: true, reason: "Safe to play in the garden!" },
-    { name: "Apple 🍎", isSafe: true, reason: "Healthy and safe to eat!" }
-  ],
-
-  unsafeItems: [
-    { name: "Hot Cup of Tea ☕", isSafe: false, reason: "Danger! Very hot, can burn your hands." },
-    { name: "Sharp Knife 🔪", isSafe: false, reason: "Danger! Very sharp, can cut fingers." },
-    { name: "Electric Plug Socket 🔌", isSafe: false, reason: "Danger! High electricity, never touch." },
-    { name: "Fire & Matches 🔥", isSafe: false, reason: "Danger! Fire can cause serious burns." }
-  ],
-
-  daysOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-
-  emotions: [
-    { emotion: "Happy", emoji: "😊", desc: "Smiling with joy!" },
-    { emotion: "Sad", emoji: "😢", desc: "Feeling down or crying." },
-    { emotion: "Angry", emoji: "😠", desc: "Feeling cross or upset." },
-    { emotion: "Surprised", emoji: "😲", desc: "Wide eyes with wonder!" }
   ]
 };
 
@@ -946,41 +1372,323 @@ function generateFayraMathQuestion() {
     audio: `Count the objects: How many are there?`,
     options: options,
     correct: options.indexOf(correctAns),
-    explanation: `There are ${count} ${icon} objects in the set!`,
+    explanation: `There are exactly ${count} ${icon} objects in the group!`,
     lang: "en-US"
   };
 }
 
 function generateFayraAwarenessQuestion() {
-  const animal = pickRandom(FAYRA_DB.waterAnimals);
-  const sentence = `Which of the following is a WATER ANIMAL that swims in the sea?`;
-  const correctAns = `${animal.emoji} ${animal.name}`;
-  const landAnimals = ["🐶 Dog", "🐱 Cat", "🦁 Lion", "🐒 Monkey"];
-  const options = shuffle([correctAns, ...landAnimals.slice(0, 3)]);
-  return {
-    category: "General Awareness • Water Animals",
-    fr: sentence,
-    en: `${animal.name} lives in the water!`,
-    audio: sentence,
-    options: options,
-    correct: options.indexOf(correctAns),
-    explanation: `${animal.name} (${animal.emoji}) is a water animal that lives in water.`,
-    lang: "en-US"
-  };
+  const isSafeQ = Math.random() > 0.5;
+  if (isSafeQ) {
+    const isWater = Math.random() > 0.5;
+    if (isWater) {
+      const animal = pickRandom(FAYRA_DB.waterAnimals);
+      const sentence = `Which of the following is a WATER ANIMAL that swims in the sea?`;
+      const correctAns = `${animal.emoji} ${animal.name}`;
+      const landAnimals = ["🐶 Dog", "🐱 Cat", "🦁 Lion", "🐒 Monkey"];
+      const options = shuffle([correctAns, ...landAnimals.slice(0, 3)]);
+      return {
+        category: "General Awareness • Water Animals",
+        fr: sentence,
+        en: `${animal.name} lives in the water!`,
+        audio: sentence,
+        options: options,
+        correct: options.indexOf(correctAns),
+        explanation: `${animal.name} (${animal.emoji}) is a water animal that lives in oceans and lakes!`,
+        lang: "en-US"
+      };
+    } else {
+      const insect = pickRandom(FAYRA_DB.insects);
+      const sentence = `Which of the following is a TINY INSECT in nature?`;
+      const correctAns = `${insect.emoji} ${insect.name}`;
+      const others = ["🐘 Elephant", "🐻 Bear", "🦒 Giraffe", "🦁 Lion"];
+      const options = shuffle([correctAns, ...others.slice(0, 3)]);
+      return {
+        category: "General Awareness • Insects",
+        fr: sentence,
+        en: `${insect.name} is an insect!`,
+        audio: sentence,
+        options: options,
+        correct: options.indexOf(correctAns),
+        explanation: `${insect.name} (${insect.emoji}) is a small insect with tiny wings or legs!`,
+        lang: "en-US"
+      };
+    }
+  } else {
+    const safeQ = pickRandom([
+      { q: "Which item is SAFE to cuddle and play with?", ans: "🧸 Soft Teddy Bear", exp: "Soft toys and storybooks are safe and fun!" },
+      { q: "Which item is DANGEROUS and you must NEVER touch?", ans: "🔌 Electric Socket & Wire", exp: "Electricity and hot kettles are dangerous for little hands!" },
+      { q: "Which day comes after Monday?", ans: "Tuesday", exp: "The days of the week are: Monday, Tuesday, Wednesday..." }
+    ]);
+    const distractors = ["🔥 Hot Iron", "🔪 Sharp Knife", "☕ Boiling Tea", "Sunday"].filter(d => d !== safeQ.ans);
+    const options = shuffle([safeQ.ans, ...distractors.slice(0, 3)]);
+    return {
+      category: "General Awareness • Safety & Days",
+      fr: safeQ.q,
+      en: safeQ.exp,
+      audio: safeQ.q,
+      options: options,
+      correct: options.indexOf(safeQ.ans),
+      explanation: safeQ.exp,
+      lang: "en-US"
+    };
+  }
 }
 
 function generateDynamicFayraQuiz(unitKey, count = 5) {
   const list = [];
   for (let i = 0; i < count; i++) {
-    if (unitKey === "fayra-phonics") list.push(generateFayraPhonicsQuestion());
-    else if (unitKey === "fayra-math") list.push(generateFayraMathQuestion());
+    if (unitKey.startsWith("fayra-phonics")) list.push(generateFayraPhonicsQuestion());
+    else if (unitKey.startsWith("fayra-math")) list.push(generateFayraMathQuestion());
     else list.push(generateFayraAwarenessQuestion());
   }
   return list;
 }
 
 // =============================================================================
-// 7. UNSCRAMBLE & EQUATION BUILDER GAME
+// 9. CHAPTER QUIZ ENGINE & INTERACTIVE CONTROLLER
+// =============================================================================
+
+function startChapterQuiz(unitKey, unitTitle, totalQuestions = 5) {
+  const isAezza = AppState.currentUser === "aezza";
+
+  if (isAezza) {
+    AppState.currentQuiz = AppState.currentSubject === "math"
+      ? generateDynamicMathQuiz(unitKey, totalQuestions)
+      : generateFrenchQuizForUnit(unitKey, totalQuestions);
+  } else {
+    AppState.currentQuiz = generateDynamicFayraQuiz(unitKey, totalQuestions);
+  }
+
+  AppState.currentQuizKey = unitKey;
+  AppState.currentQuizTitle = unitTitle;
+  AppState.quizIndex = 0;
+  AppState.quizScore = 0;
+  AppState.quizAnswersHistory = [];
+  AppState.isMockExam = false;
+
+  const topicTitle = document.getElementById("quiz-topic-title");
+  if (topicTitle) topicTitle.textContent = unitTitle;
+
+  showView("view-quiz");
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+  if (!AppState.currentQuiz || AppState.currentQuiz.length === 0) return;
+  const q = AppState.currentQuiz[AppState.quizIndex];
+  const total = AppState.currentQuiz.length;
+
+  const curNum = document.getElementById("quiz-current-num");
+  const totalNum = document.getElementById("quiz-total-num");
+  const progressFill = document.getElementById("quiz-progress-fill");
+  const catEl = document.getElementById("question-category");
+  const frEl = document.getElementById("question-french-text");
+  const hintEl = document.getElementById("question-english-hint");
+  const optContainer = document.getElementById("quiz-options-container");
+  const feedbackBanner = document.getElementById("quiz-feedback-banner");
+
+  if (curNum) curNum.textContent = AppState.quizIndex + 1;
+  if (totalNum) totalNum.textContent = total;
+  if (progressFill) {
+    const pct = Math.round(((AppState.quizIndex + 1) / total) * 100);
+    progressFill.style.width = `${pct}%`;
+  }
+
+  if (catEl) catEl.textContent = q.category;
+  if (frEl) frEl.textContent = q.fr;
+  if (hintEl) hintEl.textContent = `"${q.en}"`;
+
+  // Reset feedback
+  if (feedbackBanner) {
+    feedbackBanner.className = "feedback-banner";
+  }
+
+  // Dual audio button labels
+  const isAezza = AppState.currentUser === "aezza";
+  const labelMain = document.getElementById("label-speak-main");
+  const labelSecondary = document.getElementById("label-speak-secondary");
+  if (labelMain) {
+    labelMain.textContent = isAezza && AppState.currentSubject === "french" ? "Écouter la phrase 🇫🇷" : "Listen Question 🔊";
+  }
+  if (labelSecondary) {
+    labelSecondary.textContent = isAezza && AppState.currentSubject === "french" ? "Traduction / Clue 💡" : "Audio Clue 💡";
+  }
+
+  // Populate options
+  if (optContainer) {
+    optContainer.innerHTML = "";
+    const letters = ["A", "B", "C", "D"];
+
+    q.options.forEach((optText, idx) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "quiz-option-btn";
+      btn.dataset.index = idx;
+      btn.innerHTML = `
+        <span class="option-letter">${letters[idx]}</span>
+        <span class="option-text">${optText}</span>
+      `;
+
+      btn.addEventListener("click", () => handleQuizOption(idx));
+      optContainer.appendChild(btn);
+    });
+  }
+}
+
+function handleQuizOption(chosenIdx) {
+  const q = AppState.currentQuiz[AppState.quizIndex];
+  const isCorrect = chosenIdx === q.correct;
+  const isAezza = AppState.currentUser === "aezza";
+
+  const optButtons = document.querySelectorAll(".quiz-option-btn");
+  optButtons.forEach(btn => btn.disabled = true);
+
+  if (isCorrect) {
+    sfx.correct();
+    confetti.blast();
+    AppState.quizScore++;
+    addXP(20);
+    if (optButtons[chosenIdx]) optButtons[chosenIdx].classList.add("correct");
+  } else {
+    sfx.incorrect();
+    if (optButtons[chosenIdx]) optButtons[chosenIdx].classList.add("incorrect");
+    if (optButtons[q.correct]) optButtons[q.correct].classList.add("correct");
+  }
+
+  AppState.quizAnswersHistory.push({
+    question: q.fr,
+    chosen: q.options[chosenIdx],
+    correctAnswer: q.options[q.correct],
+    isCorrect: isCorrect,
+    explanation: q.explanation
+  });
+
+  // Display feedback banner
+  const feedbackBanner = document.getElementById("quiz-feedback-banner");
+  const fbTitle = document.getElementById("feedback-title");
+  const fbMascotAvatar = document.getElementById("feedback-mascot-avatar");
+  const fbIcon = document.getElementById("feedback-icon");
+  const fbCorrectRow = document.getElementById("feedback-correct-answer-row");
+  const fbCorrectText = document.getElementById("feedback-correct-text");
+  const fbExp = document.getElementById("feedback-explanation");
+
+  if (fbMascotAvatar) fbMascotAvatar.textContent = isAezza ? "🦊" : "🐰";
+  if (fbIcon) fbIcon.textContent = isCorrect ? "🎉" : "💡";
+
+  if (fbTitle) {
+    fbTitle.textContent = isCorrect
+      ? (isAezza ? "Bravo Aezza ! C'est parfait ! 🌟" : "Super job Fayra ! You did it ! 🎈⭐")
+      : (isAezza ? "Oups ! Regarde l'explication :" : "Good try Fayra ! Let's learn together :");
+  }
+
+  if (fbCorrectRow && fbCorrectText) {
+    if (isCorrect) {
+      fbCorrectRow.style.display = "none";
+    } else {
+      fbCorrectRow.style.display = "flex";
+      fbCorrectText.textContent = q.options[q.correct];
+    }
+  }
+
+  if (fbExp) {
+    fbExp.textContent = q.explanation;
+  }
+
+  if (feedbackBanner) {
+    feedbackBanner.className = `feedback-banner show ${isCorrect ? "correct" : "incorrect"}`;
+  }
+}
+
+function advanceQuizQuestion() {
+  AppState.quizIndex++;
+  if (AppState.quizIndex < AppState.currentQuiz.length) {
+    renderQuizQuestion();
+  } else {
+    if (AppState.isMockExam) {
+      showExamResults();
+    } else {
+      showQuizCompletion();
+    }
+  }
+}
+
+function showQuizCompletion() {
+  const isAezza = AppState.currentUser === "aezza";
+  const finalScore = AppState.quizScore;
+  const total = AppState.currentQuiz.length;
+
+  if (AppState.currentQuizKey) {
+    AppState.completedUnits[AppState.currentQuizKey] = `${finalScore}/${total}`;
+    saveStateForUser();
+  }
+
+  sfx.fanfare();
+  confetti.blast();
+  addXP(50);
+
+  showToast("🏆", `Unit Completed: ${finalScore}/${total} correct!`);
+  renderAdventureGrid();
+  showView("view-adventure");
+}
+
+function initQuizListeners() {
+  const backBtn = document.getElementById("quiz-back-btn");
+  if (backBtn) {
+    backBtn.addEventListener("click", () => {
+      sfx.pop();
+      showView(AppState.isMockExam ? "view-mock-exam" : "view-adventure");
+    });
+  }
+
+  const nextBtn = document.getElementById("btn-next-question");
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      sfx.pop();
+      advanceQuizQuestion();
+    });
+  }
+
+  const speakFrenchBtn = document.getElementById("btn-speak-french");
+  if (speakFrenchBtn) {
+    speakFrenchBtn.addEventListener("click", () => {
+      sfx.pop();
+      const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
+      const q = AppState.currentQuiz[AppState.quizIndex];
+      if (q) {
+        voice.speak(q.audio || q.fr, q.lang || "fr-FR", speed, speakFrenchBtn);
+      }
+    });
+  }
+
+  const speakEnglishBtn = document.getElementById("btn-speak-english");
+  if (speakEnglishBtn) {
+    speakEnglishBtn.addEventListener("click", () => {
+      sfx.pop();
+      const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
+      const q = AppState.currentQuiz[AppState.quizIndex];
+      if (q) {
+        voice.speak(q.en, "en-US", speed, speakEnglishBtn);
+      }
+    });
+  }
+
+  const speakExplanationBtn = document.getElementById("btn-speak-explanation");
+  if (speakExplanationBtn) {
+    speakExplanationBtn.addEventListener("click", () => {
+      sfx.pop();
+      const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
+      const q = AppState.currentQuiz[AppState.quizIndex];
+      if (q) {
+        const isAezza = AppState.currentUser === "aezza";
+        voice.speak(q.explanation, isAezza && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed, speakExplanationBtn);
+      }
+    });
+  }
+}
+
+// =============================================================================
+// 10. UNSCRAMBLE & EQUATION BUILDER GAME
 // =============================================================================
 
 function generateDynamicMathUnscramblePuzzles(count = 6) {
@@ -1005,6 +1713,16 @@ function generateDynamicMathUnscramblePuzzles(count = 6) {
         en: `Multiplication fact: ${a} × ${b} = ${res}`,
         audio: `${a} times ${b} equals ${res}`
       };
+    },
+    () => {
+      const a = randInt(10, 40);
+      const b = randInt(5, 20);
+      const res = a + b;
+      return {
+        targetTokens: [String(a), "+", String(b), "=", String(res)],
+        en: `Addition equation: ${a} + ${b} = ${res}`,
+        audio: `${a} plus ${b} equals ${res}`
+      };
     }
   ];
   return shuffle(templates).slice(0, count).map(fn => {
@@ -1025,6 +1743,21 @@ function generateDynamicFrenchUnscramblePuzzles(count = 6) {
       targetTokens: ["Aezza", "se", "brosse", "les", "dents", "le", "matin", "."],
       en: "Aezza brushes her teeth in the morning.",
       audio: "Aezza se brosse les dents le matin."
+    }),
+    () => ({
+      targetTokens: ["Paul", "habite", "en", "France", "à", "Paris", "."],
+      en: "Paul lives in France, in Paris.",
+      audio: "Paul habite en France à Paris."
+    }),
+    () => ({
+      targetTokens: ["Au", "petit", "déjeuner", "je", "prends", "du", "pain", "."],
+      en: "For breakfast, I have bread.",
+      audio: "Au petit déjeuner je prends du pain."
+    }),
+    () => ({
+      targetTokens: ["Nous", "allons", "à", "l'école", "ensemble", "."],
+      en: "We go to school together.",
+      audio: "Nous allons à l'école ensemble."
     })
   ];
   return shuffle(templates).slice(0, count).map(fn => {
@@ -1057,6 +1790,7 @@ function updateUnscrambleForSubject() {
       { targetTokens: ["A", "P", "P", "L", "E"], en: "A is for Apple 🍎", audio: "Apple starts with A" },
       { targetTokens: ["B", "A", "L", "L"], en: "B is for Ball ⚽", audio: "Ball starts with B" },
       { targetTokens: ["C", "A", "T"], en: "C is for Cat 🐱", audio: "Cat starts with C" },
+      { targetTokens: ["F", "I", "S", "H"], en: "F is for Fish 🐟", audio: "Fish starts with F" },
       { targetTokens: ["1", "2", "3", "4", "5"], en: "Counting Numbers 1 to 5", audio: "One, Two, Three, Four, Five" }
     ];
 
@@ -1068,51 +1802,69 @@ function updateUnscrambleForSubject() {
 
   AppState.unscrambleIndex = 0;
   AppState.assembledTokens = [];
-  document.getElementById("unscramble-total").textContent = AppState.unscramblePuzzles.length;
+  const totEl = document.getElementById("unscramble-total");
+  if (totEl) totEl.textContent = AppState.unscramblePuzzles.length;
   renderUnscramblePuzzle();
 }
 
 function initUnscrambleGame() {
-  document.getElementById("btn-reset-words").addEventListener("click", () => {
-    sfx.pop();
-    AppState.assembledTokens = [];
-    renderUnscramblePuzzle();
-  });
+  const resetBtn = document.getElementById("btn-reset-words");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      sfx.pop();
+      AppState.assembledTokens = [];
+      renderUnscramblePuzzle();
+    });
+  }
 
-  document.getElementById("btn-check-unscramble").addEventListener("click", checkUnscrambleAnswer);
+  const checkBtn = document.getElementById("btn-check-unscramble");
+  if (checkBtn) {
+    checkBtn.addEventListener("click", checkUnscrambleAnswer);
+  }
 
-  document.getElementById("btn-next-unscramble").addEventListener("click", () => {
-    sfx.pop();
-    AppState.unscrambleIndex++;
-    if (AppState.unscrambleIndex >= AppState.unscramblePuzzles.length) {
-      updateUnscrambleForSubject();
-      AppState.unscrambleIndex = 0;
-    }
-    AppState.assembledTokens = [];
-    renderUnscramblePuzzle();
-  });
+  const nextBtn = document.getElementById("btn-next-unscramble");
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      sfx.pop();
+      AppState.unscrambleIndex++;
+      if (AppState.unscrambleIndex >= AppState.unscramblePuzzles.length) {
+        updateUnscrambleForSubject();
+        AppState.unscrambleIndex = 0;
+      }
+      AppState.assembledTokens = [];
+      renderUnscramblePuzzle();
+    });
+  }
 
-  document.getElementById("btn-unscramble-speak").addEventListener("click", () => {
-    sfx.pop();
-    const speed = document.getElementById("audio-speed-select").value;
-    const puzzle = AppState.unscramblePuzzles[AppState.unscrambleIndex];
-    voice.speak(puzzle.audio, AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
-  });
-
-  updateUnscrambleForSubject();
+  const speakBtn = document.getElementById("btn-unscramble-speak");
+  if (speakBtn) {
+    speakBtn.addEventListener("click", () => {
+      sfx.pop();
+      const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
+      const puzzle = AppState.unscramblePuzzles[AppState.unscrambleIndex];
+      if (puzzle) {
+        voice.speak(puzzle.audio, AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed, speakBtn);
+      }
+    });
+  }
 }
 
 function renderUnscramblePuzzle() {
   if (!AppState.unscramblePuzzles || AppState.unscramblePuzzles.length === 0) return;
   const puzzle = AppState.unscramblePuzzles[AppState.unscrambleIndex];
-  document.getElementById("unscramble-lvl").textContent = AppState.unscrambleIndex + 1;
-  document.getElementById("unscramble-english-hint").textContent = `"${puzzle.en}"`;
+
+  const lvlEl = document.getElementById("unscramble-lvl");
+  const hintEl = document.getElementById("unscramble-english-hint");
+  if (lvlEl) lvlEl.textContent = AppState.unscrambleIndex + 1;
+  if (hintEl) hintEl.textContent = `"${puzzle.en}"`;
 
   const feedback = document.getElementById("unscramble-feedback");
-  feedback.classList.remove("show", "correct", "incorrect");
+  if (feedback) feedback.className = "feedback-banner";
 
   const dropZone = document.getElementById("word-drop-zone");
   const bankZone = document.getElementById("word-bank-zone");
+  if (!dropZone || !bankZone) return;
+
   dropZone.innerHTML = "";
   bankZone.innerHTML = "";
 
@@ -1122,9 +1874,11 @@ function renderUnscramblePuzzle() {
     dropZone.innerHTML = `<span class="placeholder-text">Click tiles below to build...</span>`;
   } else {
     AppState.assembledTokens.forEach((tok, pos) => {
-      const chip = document.createElement("div");
+      const chip = document.createElement("button");
+      chip.type = "button";
       chip.className = "word-chip in-drop-zone";
       chip.textContent = tok.text;
+      chip.title = "Click to remove";
       chip.addEventListener("click", () => {
         sfx.pop();
         AppState.assembledTokens.splice(pos, 1);
@@ -1137,13 +1891,14 @@ function renderUnscramblePuzzle() {
   const assembledIds = new Set(AppState.assembledTokens.map(t => t.id));
   allTokens.forEach(tok => {
     if (!assembledIds.has(tok.id)) {
-      const chip = document.createElement("div");
+      const chip = document.createElement("button");
+      chip.type = "button";
       chip.className = "word-chip";
       chip.textContent = tok.text;
       chip.addEventListener("click", () => {
         sfx.pop();
         AppState.assembledTokens.push(tok);
-        const speed = document.getElementById("audio-speed-select").value;
+        const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
         voice.speak(tok.text, AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
         renderUnscramblePuzzle();
       });
@@ -1170,45 +1925,67 @@ function checkUnscrambleAnswer() {
     AppState.unscrambleSolved++;
     saveStateForUser();
 
-    fbIcon.textContent = "🎉";
-    fbTitle.textContent = "Perfect! That's 100% correct!";
-    fbText.textContent = `Model: "${puzzle.audio}"`;
-    feedback.className = "feedback-banner show correct";
+    if (fbIcon) fbIcon.textContent = "🎉";
+    if (fbTitle) fbTitle.textContent = "Perfect! That's 100% correct!";
+    if (fbText) fbText.textContent = `Model: "${puzzle.audio}"`;
+    if (feedback) feedback.className = "feedback-banner show correct";
 
-    const speed = document.getElementById("audio-speed-select").value;
+    const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
     voice.speak(puzzle.audio, AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
   } else {
     sfx.incorrect();
-    fbIcon.textContent = "🤔";
-    fbTitle.textContent = "Almost! Check the order carefully.";
-    fbText.textContent = "Tip: Listen to the audio hint above!";
-    feedback.className = "feedback-banner show incorrect";
+    if (fbIcon) fbIcon.textContent = "🤔";
+    if (fbTitle) fbTitle.textContent = "Almost! Check the order carefully.";
+    if (fbText) fbText.textContent = "Tip: Listen to the audio hint above and try again!";
+    if (feedback) feedback.className = "feedback-banner show incorrect";
   }
 }
 
 // =============================================================================
-// 8. MATCHING PAIRS GAME
+// 11. MATCHING PAIRS GAME
 // =============================================================================
 
 function generateDynamicMatchingPairs(subject, category, count = 5) {
   if (subject === "math") {
-    const pairs = [
-      { left: "13 × 4", right: "52" },
-      { left: "14 × 5", right: "70" },
-      { left: "15 × 6", right: "90" },
-      { left: "12 × 8", right: "96" },
-      { left: "Odd + Odd", right: "Even" }
-    ];
-    return shuffle(pairs).slice(0, count).map((p, idx) => ({ ...p, id: idx + 1 }));
+    if (category === "tables") {
+      const pairs = [
+        { left: "13 × 4", right: "52" },
+        { left: "14 × 5", right: "70" },
+        { left: "15 × 6", right: "90" },
+        { left: "12 × 8", right: "96" },
+        { left: "11 × 7", right: "77" }
+      ];
+      return shuffle(pairs).slice(0, count).map((p, idx) => ({ ...p, id: idx + 1 }));
+    } else {
+      const pairs = [
+        { left: "Odd + Odd", right: "Even" },
+        { left: "Odd + Even", right: "Odd" },
+        { left: "Odd × Odd", right: "Odd" },
+        { left: "Even × Even", right: "Even" },
+        { left: "Even + Even", right: "Even" }
+      ];
+      return shuffle(pairs).slice(0, count).map((p, idx) => ({ ...p, id: idx + 1 }));
+    }
   } else {
-    const pairs = [
-      { left: "Français (Masc)", right: "Française (Fém)" },
-      { left: "Indien (Masc)", right: "Indienne (Fém)" },
-      { left: "Paris (Ville)", right: "à Paris" },
-      { left: "France (Pays)", right: "en France" },
-      { left: "du pain", right: "🥖 pain" }
-    ];
-    return shuffle(pairs).slice(0, count).map((p, idx) => ({ ...p, id: idx + 1 }));
+    if (category === "nationalities") {
+      const pairs = [
+        { left: "Français (Masc)", right: "Française (Fém)" },
+        { left: "Indien (Masc)", right: "Indienne (Fém)" },
+        { left: "Italien (Masc)", right: "Italienne (Fém)" },
+        { left: "Canadien (Masc)", right: "Canadienne (Fém)" },
+        { left: "Japonais (Masc)", right: "Japonaise (Fém)" }
+      ];
+      return shuffle(pairs).slice(0, count).map((p, idx) => ({ ...p, id: idx + 1 }));
+    } else {
+      const pairs = [
+        { left: "Paris (Ville)", right: "à Paris" },
+        { left: "France (Pays)", right: "en France" },
+        { left: "Canada (Pays Masc)", right: "au Canada" },
+        { left: "États-Unis (Pluriel)", right: "aux États-Unis" },
+        { left: "du pain", right: "🥖 pain (Masc)" }
+      ];
+      return shuffle(pairs).slice(0, count).map((p, idx) => ({ ...p, id: idx + 1 }));
+    }
   }
 }
 
@@ -1238,6 +2015,7 @@ function updateMatchingTabsForSubject() {
 
   tabs.forEach((tab, idx) => {
     const btn = document.createElement("button");
+    btn.type = "button";
     btn.className = `match-cat-btn ${idx === 0 ? "active" : ""}`;
     btn.textContent = tab.label;
     btn.dataset.matchCat = tab.key;
@@ -1279,11 +2057,16 @@ function setupMatchingBoard() {
   AppState.matchedPairsCount = 0;
   AppState.isMatchingBusy = false;
 
-  document.getElementById("match-found-count").textContent = "0";
-  document.getElementById("match-total-count").textContent = pairs.length;
-  document.getElementById("matching-complete-box").style.display = "none";
+  const foundEl = document.getElementById("match-found-count");
+  const totEl = document.getElementById("match-total-count");
+  const compBox = document.getElementById("matching-complete-box");
+
+  if (foundEl) foundEl.textContent = "0";
+  if (totEl) totEl.textContent = pairs.length;
+  if (compBox) compBox.style.display = "none";
 
   const grid = document.getElementById("matching-grid");
+  if (!grid) return;
   grid.innerHTML = "";
 
   const tiles = [];
@@ -1293,7 +2076,8 @@ function setupMatchingBoard() {
   });
 
   shuffle(tiles).forEach(tileData => {
-    const tile = document.createElement("div");
+    const tile = document.createElement("button");
+    tile.type = "button";
     tile.className = "match-tile";
     tile.textContent = tileData.text;
     tile.dataset.id = tileData.id;
@@ -1308,7 +2092,7 @@ function handleTileClick(tileElement, tileData, totalPairs) {
   if (tileElement.classList.contains("matched") || tileElement.classList.contains("selected")) return;
 
   sfx.pop();
-  const speed = document.getElementById("audio-speed-select").value;
+  const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
   voice.speak(tileData.text.split("(")[0], AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
 
   tileElement.classList.add("selected");
@@ -1326,13 +2110,16 @@ function handleTileClick(tileElement, tileData, totalPairs) {
         first.element.classList.add("matched");
         second.element.classList.add("matched");
         AppState.matchedPairsCount++;
-        document.getElementById("match-found-count").textContent = AppState.matchedPairsCount;
+
+        const foundEl = document.getElementById("match-found-count");
+        if (foundEl) foundEl.textContent = AppState.matchedPairsCount;
         addXP(15);
 
         if (AppState.matchedPairsCount === totalPairs) {
           confetti.blast();
           sfx.fanfare();
-          document.getElementById("matching-complete-box").style.display = "flex";
+          const compBox = document.getElementById("matching-complete-box");
+          if (compBox) compBox.style.display = "flex";
         }
         AppState.matchingSelected = [];
         AppState.isMatchingBusy = false;
@@ -1354,21 +2141,25 @@ function handleTileClick(tileElement, tileData, totalPairs) {
 }
 
 function initMatchingGame() {
-  document.getElementById("btn-matching-replay-cat").addEventListener("click", () => {
-    sfx.pop();
-    setupMatchingBoard();
-  });
+  const replayBtn = document.getElementById("btn-matching-replay-cat");
+  if (replayBtn) {
+    replayBtn.addEventListener("click", () => {
+      sfx.pop();
+      setupMatchingBoard();
+    });
+  }
 
-  document.getElementById("btn-match-next-cat").addEventListener("click", () => {
-    sfx.pop();
-    updateMatchingTabsForSubject();
-  });
-
-  updateMatchingTabsForSubject();
+  const nextBtn = document.getElementById("btn-match-next-cat");
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      sfx.pop();
+      updateMatchingTabsForSubject();
+    });
+  }
 }
 
 // =============================================================================
-// 9. FLASHCARDS CONTROLLER
+// 12. 3D FLASHCARDS CONTROLLER
 // =============================================================================
 
 const STATIC_FLASHCARDS = {
@@ -1376,30 +2167,38 @@ const STATIC_FLASHCARDS = {
     verbes: [
       { emoji: "⏰", fr: "se réveiller", en: "to wake up", tag: "Verbe Pronominal", exampleFr: "Je me réveille à sept heures.", exampleEn: "I wake up at seven o'clock." },
       { emoji: "🛏️", fr: "se lever", en: "to get out of bed", tag: "Verbe Pronominal", exampleFr: "Luc se lève aussitôt.", exampleEn: "Luc gets up right away." },
-      { emoji: "🚿", fr: "se doucher", en: "to take a shower", tag: "Verbe Pronominal", exampleFr: "Tu te douches avant l'école.", exampleEn: "You take a shower before school." }
+      { emoji: "🚿", fr: "se doucher", en: "to take a shower", tag: "Verbe Pronominal", exampleFr: "Tu te douches avant l'école.", exampleEn: "You take a shower before school." },
+      { emoji: "🪥", fr: "se brosser les dents", en: "to brush teeth", tag: "Verbe Pronominal", exampleFr: "Aezza se brosse les dents après le repas.", exampleEn: "Aezza brushes her teeth after the meal." }
     ],
     conjugaison: [
-      { emoji: "🚶", fr: "Aller (Je vais, Tu vas)", en: "To go", tag: "Verbe Irrégulier", exampleFr: "Nous allons à l'école ensemble.", exampleEn: "We go to school together." }
+      { emoji: "🚶", fr: "Aller (Je vais, Tu vas)", en: "To go", tag: "Verbe Irrégulier", exampleFr: "Nous allons à l'école ensemble.", exampleEn: "We go to school together." },
+      { emoji: "❤️", fr: "Aimer (J'aime, Tu aimes)", en: "To like / love", tag: "Verbe en -ER", exampleFr: "J'aime le chocolat chaud.", exampleEn: "I love hot chocolate." }
     ],
     nationalites: [
-      { emoji: "🇫🇷", fr: "Français / Française", en: "French (Masc / Fem)", tag: "Nationalité", exampleFr: "Paul est français, Sophie est française.", exampleEn: "Paul is French, Sophie is French." }
+      { emoji: "🇫🇷", fr: "Français / Française", en: "French (Masc / Fem)", tag: "Nationalité", exampleFr: "Paul est français, Sophie est française.", exampleEn: "Paul is French, Sophie is French." },
+      { emoji: "🇮🇳", fr: "Indien / Indienne", en: "Indian (Masc / Fem)", tag: "Nationalité", exampleFr: "Aezza est indienne.", exampleEn: "Aezza is Indian." }
     ],
     repas: [
-      { emoji: "🥞", fr: "Le petit déjeuner", en: "Breakfast", tag: "Vocabulaire Repas", exampleFr: "Au petit déjeuner, je bois du lait.", exampleEn: "For breakfast, I drink milk." }
+      { emoji: "🥞", fr: "Le petit déjeuner", en: "Breakfast", tag: "Vocabulaire Repas", exampleFr: "Au petit déjeuner, je bois du lait.", exampleEn: "For breakfast, I drink milk." },
+      { emoji: "🥗", fr: "Le déjeuner", en: "Lunch", tag: "Vocabulaire Repas", exampleFr: "À midi, nous mangeons de la salade.", exampleEn: "At noon, we eat salad." }
     ]
   },
   math: {
     pemdas: [
-      { emoji: "⚡", fr: "PEMDAS Rule", en: "Order of Operations", tag: "Unit 3 • Operations", exampleFr: "P: Parentheses -> M/D: Multiply/Divide -> A/S: Add/Subtract", exampleEn: "Solve brackets first!" }
+      { emoji: "⚡", fr: "PEMDAS Rule", en: "Order of Operations", tag: "Unit 3 • Operations", exampleFr: "P: Parentheses -> M/D: Multiply/Divide -> A/S: Add/Subtract", exampleEn: "Solve brackets first!" },
+      { emoji: "🔢", fr: "Even & Odd Patterns", en: "Number Generalization", tag: "Unit 3 • Generalization", exampleFr: "Odd + Odd = Even | Odd × Odd = Odd", exampleEn: "3 + 5 = 8 (Even)" }
     ],
     tables: [
-      { emoji: "✖️", fr: "13 Times Table", en: "13, 26, 39, 52, 65, 78, 91, 104, 117, 130", tag: "Unit 5 • Times Tables", exampleFr: "13 × 4 = 52 | 13 × 7 = 91", exampleEn: "13 is 10 + 3." }
+      { emoji: "✖️", fr: "13 Times Table", en: "13, 26, 39, 52, 65, 78, 91, 104, 117, 130", tag: "Unit 5 • Times Tables", exampleFr: "13 × 4 = 52 | 13 × 7 = 91", exampleEn: "13 is 10 + 3." },
+      { emoji: "✖️", fr: "14 & 15 Times Tables", en: "14 × 5 = 70 | 15 × 6 = 90", tag: "Unit 5 • Times Tables", exampleFr: "15 × 4 = 60 | 14 × 4 = 56", exampleEn: "Double 15 is 30." }
     ],
     placevalue: [
-      { emoji: "📊", fr: "4-Digit Place Value", en: "Thousands, Hundreds, Tens, Ones", tag: "1.3 • Place Value", exampleFr: "In 6,482: 6000 + 400 + 80 + 2", exampleEn: "Place of 4 is Hundreds." }
+      { emoji: "📊", fr: "4-Digit Place Value", en: "Thousands, Hundreds, Tens, Ones", tag: "1.3 • Place Value", exampleFr: "In 6,482: 6000 + 400 + 80 + 2", exampleEn: "Place of 4 is Hundreds." },
+      { emoji: "❄️", fr: "Negative Numbers", en: "Below Zero on Number Line", tag: "1.3 • Number Line", exampleFr: "-5 is less than -2", exampleEn: "Colder temperatures below zero." }
     ],
     time: [
-      { emoji: "⏰", fr: "Quarter Past / Quarter To", en: ":15 (Quarter Past) & :45 (Quarter To)", tag: "2.1 • Clock Reading", exampleFr: "Quarter past 6 = 6:15", exampleEn: "Quarter = 15 minutes." }
+      { emoji: "⏰", fr: "Quarter Past / Quarter To", en: ":15 (Quarter Past) & :45 (Quarter To)", tag: "2.1 • Clock Reading", exampleFr: "Quarter past 6 = 6:15", exampleEn: "Quarter = 15 minutes." },
+      { emoji: "📅", fr: "Days to Hours Conversion", en: "1 Day = 24 Hours", tag: "2.1 • Conversions", exampleFr: "3 Days = 3 × 24 = 72 Hours", exampleEn: "Multiply days by 24." }
     ]
   }
 };
@@ -1435,6 +2234,7 @@ function updateFlashcardTabsForSubject() {
 
   tabs.forEach((tab, idx) => {
     const btn = document.createElement("button");
+    btn.type = "button";
     btn.className = `fc-tab ${idx === 0 ? "active" : ""}`;
     btn.textContent = tab.label;
     btn.dataset.fccat = tab.key;
@@ -1444,7 +2244,8 @@ function updateFlashcardTabsForSubject() {
       btn.classList.add("active");
       AppState.flashcardCategory = tab.key;
       AppState.flashcardIndex = 0;
-      document.getElementById("flashcard-element").classList.remove("flipped");
+      const fcEl = document.getElementById("flashcard-element");
+      if (fcEl) fcEl.classList.remove("flipped");
       renderFlashcard();
     });
     container.appendChild(btn);
@@ -1463,7 +2264,7 @@ function renderFlashcard() {
     if (!catList || !catList[AppState.flashcardCategory]) return;
     const list = catList[AppState.flashcardCategory];
     totalCount = list.length;
-    card = list[AppState.flashcardIndex];
+    card = list[AppState.flashcardIndex % list.length];
   } else {
     if (AppState.flashcardCategory === "phonics-cards") {
       const p = FAYRA_DB.phonics[AppState.flashcardIndex % FAYRA_DB.phonics.length];
@@ -1485,7 +2286,7 @@ function renderFlashcard() {
         en: "Sing-Along Rhyme",
         tag: "Prep-I Rhymes",
         exampleFr: r.lyrics,
-        exampleEn: "Sing aloud with Bunny Bella!"
+        exampleEn: "Sing aloud with Bella Bunny!"
       };
     } else if (AppState.flashcardCategory === "shapes-cards") {
       const s = FAYRA_DB.shapes[AppState.flashcardIndex % FAYRA_DB.shapes.length];
@@ -1514,63 +2315,85 @@ function renderFlashcard() {
 
   if (!card) return;
 
-  document.getElementById("fc-counter").textContent = `${AppState.flashcardIndex + 1} / ${totalCount}`;
-  document.getElementById("fc-emoji").textContent = card.emoji;
-  document.getElementById("fc-french").textContent = card.fr;
-  document.getElementById("fc-english").textContent = card.en;
-  document.getElementById("fc-tag").textContent = card.tag;
-  document.getElementById("fc-example-fr").textContent = `"${card.exampleFr}"`;
-  document.getElementById("fc-example-en").textContent = `"${card.exampleEn}"`;
+  const counterEl = document.getElementById("fc-counter");
+  const emojiEl = document.getElementById("fc-emoji");
+  const frEl = document.getElementById("fc-french");
+  const enEl = document.getElementById("fc-english");
+  const tagEl = document.getElementById("fc-tag");
+  const exFrEl = document.getElementById("fc-example-fr");
+  const exEnEl = document.getElementById("fc-example-en");
+
+  if (counterEl) counterEl.textContent = `${(AppState.flashcardIndex % totalCount) + 1} / ${totalCount}`;
+  if (emojiEl) emojiEl.textContent = card.emoji;
+  if (frEl) frEl.textContent = card.fr;
+  if (enEl) enEl.textContent = card.en;
+  if (tagEl) tagEl.textContent = card.tag;
+  if (exFrEl) exFrEl.textContent = `"${card.exampleFr}"`;
+  if (exEnEl) exEnEl.textContent = `"${card.exampleEn}"`;
 }
 
 function initFlashcards() {
   const fcElement = document.getElementById("flashcard-element");
 
   const toggleFlip = (e) => {
-    if (e.target.closest(".fc-speaker-btn")) return;
+    if (e && e.target && e.target.closest(".fc-speaker-btn")) return;
     sfx.pop();
-    fcElement.classList.toggle("flipped");
+    if (fcElement) fcElement.classList.toggle("flipped");
   };
 
-  fcElement.addEventListener("click", toggleFlip);
-  document.getElementById("fc-flip-btn").addEventListener("click", toggleFlip);
-  document.getElementById("fc-flip-back-btn").addEventListener("click", toggleFlip);
+  if (fcElement) fcElement.addEventListener("click", toggleFlip);
 
-  document.getElementById("btn-fc-prev").addEventListener("click", () => {
-    sfx.pop();
-    AppState.flashcardIndex = Math.max(0, AppState.flashcardIndex - 1);
-    fcElement.classList.remove("flipped");
-    renderFlashcard();
-  });
+  const flipBtn = document.getElementById("fc-flip-btn");
+  const flipBackBtn = document.getElementById("fc-flip-back-btn");
+  if (flipBtn) flipBtn.addEventListener("click", toggleFlip);
+  if (flipBackBtn) flipBackBtn.addEventListener("click", toggleFlip);
 
-  document.getElementById("btn-fc-next").addEventListener("click", () => {
-    sfx.pop();
-    AppState.flashcardIndex++;
-    fcElement.classList.remove("flipped");
-    renderFlashcard();
-  });
+  const prevBtn = document.getElementById("btn-fc-prev");
+  const nextBtn = document.getElementById("btn-fc-next");
 
-  document.getElementById("fc-speaker-btn").addEventListener("click", (e) => {
-    e.stopPropagation();
-    sfx.pop();
-    const speed = document.getElementById("audio-speed-select").value;
-    const txt = document.getElementById("fc-french").textContent;
-    voice.speak(txt, AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
-  });
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      sfx.pop();
+      AppState.flashcardIndex = Math.max(0, AppState.flashcardIndex - 1);
+      if (fcElement) fcElement.classList.remove("flipped");
+      renderFlashcard();
+    });
+  }
 
-  document.getElementById("fc-example-speaker-btn").addEventListener("click", (e) => {
-    e.stopPropagation();
-    sfx.pop();
-    const speed = document.getElementById("audio-speed-select").value;
-    const txt = document.getElementById("fc-example-fr").textContent.replace(/"/g, "");
-    voice.speak(txt, AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
-  });
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      sfx.pop();
+      AppState.flashcardIndex++;
+      if (fcElement) fcElement.classList.remove("flipped");
+      renderFlashcard();
+    });
+  }
 
-  updateFlashcardTabsForSubject();
+  const spkBtn = document.getElementById("fc-speaker-btn");
+  if (spkBtn) {
+    spkBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      sfx.pop();
+      const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
+      const txt = document.getElementById("fc-french") ? document.getElementById("fc-french").textContent : "";
+      voice.speak(txt, AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed, spkBtn);
+    });
+  }
+
+  const exSpkBtn = document.getElementById("fc-example-speaker-btn");
+  if (exSpkBtn) {
+    exSpkBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      sfx.pop();
+      const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
+      const txt = document.getElementById("fc-example-fr") ? document.getElementById("fc-example-fr").textContent.replace(/"/g, "") : "";
+      voice.speak(txt, AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed, exSpkBtn);
+    });
+  }
 }
 
 // =============================================================================
-// 10. MOCK EXAM & ASSESSMENT CONTROLLER
+// 13. MOCK EXAM & FULL ASSESSMENT CONTROLLER
 // =============================================================================
 
 function updateMockExamIntroForSubject() {
@@ -1584,32 +2407,43 @@ function updateMockExamIntroForSubject() {
     if (title) title.textContent = isMath ? "Grand Mathematics Mock Exam 📝" : "Grand Examen Blanc de Français 📝";
     if (desc) desc.textContent = isMath
       ? "This 15-question simulated assessment covers Unit 3 (Operations, Estimation, PEMDAS), Unit 5 (Tables 2-15, Factors, Multiples), Place Value, Negative Numbers, and Time!"
-      : "Cet examen simule ton contrôle de mi-trimestre ! Il couvre les 3 chapitres, les verbes pronominaux, la conjugaison, les nationalités, les prépositions et les articles partitifs.";
+      : "Cet examen simule ton contrôle de mi-trimestre ! Il couvre les 4 chapitres : verbes pronominaux, prépositions de lieux, articles partitifs et conjugaison.";
     if (badge) badge.textContent = isMath ? "🎯 Grade 3 Summative Assessment 1 Simulation" : "🎯 Évaluation Complète de Mi-Trimestre";
   } else {
-    if (title) title.textContent = "Fayra's Prep-I Summative Assessment 🎈";
-    if (desc) desc.textContent = "10 Fun Questions covering Phonics Aa-Oo, Sing-Along Rhymes, Shapes, Counting 1-10, Water Animals, and Safe vs Unsafe Touch!";
+    if (title) title.textContent = "Fayra's Prep-I Star Assessment 🎈⭐";
+    if (desc) desc.textContent = "10 Fun Questions covering Phonics Aa-Oo, Sing-Along Rhymes, Shapes, Counting 1-10, Water Animals, and Safety Rules!";
     if (badge) badge.textContent = "🎯 Little Wings Prep-I SA-1 (Baldwin International School)";
   }
 }
 
 function initMockExam() {
-  document.getElementById("btn-start-mock-exam").addEventListener("click", () => {
-    sfx.pop();
-    startMockExam();
-  });
+  const startBtn = document.getElementById("btn-start-mock-exam");
+  if (startBtn) {
+    startBtn.addEventListener("click", () => {
+      sfx.pop();
+      startMockExam();
+    });
+  }
 
-  document.getElementById("btn-review-exam").addEventListener("click", () => {
-    sfx.pop();
-    startMockExam();
-  });
+  const reviewBtn = document.getElementById("btn-review-exam");
+  if (reviewBtn) {
+    reviewBtn.addEventListener("click", () => {
+      sfx.pop();
+      startMockExam();
+    });
+  }
 
-  document.getElementById("btn-exam-to-home").addEventListener("click", () => {
-    sfx.pop();
-    document.getElementById("exam-intro-card").style.display = "flex";
-    document.getElementById("exam-results-card").style.display = "none";
-    showView("view-adventure");
-  });
+  const homeBtn = document.getElementById("btn-exam-to-home");
+  if (homeBtn) {
+    homeBtn.addEventListener("click", () => {
+      sfx.pop();
+      const introCard = document.getElementById("exam-intro-card");
+      const resCard = document.getElementById("exam-results-card");
+      if (introCard) introCard.style.display = "flex";
+      if (resCard) resCard.style.display = "none";
+      showView("view-adventure");
+    });
+  }
 }
 
 function startMockExam() {
@@ -1637,9 +2471,13 @@ function startMockExam() {
   AppState.quizAnswersHistory = [];
   AppState.isMockExam = true;
 
-  document.getElementById("quiz-topic-title").textContent = isAezza ? "Summative Assessment 1 Exam 📝" : "Prep-I Mock Assessment 🎈";
-  document.getElementById("exam-intro-card").style.display = "none";
-  document.getElementById("exam-results-card").style.display = "none";
+  const topicTitle = document.getElementById("quiz-topic-title");
+  if (topicTitle) topicTitle.textContent = isAezza ? "Summative Assessment 1 Exam 📝" : "Prep-I Mock Assessment 🎈";
+
+  const introCard = document.getElementById("exam-intro-card");
+  const resCard = document.getElementById("exam-results-card");
+  if (introCard) introCard.style.display = "none";
+  if (resCard) resCard.style.display = "none";
 
   showView("view-quiz");
   renderQuizQuestion();
@@ -1647,12 +2485,14 @@ function startMockExam() {
 
 function showExamResults() {
   showView("view-mock-exam");
-  document.getElementById("exam-intro-card").style.display = "none";
+  const introCard = document.getElementById("exam-intro-card");
   const resultsCard = document.getElementById("exam-results-card");
-  resultsCard.style.display = "flex";
+  if (introCard) introCard.style.display = "none";
+  if (resultsCard) resultsCard.style.display = "flex";
 
   const finalScore = AppState.quizScore;
-  document.getElementById("exam-final-score").textContent = finalScore;
+  const scoreNum = document.getElementById("exam-final-score");
+  if (scoreNum) scoreNum.textContent = finalScore;
 
   const title = document.getElementById("exam-grade-title");
   const msg = document.getElementById("exam-grade-msg");
@@ -1663,56 +2503,62 @@ function showExamResults() {
 
   const isAezza = AppState.currentUser === "aezza";
   if (finalScore >= (isAezza ? 13 : 8)) {
-    title.textContent = `Outstanding! Star Performer ${isAezza ? "Aezza" : "Fayra"}! 🌟👑`;
-    msg.textContent = "You are ready to get 100% on your school mid-term exam!";
+    if (title) title.textContent = `Outstanding! Star Performer ${isAezza ? "Aezza" : "Fayra"}! 🌟👑`;
+    if (msg) msg.textContent = "You are completely ready to get 100% on your school mid-term exam!";
   } else {
-    title.textContent = "Great Job! Keep practicing! 💪";
-    msg.textContent = "Review each topic in Adventure Mode to prepare for the test!";
+    if (title) title.textContent = "Great Effort! Keep practicing! 💪";
+    if (msg) msg.textContent = "Review each unit in Adventure Mode to prepare for the test!";
   }
 
   const reviewBox = document.getElementById("exam-review-box");
-  reviewBox.innerHTML = `<h3 style='margin-bottom:8px;'>Question Breakdown & Explanations:</h3>`;
+  if (reviewBox) {
+    reviewBox.innerHTML = `<h3 style='margin-bottom:12px; font-family:var(--font-headline); font-size:18px;'>📋 Detailed Question Review & Audio Explanations:</h3>`;
 
-  AppState.quizAnswersHistory.forEach((hist, i) => {
-    const item = document.createElement("div");
-    item.className = `review-item ${hist.isCorrect ? "pass" : "fail"}`;
-    item.innerHTML = `
-      <div class="review-q">Question ${i + 1}: ${hist.question}</div>
-      <div class="review-ans">Your answer: <strong>${hist.chosen}</strong> ${hist.isCorrect ? "✅" : "❌"}</div>
-      ${!hist.isCorrect ? `<div class="review-correct">✅ Correct answer: <strong>${hist.correctAnswer}</strong></div>` : ""}
-      <div class="review-exp-row" style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:4px;">
-        <div style="font-size:13px; color:#5e4f71; font-style:italic; flex:1;">💡 ${hist.explanation}</div>
-        <button class="audio-btn-mini review-speak-btn" style="padding:4px 10px; font-size:11px;" title="Listen to explanation">
-          🔊 Hear Explanation
-        </button>
-      </div>
-    `;
+    AppState.quizAnswersHistory.forEach((hist, i) => {
+      const item = document.createElement("div");
+      item.className = `review-item ${hist.isCorrect ? "pass" : "fail"}`;
+      item.innerHTML = `
+        <div class="review-q">Question ${i + 1}: ${hist.question}</div>
+        <div class="review-ans">Your answer: <strong>${hist.chosen}</strong> ${hist.isCorrect ? "✅" : "❌"}</div>
+        ${!hist.isCorrect ? `<div class="review-correct">✅ Correct answer: <strong>${hist.correctAnswer}</strong></div>` : ""}
+        <div class="review-exp-row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:6px; flex-wrap:wrap;">
+          <div style="font-size:13px; color:#5e4f71; font-style:italic; flex:1;">💡 ${hist.explanation}</div>
+          <button type="button" class="audio-btn-mini review-speak-btn" style="padding:6px 12px; font-size:12px;" title="Listen to explanation">
+            🔊 Hear Explanation
+          </button>
+        </div>
+      `;
 
-    const speakBtn = item.querySelector(".review-speak-btn");
-    if (speakBtn) {
-      speakBtn.onclick = () => {
-        sfx.pop();
-        const curSpeed = document.getElementById("audio-speed-select").value;
-        const msgText = `For question ${i + 1}: The correct answer is ${hist.correctAnswer}. ${hist.explanation}`;
-        voice.speak(msgText, isAezza && AppState.currentSubject === "french" ? "fr-FR" : "en-US", curSpeed);
-      };
-    }
+      const speakBtn = item.querySelector(".review-speak-btn");
+      if (speakBtn) {
+        speakBtn.addEventListener("click", () => {
+          sfx.pop();
+          const curSpeed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
+          const msgText = `For question ${i + 1}: The correct answer is ${hist.correctAnswer}. ${hist.explanation}`;
+          voice.speak(msgText, isAezza && AppState.currentSubject === "french" ? "fr-FR" : "en-US", curSpeed, speakBtn);
+        });
+      }
 
-    reviewBox.appendChild(item);
-  });
+      reviewBox.appendChild(item);
+    });
+  }
 }
 
 // =============================================================================
-// 11. TROPHIES VIEW CONTROLLER (PER STUDENT)
+// 14. TROPHIES VIEW CONTROLLER (PER STUDENT)
 // =============================================================================
 
 function renderTrophiesView() {
   const container = document.getElementById("trophies-content-container");
   const headline = document.getElementById("trophies-headline");
+  const subheadline = document.getElementById("trophies-subheadline");
   if (!container) return;
 
   const isAezza = AppState.currentUser === "aezza";
   if (headline) headline.textContent = isAezza ? "Aezza's Trophy Hall of Fame 🏆" : "Fayra's Star Trophy Room 🎈🏆";
+  if (subheadline) subheadline.textContent = isAezza
+    ? "Unlock shiny badges as you complete French & Math quizzes and master Grade 3 topics!"
+    : "Collect stars and badges as you sing rhymes, count numbers, and learn shapes!";
 
   container.innerHTML = "";
 
@@ -1726,7 +2572,7 @@ function renderTrophiesView() {
         <div class="trophy-card unlocked"><div class="trophy-icon">🎨</div><h3 class="trophy-name">Maître des Verbes</h3><p class="trophy-desc">Conjugation & Hobbies.</p><span class="trophy-status">Unlocked ✨</span></div>
       </div>
 
-      <div class="trophy-section-heading" style="margin-top:24px;">🔢 Mathematics Quest Badges (Grade 3 SA-1)</div>
+      <div class="trophy-section-heading" style="margin-top:28px;">🔢 Mathematics Quest Badges (Grade 3 SA-1)</div>
       <div class="trophies-grid">
         <div class="trophy-card unlocked"><div class="trophy-icon">➕</div><h3 class="trophy-name">Calculation Wizard</h3><p class="trophy-desc">Addition, Subtraction & Estimation.</p><span class="trophy-status">Unlocked ✨</span></div>
         <div class="trophy-card unlocked"><div class="trophy-icon">⚡</div><h3 class="trophy-name">PEMDAS Guru</h3><p class="trophy-desc">Order of Operations master.</p><span class="trophy-status">Unlocked ✨</span></div>
@@ -1739,16 +2585,16 @@ function renderTrophiesView() {
       <div class="trophy-section-heading">🔤 English Phonics & Rhymes Badges</div>
       <div class="trophies-grid">
         <div class="trophy-card unlocked"><div class="trophy-icon">🔤</div><h3 class="trophy-name">Alphabet Star</h3><p class="trophy-desc">Mastered Letter Sounds Aa to Oo!</p><span class="trophy-status">Unlocked ✨</span></div>
-        <div class="trophy-card unlocked"><div class="trophy-icon">🎶</div><h3 class="trophy-name">Rhyme Singer</h3><p class="trophy-desc">Sang all 4 preschool rhymes with Bunny Bella!</p><span class="trophy-status">Unlocked ✨</span></div>
+        <div class="trophy-card unlocked"><div class="trophy-icon">🎶</div><h3 class="trophy-name">Rhyme Singer</h3><p class="trophy-desc">Sang all 4 preschool rhymes with Bella Bunny!</p><span class="trophy-status">Unlocked ✨</span></div>
       </div>
 
-      <div class="trophy-section-heading" style="margin-top:24px;">🔢 Math Magic & Shapes Badges</div>
+      <div class="trophy-section-heading" style="margin-top:28px;">🔢 Math Magic & Shapes Badges</div>
       <div class="trophies-grid">
         <div class="trophy-card unlocked"><div class="trophy-icon">🔢</div><h3 class="trophy-name">Counting Champion</h3><p class="trophy-desc">Counted objects 1 to 10 with ease!</p><span class="trophy-status">Unlocked ✨</span></div>
         <div class="trophy-card unlocked"><div class="trophy-icon">🔺</div><h3 class="trophy-name">Shape Explorer</h3><p class="trophy-desc">Identified Circle, Square, Triangle, Rectangle & Oval!</p><span class="trophy-status">Unlocked ✨</span></div>
       </div>
 
-      <div class="trophy-section-heading" style="margin-top:24px;">🌍 General Awareness Badges</div>
+      <div class="trophy-section-heading" style="margin-top:28px;">🌍 General Awareness Badges</div>
       <div class="trophies-grid">
         <div class="trophy-card unlocked"><div class="trophy-icon">🐬</div><h3 class="trophy-name">Ocean & Insect Friend</h3><p class="trophy-desc">Knows water animals and tiny insects!</p><span class="trophy-status">Unlocked ✨</span></div>
         <div class="trophy-card unlocked"><div class="trophy-icon">🛑</div><h3 class="trophy-name">Safety Hero</h3><p class="trophy-desc">Knows safe toys vs dangerous hot things!</p><span class="trophy-status">Unlocked ✨</span></div>
@@ -1758,7 +2604,7 @@ function renderTrophiesView() {
 }
 
 // =============================================================================
-// 12. INITIALIZATION & NAVIGATION
+// 15. INITIALIZATION & NAVIGATION
 // =============================================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1791,7 +2637,10 @@ function showView(viewId) {
     panel.classList.remove("active");
   });
   const target = document.getElementById(viewId);
-  if (target) target.classList.add("active");
+  if (target) {
+    target.classList.add("active");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 }
 
 function initMascot() {
@@ -1823,22 +2672,23 @@ function initMascot() {
       quote = pickRandom([
         "A is for Apple 🍎! B is for Ball ⚽! You are so smart Fayra!",
         "Mary had a little lamb, its fleece was white as snow! 🐑",
-        "A circle is round like a ball 🔴!",
-        "Dolphin 🐬 and fish 🐟 love swimming in the blue sea!",
-        "You are going to be the star of Prep-I Fayra! 🎈🌟"
+        "A circle is round like a ball 🔴 with no corners!",
+        "Dolphin 🐬 and fish 🐟 love swimming in the deep blue sea!",
+        "You are going to be the superstar of Prep-I Fayra! 🎈🌟"
       ]);
     }
 
     if (mascotText) mascotText.textContent = `"${quote}"`;
     const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
-    voice.speak(quote, isAezza && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
+    voice.speak(quote, isAezza && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed, voiceBtn);
   };
 
   if (voiceBtn && mascotText) {
     voiceBtn.addEventListener("click", () => {
       sfx.pop();
       const speed = document.getElementById("audio-speed-select") ? document.getElementById("audio-speed-select").value : 0.9;
-      voice.speak(mascotText.textContent.replace(/"/g, ""), AppState.currentUser === "aezza" && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed);
+      const isAezza = AppState.currentUser === "aezza";
+      voice.speak(mascotText.textContent.replace(/"/g, ""), isAezza && AppState.currentSubject === "french" ? "fr-FR" : "en-US", speed, voiceBtn);
     });
   }
 

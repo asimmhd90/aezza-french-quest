@@ -2,9 +2,9 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aezza's Learning Quest 🌟 - French & Mathematics</title>
-  <!-- Google Fonts: Plus Jakarta Sans & Quicksand as defined in Stitch Design System -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Sisters' Learning Quest 🌟🎈 - Aezza & Fayra</title>
+  <!-- Google Fonts: Plus Jakarta Sans & Quicksand -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -13,19 +13,19 @@
 </head>
 <body>
   <!-- Confetti Canvas -->
-  <canvas id="confetti-canvas"></canvas>
+  <canvas id="confetti-canvas" aria-hidden="true"></canvas>
 
   <!-- Toast Notification Floating Element -->
-  <div id="toast-container" class="toast-container"></div>
+  <div id="toast-container" class="toast-container" role="status" aria-live="polite"></div>
 
   <div id="app-container">
     <!-- Top Header / Gamification Bar -->
     <header class="app-header" id="app-header">
       <div class="header-left">
-        <div class="avatar-badge" id="avatar-badge" title="Click on Coco!">
+        <button type="button" class="avatar-badge" id="avatar-badge" title="Click on Mascot!" aria-label="Mascot Mascot">
           <span class="avatar-emoji" id="avatar-emoji">🦊</span>
           <span class="avatar-beret" id="avatar-accessory">🥖</span>
-        </div>
+        </button>
         <div class="user-greeting">
           <span class="greeting-sub" id="greeting-sub">Bienvenue !</span>
           <h2 class="user-name" id="display-user-name">Aezza 🌟</h2>
@@ -33,18 +33,18 @@
       </div>
 
       <div class="header-right-group" id="header-authenticated-stats">
-        <div class="header-stats">
-          <div class="stat-pill streak-pill" title="Consecutive training days">
-            <span class="stat-icon">🔥</span>
+        <div class="header-stats" role="region" aria-label="Player Statistics">
+          <div class="stat-pill streak-pill" title="Consecutive training days" aria-label="Daily Streak">
+            <span class="stat-icon" aria-hidden="true">🔥</span>
             <span class="stat-value" id="stat-streak">5</span>
             <span class="stat-label">Streak</span>
           </div>
-          <div class="stat-pill star-pill" title="Magic stars earned">
-            <span class="stat-icon">⭐</span>
+          <div class="stat-pill star-pill" title="Magic stars earned" aria-label="Magic Stars">
+            <span class="stat-icon" aria-hidden="true">⭐</span>
             <span class="stat-value" id="stat-stars">120</span>
           </div>
-          <div class="stat-pill xp-pill" title="Experience points">
-            <span class="stat-icon">⚡</span>
+          <div class="stat-pill xp-pill" title="Experience points" aria-label="XP Points">
+            <span class="stat-icon" aria-hidden="true">⚡</span>
             <span class="stat-value" id="stat-xp">350</span>
             <span class="stat-label">XP</span>
           </div>
@@ -52,71 +52,75 @@
 
         <!-- Family Profile Pill, Switcher & Logout -->
         <div class="github-profile-pill" id="github-profile-pill">
-          <span class="family-badge-icon" id="header-user-avatar">🌟</span>
+          <span class="family-badge-icon" id="header-user-avatar" aria-hidden="true">🌟</span>
           <span class="github-user-handle" id="header-user-label">Aezza (Grade 3)</span>
-          <button class="btn-switch-user" id="btn-switch-user" title="Switch between Aezza and Fayra">🔄 Switch Sister</button>
-          <button class="btn-logout" id="btn-logout" title="Lock App / Se Déconnecter">🔒 Lock</button>
+          <button type="button" class="btn-switch-user" id="btn-switch-user" title="Switch between Aezza and Fayra" aria-label="Switch sister profile">
+            <span>🔄 Switch Sister</span>
+          </button>
+          <button type="button" class="btn-logout" id="btn-logout" title="Lock App / Se Déconnecter" aria-label="Lock application">
+            <span>🔒 Lock</span>
+          </button>
         </div>
       </div>
     </header>
 
     <!-- DYNAMIC SUBJECT SWITCHER BAR -->
-    <div class="subject-switcher-container" id="subject-switcher-container">
+    <div class="subject-switcher-container" id="subject-switcher-container" role="region" aria-label="Subject Selector">
       <div class="subject-switcher" id="subject-switcher-buttons">
         <!-- Dynamically populated based on active user (Aezza or Fayra) -->
       </div>
     </div>
 
     <!-- Main Navigation Bar (Hidden when locked) -->
-    <nav class="main-nav" id="main-nav">
-      <button class="nav-btn active" data-tab="adventure">
-        <span class="nav-icon">🗺️</span>
+    <nav class="main-nav" id="main-nav" aria-label="Main Navigation">
+      <button type="button" class="nav-btn active" data-tab="adventure" aria-label="Units and Adventure">
+        <span class="nav-icon" aria-hidden="true">🗺️</span>
         <span id="nav-label-adventure">Aventure / Units</span>
       </button>
-      <button class="nav-btn" data-tab="unscramble">
-        <span class="nav-icon">🧩</span>
+      <button type="button" class="nav-btn" data-tab="unscramble" aria-label="Word and Equation Builder">
+        <span class="nav-icon" aria-hidden="true">🧩</span>
         <span id="nav-label-unscramble">Mots / Equations</span>
       </button>
-      <button class="nav-btn" data-tab="matching">
-        <span class="nav-icon">🎯</span>
+      <button type="button" class="nav-btn" data-tab="matching" aria-label="Magic Pairs Matching">
+        <span class="nav-icon" aria-hidden="true">🎯</span>
         <span id="nav-label-matching">Paires Magiques</span>
       </button>
-      <button class="nav-btn" data-tab="flashcards">
-        <span class="nav-icon">🎴</span>
+      <button type="button" class="nav-btn" data-tab="flashcards" aria-label="Memory Flashcards">
+        <span class="nav-icon" aria-hidden="true">🎴</span>
         <span id="nav-label-flashcards">Cartes Mémo</span>
       </button>
-      <button class="nav-btn" data-tab="mock-exam">
-        <span class="nav-icon">📝</span>
+      <button type="button" class="nav-btn" data-tab="mock-exam" aria-label="Simulated Mock Exam">
+        <span class="nav-icon" aria-hidden="true">📝</span>
         <span id="nav-label-exam">Examen Blanc</span>
       </button>
-      <button class="nav-btn" data-tab="trophies">
-        <span class="nav-icon">🏆</span>
+      <button type="button" class="nav-btn" data-tab="trophies" aria-label="Trophies and Badges">
+        <span class="nav-icon" aria-hidden="true">🏆</span>
         <span>Trophées / Badges</span>
       </button>
     </nav>
 
     <!-- Mascot Bubble Banner (Hidden when locked) -->
-    <div class="mascot-bar" id="mascot-bar">
-      <div class="mascot-img-box" id="mascot-click-target" title="Click on Mascot!">
+    <aside class="mascot-bar" id="mascot-bar" aria-label="Mascot Helper">
+      <div class="mascot-img-box" id="mascot-click-target" title="Click on Mascot!" role="button" tabindex="0" aria-label="Ask Mascot for tips">
         <div class="mascot-avatar" id="mascot-avatar-emoji">🦊</div>
       </div>
       <div class="mascot-speech-bubble">
         <p id="mascot-text">"Bonjour Aezza ! Je m'appelle Coco le renard. Prête à réussir ton examen ? Choisis un chapitre !"</p>
-        <button class="audio-btn-mini" id="mascot-voice-btn" title="Listen to Mascot">
+        <button type="button" class="audio-btn-mini" id="mascot-voice-btn" title="Listen to Mascot" aria-label="Listen to mascot quote">
           🔊 Speak
         </button>
       </div>
-    </div>
+    </aside>
 
     <!-- MAIN CONTENT VIEWPORTS -->
     <main id="main-content">
 
       <!-- 0. RBAC MULTI-USER LOGIN VIEW (ACTIVE BY DEFAULT IF NOT LOGGED IN) -->
-      <section id="view-login" class="view-panel active">
+      <section id="view-login" class="view-panel active" aria-label="Login & Profile Selection">
         <div class="login-wrapper">
           <div class="login-card">
             <div class="login-header">
-              <div class="octocat-badge">
+              <div class="octocat-badge" aria-hidden="true">
                 <span style="font-size: 38px;">👑</span>
                 <span class="octocat-beret">✨</span>
               </div>
@@ -128,8 +132,8 @@
             <div class="profile-select-section">
               <div class="profile-cards-grid">
                 <!-- Aezza Card -->
-                <div class="profile-card profile-card-aezza" id="btn-select-aezza">
-                  <div class="profile-avatar-box">🌟</div>
+                <div class="profile-card profile-card-aezza" id="btn-select-aezza" role="button" tabindex="0" aria-label="Enter Aezza's Grade 3 Quest">
+                  <div class="profile-avatar-box" aria-hidden="true">🌟</div>
                   <div class="profile-info">
                     <h3 class="profile-name">Aezza</h3>
                     <span class="profile-grade">Grade 3 • SA-1 (2026-27)</span>
@@ -142,8 +146,8 @@
                 </div>
 
                 <!-- Fayra Card -->
-                <div class="profile-card profile-card-fayra" id="btn-select-fayra">
-                  <div class="profile-avatar-box">🎈</div>
+                <div class="profile-card profile-card-fayra" id="btn-select-fayra" role="button" tabindex="0" aria-label="Enter Fayra's Prep-I Quest">
+                  <div class="profile-avatar-box" aria-hidden="true">🎈</div>
                   <div class="profile-info">
                     <h3 class="profile-name">Fayra</h3>
                     <span class="profile-grade">Prep-I • Little Wings (SA-1)</span>
@@ -166,13 +170,13 @@
 
               <div class="form-group">
                 <div class="input-with-icon">
-                  <span class="input-icon">🔐</span>
-                  <input type="password" id="family-password" placeholder="Passcode (e.g. aezza, fayra, 1234, 5678)" autocomplete="current-password" />
+                  <span class="input-icon" aria-hidden="true">🔐</span>
+                  <input type="password" id="family-password" placeholder="Passcode (e.g. aezza, fayra, 1234, 5678)" autocomplete="current-password" aria-label="Family Secret Passcode" />
                 </div>
               </div>
 
-              <div class="login-error-banner" id="login-error-banner" style="display: none;">
-                <span class="error-icon">⚠️</span>
+              <div class="login-error-banner" id="login-error-banner" style="display: none;" role="alert">
+                <span class="error-icon" aria-hidden="true">⚠️</span>
                 <span id="login-error-text">Incorrect passcode. Try 'aezza', 'fayra', or '1234'!</span>
               </div>
 
@@ -185,7 +189,7 @@
       </section>
 
       <!-- 1. ADVENTURE (CHAPTER SELECTOR) -->
-      <section id="view-adventure" class="view-panel">
+      <section id="view-adventure" class="view-panel" aria-label="Adventure Chapter Selection">
         <div class="section-title-wrap">
           <h1 class="section-title" id="adventure-headline">Choisis ton Aventure 🚀</h1>
           <p class="section-desc" id="adventure-subheadline">Entraîne-toi sur chaque chapitre du programme pour maîtriser ton contrôle !</p>
@@ -198,16 +202,16 @@
       </section>
 
       <!-- 2. QUIZ SCREEN (ACTIVE DURING CHAPTER QUIZ & MOCK EXAM) -->
-      <section id="view-quiz" class="view-panel">
+      <section id="view-quiz" class="view-panel" aria-label="Interactive Quiz Screen">
         <div class="quiz-header-bar">
-          <button class="btn-back" id="quiz-back-btn">⬅️ Back to Menu</button>
+          <button type="button" class="btn-back" id="quiz-back-btn">⬅️ Back to Menu</button>
           <div class="quiz-topic-title" id="quiz-topic-title">La Vie Quotidienne de Luc</div>
           <div class="quiz-progress-pill">
             <span id="quiz-current-num">1</span> / <span id="quiz-total-num">5</span>
           </div>
         </div>
 
-        <div class="quiz-progress-track">
+        <div class="quiz-progress-track" role="progressbar" aria-label="Quiz Progress">
           <div class="quiz-progress-fill" id="quiz-progress-fill" style="width: 20%"></div>
         </div>
 
@@ -215,17 +219,17 @@
           <div class="quiz-question-card" id="quiz-question-card">
             <!-- Audio recitation bar -->
             <div class="reciter-control-bar">
-              <button class="reciter-btn play-french-audio-btn" id="btn-speak-french" title="Listen to pronunciation">
-                <span class="speaker-icon">🔊</span>
+              <button type="button" class="reciter-btn play-french-audio-btn" id="btn-speak-french" title="Listen to pronunciation" aria-label="Listen to question">
+                <span class="speaker-icon" aria-hidden="true">🔊</span>
                 <span id="label-speak-main">Écouter la phrase 🇫🇷</span>
               </button>
-              <button class="reciter-btn play-english-audio-btn" id="btn-speak-english" title="Hear English clue/explanation">
-                <span class="speaker-icon">💡</span>
+              <button type="button" class="reciter-btn play-english-audio-btn" id="btn-speak-english" title="Hear English clue/explanation" aria-label="Listen to clue">
+                <span class="speaker-icon" aria-hidden="true">💡</span>
                 <span id="label-speak-secondary">Traduction / Clue</span>
               </button>
               <div class="speed-toggle" title="Voice speed">
                 <label for="audio-speed-select">🐢 Speed:</label>
-                <select id="audio-speed-select">
+                <select id="audio-speed-select" aria-label="Audio voice speed">
                   <option value="0.75">Slow (0.75x)</option>
                   <option value="0.9" selected>Normal (0.9x)</option>
                   <option value="1.0">Fast (1.0x)</option>
@@ -246,7 +250,7 @@
             </div>
 
             <!-- Feedback Alert Bubble (Shown after answer) -->
-            <div class="feedback-banner" id="quiz-feedback-banner">
+            <div class="feedback-banner" id="quiz-feedback-banner" role="alert">
               <div class="feedback-mascot-box">
                 <div class="feedback-mascot-avatar" id="feedback-mascot-avatar">🦊</div>
                 <div class="feedback-icon-badge" id="feedback-icon">🎉</div>
@@ -254,8 +258,8 @@
               <div class="feedback-body">
                 <div class="feedback-header-row">
                   <h4 id="feedback-title">Bravo Aezza !</h4>
-                  <button class="feedback-voice-btn" id="btn-speak-explanation" title="Listen to Coco explain this answer">
-                    🔊 Hear Coco's Explanation
+                  <button type="button" class="feedback-voice-btn" id="btn-speak-explanation" title="Listen to explanation" aria-label="Listen to explanation audio">
+                    🔊 Hear Explanation
                   </button>
                 </div>
                 <div class="feedback-explanation-box">
@@ -267,7 +271,7 @@
                 </div>
               </div>
               <div class="feedback-action-wrap">
-                <button class="btn-primary" id="btn-next-question">Next ➡️</button>
+                <button type="button" class="btn-primary" id="btn-next-question">Next ➡️</button>
               </div>
             </div>
           </div>
@@ -275,9 +279,9 @@
       </section>
 
       <!-- 3. WORD / EQUATION UNSCRAMBLE -->
-      <section id="view-unscramble" class="view-panel">
+      <section id="view-unscramble" class="view-panel" aria-label="Word and Equation Unscramble">
         <div class="section-title-wrap">
-          <div class="badge-pill" id="unscramble-badge-pill">🧩 Special Exam Exercise</div>
+          <div class="badge-pill" id="unscramble-badge-pill">🧩 Special Exercise</div>
           <h1 class="section-title" id="unscramble-title">Remets les Mots dans l'Ordre !</h1>
           <p class="section-desc" id="unscramble-desc">Clique sur les étiquettes pour construire la phrase française dans le bon ordre grammatical.</p>
         </div>
@@ -286,8 +290,8 @@
           <div class="unscramble-card">
             <!-- Audio Bar -->
             <div class="reciter-control-bar">
-              <button class="reciter-btn" id="btn-unscramble-speak" title="Listen to model">
-                <span class="speaker-icon">🔊</span>
+              <button type="button" class="reciter-btn" id="btn-unscramble-speak" title="Listen to model" aria-label="Listen to model audio">
+                <span class="speaker-icon" aria-hidden="true">🔊</span>
                 <span>Listen Audio</span>
               </button>
               <span class="unscramble-counter">Level <span id="unscramble-lvl">1</span> / <span id="unscramble-total">6</span></span>
@@ -317,25 +321,25 @@
 
             <!-- Action Controls -->
             <div class="unscramble-actions">
-              <button class="btn-secondary" id="btn-reset-words">🔄 Reset</button>
-              <button class="btn-primary" id="btn-check-unscramble">Check ✨</button>
+              <button type="button" class="btn-secondary" id="btn-reset-words">🔄 Reset</button>
+              <button type="button" class="btn-primary" id="btn-check-unscramble">Check ✨</button>
             </div>
 
             <!-- Feedback -->
-            <div class="feedback-banner" id="unscramble-feedback">
+            <div class="feedback-banner" id="unscramble-feedback" role="alert">
               <div class="feedback-icon" id="unscramble-feedback-icon">🎉</div>
               <div class="feedback-body">
                 <h4 id="unscramble-feedback-title">Great Job!</h4>
                 <p id="unscramble-feedback-text">Everything is in the correct order!</p>
               </div>
-              <button class="btn-primary" id="btn-next-unscramble">Next Puzzle ➡️</button>
+              <button type="button" class="btn-primary" id="btn-next-unscramble">Next Puzzle ➡️</button>
             </div>
           </div>
         </div>
       </section>
 
       <!-- 4. MATCHING PAIRS GAME -->
-      <section id="view-matching" class="view-panel">
+      <section id="view-matching" class="view-panel" aria-label="Magic Pairs Matching Game">
         <div class="section-title-wrap">
           <div class="badge-pill">🎯 Association Challenge</div>
           <h1 class="section-title">Magic Pairs Matching</h1>
@@ -349,7 +353,7 @@
         <div class="matching-board-container">
           <div class="matching-stats-bar">
             <span>Pairs found: <strong id="match-found-count">0</strong> / <span id="match-total-count">5</span></span>
-            <button class="audio-btn-mini" id="btn-matching-replay-cat" title="Replay category">🔄 Shuffle</button>
+            <button type="button" class="audio-btn-mini" id="btn-matching-replay-cat" title="Replay category" aria-label="Shuffle and replay">🔄 Shuffle</button>
           </div>
           <div class="matching-grid" id="matching-grid">
             <!-- Dynamic pairs tiles -->
@@ -357,19 +361,19 @@
 
           <!-- Matching Completion Box -->
           <div class="matching-complete-box" id="matching-complete-box" style="display: none;">
-            <div class="match-trophy">🌟</div>
-            <h3>Awesome job Aezza!</h3>
+            <div class="match-trophy" aria-hidden="true">🌟</div>
+            <h3>Awesome job!</h3>
             <p>You matched all pairs in this category! (+30 XP)</p>
-            <button class="btn-primary" id="btn-match-next-cat">Next Category ➡️</button>
+            <button type="button" class="btn-primary" id="btn-match-next-cat">Next Category ➡️</button>
           </div>
         </div>
       </section>
 
       <!-- 5. FLASHCARDS (CARTES MÉMO) -->
-      <section id="view-flashcards" class="view-panel">
+      <section id="view-flashcards" class="view-panel" aria-label="Memory Flashcards">
         <div class="section-title-wrap">
           <h1 class="section-title">Memory Flashcards 🎴</h1>
-          <p class="section-desc">Review key concepts, formulas, and vocabulary with Coco!</p>
+          <p class="section-desc">Review key concepts, formulas, and vocabulary with your mascot!</p>
         </div>
 
         <div class="flashcard-category-tabs" id="flashcard-tabs-container">
@@ -377,7 +381,7 @@
         </div>
 
         <div class="flashcard-arena">
-          <div class="flashcard" id="flashcard-element">
+          <div class="flashcard" id="flashcard-element" role="button" tabindex="0" aria-label="Flashcard - click to flip">
             <div class="flashcard-inner">
               <div class="flashcard-front">
                 <span class="fc-tag" id="fc-tag">Topic</span>
@@ -385,8 +389,8 @@
                 <h2 class="fc-french" id="fc-french">Concept</h2>
                 <p class="fc-hint">Tap card to flip 🔄</p>
                 <div class="fc-action-row">
-                  <button class="fc-speaker-btn" id="fc-speaker-btn" title="Listen">🔊 Speak</button>
-                  <button class="fc-flip-btn" id="fc-flip-btn">🔄 Flip</button>
+                  <button type="button" class="fc-speaker-btn" id="fc-speaker-btn" title="Listen" aria-label="Listen to concept pronunciation">🔊 Speak</button>
+                  <button type="button" class="fc-flip-btn" id="fc-flip-btn" aria-label="Flip flashcard">🔄 Flip</button>
                 </div>
               </div>
               <div class="flashcard-back">
@@ -397,23 +401,23 @@
                   <p class="fc-example-en" id="fc-example-en">"Details"</p>
                 </div>
                 <div class="fc-action-row">
-                  <button class="fc-speaker-btn" id="fc-example-speaker-btn" title="Listen Example">🔊 Speak Example</button>
-                  <button class="fc-flip-btn" id="fc-flip-back-btn">🔄 Flip</button>
+                  <button type="button" class="fc-speaker-btn" id="fc-example-speaker-btn" title="Listen Example" aria-label="Listen to example audio">🔊 Speak Example</button>
+                  <button type="button" class="fc-flip-btn" id="fc-flip-back-btn" aria-label="Flip back to front">🔄 Flip</button>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="flashcard-controls">
-            <button class="btn-nav-fc" id="btn-fc-prev">⬅️ Previous</button>
+            <button type="button" class="btn-nav-fc" id="btn-fc-prev" aria-label="Previous card">⬅️ Previous</button>
             <span class="fc-counter" id="fc-counter">1 / 6</span>
-            <button class="btn-nav-fc" id="btn-fc-next">Next ➡️</button>
+            <button type="button" class="btn-nav-fc" id="btn-fc-next" aria-label="Next card">Next ➡️</button>
           </div>
         </div>
       </section>
 
       <!-- 6. MOCK EXAM (EXAMEN BLANC COMPLET) -->
-      <section id="view-mock-exam" class="view-panel">
+      <section id="view-mock-exam" class="view-panel" aria-label="Full Assessment Simulation">
         <div class="exam-intro-card" id="exam-intro-card">
           <div class="exam-badge" id="exam-badge-label">🎯 Full Assessment Simulation</div>
           <h1 class="exam-title" id="exam-title-text">Grand Examen Blanc</h1>
@@ -425,14 +429,14 @@
             <div class="feat-item">🏆 Unlock special Champion Badges on high score</div>
           </div>
 
-          <button class="btn-primary btn-large" id="btn-start-mock-exam">Start Exam 📝</button>
+          <button type="button" class="btn-primary btn-large" id="btn-start-mock-exam">Start Exam 📝</button>
         </div>
 
         <!-- Exam Results Screen -->
         <div class="exam-results-card" id="exam-results-card" style="display: none;">
           <div class="results-header">
-            <div class="results-trophy">🏆</div>
-            <h1 class="results-title">Congratulations Aezza!</h1>
+            <div class="results-trophy" aria-hidden="true">🏆</div>
+            <h1 class="results-title">Congratulations!</h1>
             <p class="results-sub">You completed your exam simulation!</p>
           </div>
 
@@ -447,20 +451,20 @@
             </div>
           </div>
 
-          <!-- Question Review Accordion -->
+          <!-- Question Review Breakdown -->
           <div class="exam-review-box" id="exam-review-box">
             <!-- Dynamically populated review items -->
           </div>
 
           <div class="results-actions">
-            <button class="btn-primary" id="btn-review-exam">Retry Exam 🔄</button>
-            <button class="btn-secondary" id="btn-exam-to-home">Back to Menu 🏠</button>
+            <button type="button" class="btn-primary" id="btn-review-exam">Retry Exam 🔄</button>
+            <button type="button" class="btn-secondary" id="btn-exam-to-home">Back to Menu 🏠</button>
           </div>
         </div>
       </section>
 
       <!-- 7. TROPHIES & BADGES -->
-      <section id="view-trophies" class="view-panel">
+      <section id="view-trophies" class="view-panel" aria-label="Trophies and Badges Hall of Fame">
         <div class="section-title-wrap">
           <h1 class="section-title" id="trophies-headline">Trophy Hall of Fame 🏆</h1>
           <p class="section-desc" id="trophies-subheadline">Unlock shiny badges as you complete quizzes and master topics!</p>
@@ -475,7 +479,7 @@
 
     <!-- Footer -->
     <footer class="app-footer">
-      <p>Aezza's Learning Quest • French 🇫🇷 & Mathematics 🔢 Grade 3 SA-1 • Protected by GitHub Auth</p>
+      <p>Sisters' Learning Quest • Aezza (Grade 3 🇫🇷 🔢) & Fayra (Prep-I 🔤 🎈) • Designed with Stitch Design System</p>
     </footer>
   </div>
 
