@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aezza's French Quest 🇫🇷 - L'Aventure de Français</title>
+  <!-- Google Fonts: Plus Jakarta Sans & Quicksand as defined in Stitch Design System -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦊</text></svg>">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Toast Notification Floating Element -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <div id="app-container">
+    <!-- Top Header / Gamification Bar -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="avatar-badge" id="avatar-badge" title="Clique sur Coco !">
+          <span class="avatar-emoji">🦊</span>
+          <span class="avatar-beret">🥖</span>
+        </div>
+        <div class="user-greeting">
+          <span class="greeting-sub">Bienvenue !</span>
+          <h2 class="user-name">Aezza 🌟</h2>
+        </div>
+      </div>
+
+      <div class="header-stats">
+        <div class="stat-pill streak-pill" title="Jours consécutifs d'entraînement">
+          <span class="stat-icon">🔥</span>
+          <span class="stat-value" id="stat-streak">5</span>
+          <span class="stat-label">Série</span>
+        </div>
+        <div class="stat-pill star-pill" title="Étoiles magiques">
+          <span class="stat-icon">⭐</span>
+          <span class="stat-value" id="stat-stars">120</span>
+        </div>
+        <div class="stat-pill xp-pill" title="Points d'expérience">
+          <span class="stat-icon">⚡</span>
+          <span class="stat-value" id="stat-xp">350</span>
+          <span class="stat-label">XP</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Navigation Bar -->
+    <nav class="main-nav">
+      <button class="nav-btn active" data-tab="adventure">
+        <span class="nav-icon">🗺️</span>
+        <span>Aventure</span>
+      </button>
+      <button class="nav-btn" data-tab="unscramble">
+        <span class="nav-icon">🧩</span>
+        <span>Mots en Ordre</span>
+      </button>
+      <button class="nav-btn" data-tab="matching">
+        <span class="nav-icon">🎯</span>
+        <span>Paires Magiques</span>
+      </button>
+      <button class="nav-btn" data-tab="flashcards">
+        <span class="nav-icon">🎴</span>
+        <span>Cartes Mémo</span>
+      </button>
+      <button class="nav-btn" data-tab="mock-exam">
+        <span class="nav-icon">📝</span>
+        <span>Examen Blanc</span>
+      </button>
+      <button class="nav-btn" data-tab="trophies">
+        <span class="nav-icon">🏆</span>
+        <span>Trophées</span>
+      </button>
+    </nav>
+
+    <!-- Mascot Bubble Banner -->
+    <div class="mascot-bar">
+      <div class="mascot-img-box" id="mascot-click-target" title="Clique sur Coco !">
+        <div class="mascot-avatar">🦊</div>
+      </div>
+      <div class="mascot-speech-bubble">
+        <p id="mascot-text">"Bonjour Aezza ! Je m'appelle Coco le renard. Prête à réussir ton examen de français ? Choisis un chapitre !"</p>
+        <button class="audio-btn-mini" id="mascot-voice-btn" title="Écouter la voix de Coco">
+          🔊 Écouter Coco
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT VIEWPORTS -->
+    <main id="main-content">
+
+      <!-- 1. ADVENTURE (CHAPTER SELECTOR) -->
+      <section id="view-adventure" class="view-panel active">
+        <div class="section-title-wrap">
+          <h1 class="section-title">Choisis ton Aventure 🚀</h1>
+          <p class="section-desc">Entraîne-toi sur chaque chapitre du programme pour maîtriser ton contrôle !</p>
+        </div>
+
+        <div class="chapter-grid">
+          <!-- Card 1: La Vie Quotidienne de Luc -->
+          <div class="chapter-card card-pink" data-chapter="ch1">
+            <div class="card-badge" id="badge-status-ch1">Chapitre 1</div>
+            <div class="card-icon-hero">⏰ 🏠</div>
+            <h3 class="card-title">La Vie Quotidienne de Luc</h3>
+            <p class="card-subtitle">Verbes Pronominaux & Routine</p>
+            <div class="tags-row">
+              <span class="tag">se lever</span>
+              <span class="tag">se coucher</span>
+              <span class="tag">s'habiller</span>
+              <span class="tag">se doucher</span>
+            </div>
+            <div class="progress-container">
+              <div class="progress-bar" id="prog-ch1" style="width: 0%"></div>
+            </div>
+            <div class="card-action-row">
+              <button class="btn-primary start-chapter-btn" data-chapter="ch1">S'entraîner 🚀</button>
+            </div>
+          </div>
+
+          <!-- Card 2: Le Monde Multiculturel -->
+          <div class="chapter-card card-mint" data-chapter="ch2">
+            <div class="card-badge" id="badge-status-ch2">Chapitre 2</div>
+            <div class="card-icon-hero">🌍 ✈️</div>
+            <h3 class="card-title">Le Monde Multiculturel</h3>
+            <p class="card-subtitle">Nationalités & Prépositions (à, en, au, aux)</p>
+            <div class="tags-row">
+              <span class="tag">français/e</span>
+              <span class="tag">en France</span>
+              <span class="tag">au Canada</span>
+              <span class="tag">aux États-Unis</span>
+            </div>
+            <div class="progress-container">
+              <div class="progress-bar" id="prog-ch2" style="width: 0%"></div>
+            </div>
+            <div class="card-action-row">
+              <button class="btn-primary start-chapter-btn" data-chapter="ch2">S'entraîner 🚀</button>
+            </div>
+          </div>
+
+          <!-- Card 3: La Bonne Nourriture & Les Repas -->
+          <div class="chapter-card card-blue" data-chapter="ch3">
+            <div class="card-badge" id="badge-status-ch3">Chapitre 3</div>
+            <div class="card-icon-hero">🥐 🍎</div>
+            <h3 class="card-title">La Bonne Nourriture</h3>
+            <p class="card-subtitle">Les Repas & Articles Partitifs (du, de la, de l', des)</p>
+            <div class="tags-row">
+              <span class="tag">petit déjeuner</span>
+              <span class="tag">du pain</span>
+              <span class="tag">de la confiture</span>
+              <span class="tag">de l'eau</span>
+            </div>
+            <div class="progress-container">
+              <div class="progress-bar" id="prog-ch3" style="width: 0%"></div>
+            </div>
+            <div class="card-action-row">
+              <button class="btn-primary start-chapter-btn" data-chapter="ch3">S'entraîner 🚀</button>
+            </div>
+          </div>
+
+          <!-- Card 4: Conjugaison & Loisirs -->
+          <div class="chapter-card card-yellow" data-chapter="ch4">
+            <div class="card-badge" id="badge-status-ch4">Grammaire & Loisirs</div>
+            <div class="card-icon-hero">🎨 ⚽</div>
+            <h3 class="card-title">Conjugaison & Mes Loisirs</h3>
+            <p class="card-subtitle">Aimer, Aller, Parler, Regarder, Habiter & J'aime...</p>
+            <div class="tags-row">
+              <span class="tag">Je vais</span>
+              <span class="tag">J'aime</span>
+              <span class="tag">Je n'aime pas</span>
+              <span class="tag">Habiter</span>
+            </div>
+            <div class="progress-container">
+              <div class="progress-bar" id="prog-ch4" style="width: 0%"></div>
+            </div>
+            <div class="card-action-row">
+              <button class="btn-primary start-chapter-btn" data-chapter="ch4">S'entraîner 🚀</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. QUIZ SCREEN (ACTIVE DURING CHAPTER QUIZ & MOCK EXAM) -->
+      <section id="view-quiz" class="view-panel">
+        <div class="quiz-header-bar">
+          <button class="btn-back" id="quiz-back-btn">⬅️ Menu Principal</button>
+          <div class="quiz-topic-title" id="quiz-topic-title">La Vie Quotidienne de Luc</div>
+          <div class="quiz-progress-pill">
+            <span id="quiz-current-num">1</span> / <span id="quiz-total-num">5</span>
+          </div>
+        </div>
+
+        <div class="quiz-progress-track">
+          <div class="quiz-progress-fill" id="quiz-progress-fill" style="width: 20%"></div>
+        </div>
+
+        <div class="quiz-card-container">
+          <div class="quiz-question-card" id="quiz-question-card">
+            <!-- Audio recitation bar -->
+            <div class="reciter-control-bar">
+              <button class="reciter-btn play-french-audio-btn" id="btn-speak-french" title="Écouter la prononciation en Français">
+                <span class="speaker-icon">🔊</span>
+                <span>Écouter la phrase 🇫🇷</span>
+              </button>
+              <button class="reciter-btn play-english-audio-btn" id="btn-speak-english" title="Hear English translation clue">
+                <span class="speaker-icon">🇬🇧</span>
+                <span>Traduction / Indice</span>
+              </button>
+              <div class="speed-toggle" title="Vitesse de la voix">
+                <label for="audio-speed-select">🐢 Vitesse:</label>
+                <select id="audio-speed-select">
+                  <option value="0.75">Lente (0.75x)</option>
+                  <option value="0.9" selected>Normale (0.9x)</option>
+                  <option value="1.0">Rapide (1.0x)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Question Prompt -->
+            <div class="question-header">
+              <span class="question-category" id="question-category">Grammaire • Verbe Pronominal</span>
+              <h2 class="question-french-text" id="question-french-text">Luc ______ à 7h du matin. (se réveiller)</h2>
+              <p class="question-english-hint" id="question-english-hint">"Luc wakes up at 7:00 in the morning."</p>
+            </div>
+
+            <!-- Question Interactive Area (Options buttons) -->
+            <div class="options-container" id="quiz-options-container">
+              <!-- Dynamically populated options buttons -->
+            </div>
+
+            <!-- Feedback Alert Bubble (Shown after answer) -->
+            <div class="feedback-banner" id="quiz-feedback-banner">
+              <div class="feedback-icon" id="feedback-icon">🎉</div>
+              <div class="feedback-body">
+                <h4 id="feedback-title">Bravo Aezza !</h4>
+                <p id="feedback-explanation">"se réveille" est la forme correcte pour "Luc" (il).</p>
+              </div>
+              <button class="btn-primary" id="btn-next-question">Continuer ➡️</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. WORD UNSCRAMBLE (REMETTEZ LES MOTS DANS L'ORDRE) -->
+      <section id="view-unscramble" class="view-panel">
+        <div class="section-title-wrap">
+          <div class="badge-pill">🧩 Exercice Spécial Examen</div>
+          <h1 class="section-title">Remets les Mots dans l'Ordre !</h1>
+          <p class="section-desc">Clique sur les étiquettes pour construire la phrase française dans le bon ordre grammatical.</p>
+        </div>
+
+        <div class="unscramble-container">
+          <div class="unscramble-card">
+            <!-- Audio Bar -->
+            <div class="reciter-control-bar">
+              <button class="reciter-btn" id="btn-unscramble-speak" title="Écouter la phrase modèle">
+                <span class="speaker-icon">🔊</span>
+                <span>Écouter la phrase 🇫🇷</span>
+              </button>
+              <span class="unscramble-counter">Niveau <span id="unscramble-lvl">1</span> / <span id="unscramble-total">6</span></span>
+            </div>
+
+            <!-- English Clue -->
+            <div class="target-sentence-hint">
+              <span class="hint-label">🎯 Signification en anglais :</span>
+              <p class="hint-text" id="unscramble-english-hint">"Luc wakes up at seven o'clock."</p>
+            </div>
+
+            <!-- Drop / Assembled Area -->
+            <div class="drop-zone-wrapper">
+              <div class="zone-label">Ta phrase construite :</div>
+              <div class="word-drop-zone" id="word-drop-zone">
+                <span class="placeholder-text" id="drop-placeholder">Clique sur les étiquettes ci-dessous pour former la phrase...</span>
+              </div>
+            </div>
+
+            <!-- Word Bank -->
+            <div class="bank-zone-wrapper">
+              <div class="zone-label">Banque de mots :</div>
+              <div class="word-bank-zone" id="word-bank-zone">
+                <!-- Dynamically generated word chips -->
+              </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="unscramble-actions">
+              <button class="btn-secondary" id="btn-reset-words">🔄 Réinitialiser</button>
+              <button class="btn-primary" id="btn-check-unscramble">Vérifier ✨</button>
+            </div>
+
+            <!-- Feedback -->
+            <div class="feedback-banner" id="unscramble-feedback">
+              <div class="feedback-icon" id="unscramble-feedback-icon">🎉</div>
+              <div class="feedback-body">
+                <h4 id="unscramble-feedback-title">Super travail !</h4>
+                <p id="unscramble-feedback-text">La phrase est parfaitement ordonnée !</p>
+              </div>
+              <button class="btn-primary" id="btn-next-unscramble">Phrase suivante ➡️</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. MATCHING PAIRS GAME -->
+      <section id="view-matching" class="view-panel">
+        <div class="section-title-wrap">
+          <div class="badge-pill">🎯 Jeu d'Association</div>
+          <h1 class="section-title">Les Paires Magiques</h1>
+          <p class="section-desc">Touche deux cartes correspondantes pour former des paires !</p>
+        </div>
+
+        <div class="matching-category-select">
+          <button class="match-cat-btn active" data-match-cat="nationalities">👥 Nationalités (Masc ↔ Fem)</button>
+          <button class="match-cat-btn" data-match-cat="prepositions">🌍 Pays & Prépositions (à, en, au, aux)</button>
+          <button class="match-cat-btn" data-match-cat="partitives">🥐 Nourriture & Partitifs (du, de la, des)</button>
+        </div>
+
+        <div class="matching-board-container">
+          <div class="matching-stats-bar">
+            <span>Paires trouvées : <strong id="match-found-count">0</strong> / <span id="match-total-count">5</span></span>
+            <button class="audio-btn-mini" id="btn-matching-replay-cat" title="Rejouer cette catégorie">🔄 Recommencer</button>
+          </div>
+          <div class="matching-grid" id="matching-grid">
+            <!-- Dynamic pairs tiles -->
+          </div>
+
+          <!-- Matching Completion Box -->
+          <div class="matching-complete-box" id="matching-complete-box" style="display: none;">
+            <div class="match-trophy">🌟</div>
+            <h3>Félicitations Aezza !</h3>
+            <p>Tu as trouvé toutes les paires magiques de cette catégorie ! (+30 XP)</p>
+            <button class="btn-primary" id="btn-match-next-cat">Catégorie Suivante ➡️</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. FLASHCARDS (CARTES MÉMO) -->
+      <section id="view-flashcards" class="view-panel">
+        <div class="section-title-wrap">
+          <h1 class="section-title">Cartes Mémo Magiques 🎴</h1>
+          <p class="section-desc">Passe en revue tout le vocabulaire et la grammaire avec la voix de Coco !</p>
+        </div>
+
+        <div class="flashcard-category-tabs">
+          <button class="fc-tab active" data-fccat="verbes">⏰ Verbes Pronominaux</button>
+          <button class="fc-tab" data-fccat="conjugaison">✏️ Conjugaison (Aller, Aimer...)</button>
+          <button class="fc-tab" data-fccat="nationalites">🌎 Nationalités & Pays</button>
+          <button class="fc-tab" data-fccat="repas">🍳 Les Repas & Boissons</button>
+          <button class="fc-tab" data-fccat="loisirs">🎨 Mes Loisirs (J'aime...)</button>
+        </div>
+
+        <div class="flashcard-arena">
+          <div class="flashcard" id="flashcard-element">
+            <div class="flashcard-inner">
+              <div class="flashcard-front">
+                <span class="fc-tag" id="fc-tag">Verbe Pronominal</span>
+                <div class="fc-emoji" id="fc-emoji">⏰</div>
+                <h2 class="fc-french" id="fc-french">se réveiller</h2>
+                <p class="fc-hint">Touche la carte pour voir la traduction 🔄</p>
+                <div class="fc-action-row">
+                  <button class="fc-speaker-btn" id="fc-speaker-btn" title="Écouter la prononciation">🔊 Écouter</button>
+                  <button class="fc-flip-btn" id="fc-flip-btn">🔄 Retourner</button>
+                </div>
+              </div>
+              <div class="flashcard-back">
+                <span class="fc-tag">Traduction & Explication</span>
+                <h3 class="fc-english" id="fc-english">to wake up</h3>
+                <div class="fc-example-box">
+                  <p class="fc-example-fr" id="fc-example-fr">"Je me réveille à sept heures."</p>
+                  <p class="fc-example-en" id="fc-example-en">"I wake up at seven o'clock."</p>
+                </div>
+                <div class="fc-action-row">
+                  <button class="fc-speaker-btn" id="fc-example-speaker-btn" title="Écouter l'exemple">🔊 Écouter la phrase</button>
+                  <button class="fc-flip-btn" id="fc-flip-back-btn">🔄 Retourner</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flashcard-controls">
+            <button class="btn-nav-fc" id="btn-fc-prev">⬅️ Précédent</button>
+            <span class="fc-counter" id="fc-counter">1 / 6</span>
+            <button class="btn-nav-fc" id="btn-fc-next">Suivant ➡️</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. MOCK EXAM (EXAMEN BLANC COMPLET) -->
+      <section id="view-mock-exam" class="view-panel">
+        <div class="exam-intro-card" id="exam-intro-card">
+          <div class="exam-badge">🎯 Évaluation Complète</div>
+          <h1 class="exam-title">Grand Examen Blanc de Français</h1>
+          <p class="exam-desc">Cet examen simule ton contrôle de mi-trimestre ! Il couvre les 3 chapitres, les verbes pronominaux, la conjugaison, les nationalités, les prépositions et les articles partitifs.</p>
+          
+          <div class="exam-features-list">
+            <div class="feat-item">✨ <strong>15 Questions variées</strong> comme dans un vrai devoir</div>
+            <div class="feat-item">🔊 Prononciation audio disponible pour chaque question</div>
+            <div class="feat-item">🏆 Certificat et trophée spécial à débloquer</div>
+          </div>
+
+          <button class="btn-primary btn-large" id="btn-start-mock-exam">Commencer l'Examen 📝</button>
+        </div>
+
+        <!-- Exam Results Screen -->
+        <div class="exam-results-card" id="exam-results-card" style="display: none;">
+          <div class="results-header">
+            <div class="results-trophy">🏆</div>
+            <h1 class="results-title">Félicitations Aezza !</h1>
+            <p class="results-sub">Tu as terminé ton examen blanc de français !</p>
+          </div>
+
+          <div class="results-score-box">
+            <div class="score-circle">
+              <span class="score-num" id="exam-final-score">15</span>
+              <span class="score-den">/ 15</span>
+            </div>
+            <div class="score-feedback">
+              <h3 id="exam-grade-title">Excellent travail ! 🌟</h3>
+              <p id="exam-grade-msg">Tu es prête pour briller à ton examen de mi-trimestre !</p>
+            </div>
+          </div>
+
+          <!-- Question Review Accordion -->
+          <div class="exam-review-box" id="exam-review-box">
+            <!-- Dynamically populated review items -->
+          </div>
+
+          <div class="results-actions">
+            <button class="btn-primary" id="btn-review-exam">Recommencer l'Examen 🔄</button>
+            <button class="btn-secondary" id="btn-exam-to-home">Retour au Menu 🏠</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. TROPHIES & BADGES -->
+      <section id="view-trophies" class="view-panel">
+        <div class="section-title-wrap">
+          <h1 class="section-title">Le Coffre aux Trophées d'Aezza 🏆</h1>
+          <p class="section-desc">Débloque tous les badges magiques en complétant les activités !</p>
+        </div>
+
+        <div class="trophies-grid">
+          <div class="trophy-card" id="trophy-ch1">
+            <div class="trophy-icon">🇫🇷</div>
+            <h3 class="trophy-name">Petit Parisien</h3>
+            <p class="trophy-desc">Complète le Chapitre 1 (La vie de Luc).</p>
+            <span class="trophy-status locked">À débloquer 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-ch2">
+            <div class="trophy-icon">🌍</div>
+            <h3 class="trophy-name">Explorateur du Monde</h3>
+            <p class="trophy-desc">Réussis le Chapitre 2 (Nationalités & Pays).</p>
+            <span class="trophy-status locked">À débloquer 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-ch3">
+            <div class="trophy-icon">🥐</div>
+            <h3 class="trophy-name">Chef Pâtissier</h3>
+            <p class="trophy-desc">Maîtrise le Chapitre 3 (Repas & Partitifs).</p>
+            <span class="trophy-status locked">À débloquer 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-ch4">
+            <div class="trophy-icon">🎨</div>
+            <h3 class="trophy-name">Maître des Verbes</h3>
+            <p class="trophy-desc">Conjugue les verbes et décris tes loisirs.</p>
+            <span class="trophy-status locked">À débloquer 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-unscramble">
+            <div class="trophy-icon">🧩</div>
+            <h3 class="trophy-name">Génie des Phrases</h3>
+            <p class="trophy-desc">Remets toutes les phrases dans le bon ordre.</p>
+            <span class="trophy-status locked">À débloquer 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-matching">
+            <div class="trophy-icon">🎯</div>
+            <h3 class="trophy-name">Roi de la Mémoire</h3>
+            <p class="trophy-desc">Trouve toutes les Paires Magiques.</p>
+            <span class="trophy-status locked">À débloquer 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-exam">
+            <div class="trophy-icon">👑</div>
+            <h3 class="trophy-name">Reine du Français</h3>
+            <p class="trophy-desc">Obtenir 13/15 ou plus au Grand Examen Blanc.</p>
+            <span class="trophy-status locked">À débloquer 🔒</span>
+          </div>
+
+          <div class="trophy-card" id="trophy-voice">
+            <div class="trophy-icon">🎙️</div>
+            <h3 class="trophy-name">Oreille Musicale</h3>
+            <p class="trophy-desc">Écoute 5 prononciations en français.</p>
+            <span class="trophy-status locked">À débloquer 🔒</span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Conçu avec tendresse pour Aezza • Préparation Examen de Français Mi-Trimestre 🥐🇫🇷</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
