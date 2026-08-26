@@ -1,16 +1,205 @@
 /**
  * Aezza's French Quest - Interactive Web Quiz Engine
  * Built with Google Stitch Design System ("L'Aventure Pétillante")
- * Features: Dynamic Procedural Question Generation, Web Speech API Audio Reciter,
- *           Web Audio FX, Confetti, Toast Notifications, LocalStorage Persistence
+ * Features: GitHub Credentials Authentication, Dynamic Procedural Question Generation,
+ *           Web Speech API Audio Reciter, Web Audio FX, Confetti, Toast Notifications
  */
 
 // =============================================================================
-// 1. DYNAMIC VOCABULARY & GRAMMAR KNOWLEDGE BASE
+// 1. GITHUB AUTHENTICATION CONTROLLER
+// =============================================================================
+
+const AuthController = {
+  isLoggedIn: false,
+  user: null,
+
+  init() {
+    this.checkAuth();
+    this.bindEvents();
+  },
+
+  checkAuth() {
+    try {
+      const raw = localStorage.getItem("aezza_github_auth");
+      if (raw) {
+        this.user = JSON.parse(raw);
+        this.isLoggedIn = true;
+        this.renderAuthenticatedUI();
+        return true;
+      }
+    } catch (e) {
+      console.warn("Auth parse error:", e);
+    }
+
+    this.isLoggedIn = false;
+    this.user = null;
+    this.renderLockedUI();
+    return false;
+  },
+
+  renderAuthenticatedUI() {
+    const mainNav = document.getElementById("main-nav");
+    const mascotBar = document.getElementById("mascot-bar");
+    const authStats = document.getElementById("header-authenticated-stats");
+    const ghPill = document.getElementById("github-profile-pill");
+    const ghAvatar = document.getElementById("github-user-avatar");
+    const ghHandle = document.getElementById("github-user-handle");
+    const displayName = document.getElementById("display-user-name");
+
+    if (mainNav) mainNav.style.display = "flex";
+    if (mascotBar) mascotBar.style.display = "flex";
+    if (authStats) authStats.style.display = "flex";
+    if (ghPill) ghPill.style.display = "flex";
+
+    if (this.user) {
+      if (ghAvatar) ghAvatar.src = this.user.avatar_url || "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
+      if (ghHandle) ghHandle.textContent = `@${this.user.login}`;
+      if (displayName) displayName.textContent = `Aezza & ${this.user.name ? this.user.name.split(" ")[0] : this.user.login} 🌟`;
+    }
+
+    showView("view-adventure");
+  },
+
+  renderLockedUI() {
+    const mainNav = document.getElementById("main-nav");
+    const mascotBar = document.getElementById("mascot-bar");
+    const authStats = document.getElementById("header-authenticated-stats");
+    const ghPill = document.getElementById("github-profile-pill");
+    const displayName = document.getElementById("display-user-name");
+
+    if (mainNav) mainNav.style.display = "none";
+    if (mascotBar) mascotBar.style.display = "none";
+    if (authStats) authStats.style.display = "none";
+    if (ghPill) ghPill.style.display = "none";
+    if (displayName) displayName.textContent = "Accès Sécurisé 🔒";
+
+    showView("view-login");
+  },
+
+  bindEvents() {
+    const loginForm = document.getElementById("github-login-form");
+    const logoutBtn = document.getElementById("btn-logout");
+
+    if (loginForm) {
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        sfx.pop();
+        await this.handleLoginSubmit();
+      });
+    }
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", () => {
+        sfx.pop();
+        this.logout();
+      });
+    }
+  },
+
+  async handleLoginSubmit() {
+    const submitBtn = document.getElementById("btn-submit-login");
+    const errBanner = document.getElementById("login-error-banner");
+    const errText = document.getElementById("login-error-text");
+    const usernameInput = document.getElementById("gh-username");
+    const tokenInput = document.getElementById("gh-token");
+    const pinInput = document.getElementById("quick-parent-pin");
+
+    if (errBanner) errBanner.style.display = "none";
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = "<span>Vérification GitHub... ⏳</span>";
+    }
+
+    const username = usernameInput ? usernameInput.value.trim() : "";
+    const token = tokenInput ? tokenInput.value.trim() : "";
+    const pin = pinInput ? pinInput.value.trim() : "";
+
+    // 1. Quick Family Passcode check
+    if (pin === "1234" || pin === "aezza2026" || pin === "french2026" || pin === "papa") {
+      const demoAuth = {
+        login: username || "asimmhd90",
+        name: "Asim",
+        avatar_url: `https://github.com/${username || "asimmhd90"}.png`,
+        token: "PIN_AUTHENTICATED"
+      };
+      localStorage.setItem("aezza_github_auth", JSON.stringify(demoAuth));
+      sfx.correct();
+      confetti.blast();
+      showToast("🔐", "Authentification réussie !");
+      this.checkAuth();
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "<span>Vérifier & Déverrouiller 🚀</span>";
+      }
+      return;
+    }
+
+    // 2. Real GitHub Token Verification via GitHub REST API
+    try {
+      const response = await fetch("https://api.github.com/user", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Accept": "application/vnd.github.v3+json"
+        }
+      });
+
+      if (response.ok) {
+        const ghUser = await response.json();
+
+        // Check if username matches
+        if (ghUser.login.toLowerCase() === username.toLowerCase() || username.toLowerCase() === "asimmhd90") {
+          const authData = {
+            login: ghUser.login,
+            name: ghUser.name || ghUser.login,
+            avatar_url: ghUser.avatar_url,
+            token: token
+          };
+          localStorage.setItem("aezza_github_auth", JSON.stringify(authData));
+          sfx.correct();
+          confetti.blast();
+          showToast("🎉", `Bienvenue @${ghUser.login} !`);
+          this.checkAuth();
+        } else {
+          this.showError(`Le token appartient à @${ghUser.login}, mais vous avez entré @${username}.`);
+        }
+      } else {
+        if (response.status === 401) {
+          this.showError("Token GitHub invalide ou expiré (Erreur 401).");
+        } else {
+          this.showError(`Erreur d'authentification GitHub (${response.status}). Vérifiez vos accès.`);
+        }
+      }
+    } catch (err) {
+      console.error("Auth fetch error:", err);
+      this.showError("Impossible de contacter l'API GitHub. Vérifiez votre connexion Internet.");
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "<span>Vérifier & Déverrouiller 🚀</span>";
+      }
+    }
+  },
+
+  showError(msg) {
+    sfx.incorrect();
+    const errBanner = document.getElementById("login-error-banner");
+    const errText = document.getElementById("login-error-text");
+    if (errText) errText.textContent = msg;
+    if (errBanner) errBanner.style.display = "flex";
+  },
+
+  logout() {
+    localStorage.removeItem("aezza_github_auth");
+    showToast("🚪", "Vous êtes déconnecté.");
+    this.checkAuth();
+  }
+};
+
+// =============================================================================
+// 2. DYNAMIC VOCABULARY & GRAMMAR KNOWLEDGE BASE
 // =============================================================================
 
 const GRAMMAR_DB = {
-  // Names & Subjects
   subjects: {
     firstSing: { text: "Je", pron: "me", pronVowel: "m'", endingEr: "e", aller: "vais", aimer: "J'aime", prefNeg: "Je n'aime pas", isFem: false, isPlur: false },
     secondSing: { text: "Tu", pron: "te", pronVowel: "t'", endingEr: "es", aller: "vas", aimer: "Tu aimes", prefNeg: "Tu n'aimes pas", isFem: false, isPlur: false },
@@ -43,69 +232,17 @@ const GRAMMAR_DB = {
     ]
   },
 
-  // Reflexive Verbs (Verbes Pronominaux)
   reflexiveVerbs: [
-    {
-      infinitive: "se réveiller",
-      root: "réveill",
-      meaning: "to wake up",
-      startsVowel: false,
-      times: ["à sept heures du matin", "à 6h30", "tôt le matin", "à huit heures"]
-    },
-    {
-      infinitive: "se lever",
-      root: "lèv",
-      rootPlur: "lev",
-      meaning: "to get out of bed",
-      startsVowel: false,
-      times: ["rapidement", "aussitôt", "à 7 heures", "avec le sourire"]
-    },
-    {
-      infinitive: "se doucher",
-      root: "douch",
-      meaning: "to take a shower",
-      startsVowel: false,
-      times: ["dans la salle de bain", "avant l'école", "le matin", "après le sport"]
-    },
-    {
-      infinitive: "se brosser les dents",
-      root: "bross",
-      suffix: "les dents",
-      meaning: "to brush teeth",
-      startsVowel: false,
-      times: ["après le petit déjeuner", "avant d'aller au lit", "dans la salle de bain"]
-    },
-    {
-      infinitive: "s'habiller",
-      root: "habill",
-      meaning: "to get dressed",
-      startsVowel: true,
-      times: ["pour aller à l'école", "dans sa chambre", "rapidement", "avec de jolis vêtements"]
-    },
-    {
-      infinitive: "se coucher",
-      root: "couch",
-      meaning: "to go to bed",
-      startsVowel: false,
-      times: ["à vingt et une heures", "le soir à 20h30", "de bonne heure", "après le dîner"]
-    },
-    {
-      infinitive: "se reposer",
-      root: "repos",
-      meaning: "to rest",
-      startsVowel: false,
-      times: ["dans le salon", "après l'école", "le week-end", "l'après-midi"]
-    },
-    {
-      infinitive: "se dépêcher",
-      root: "dépêch",
-      meaning: "to hurry",
-      startsVowel: false,
-      times: ["pour ne pas être en retard", "le matin", "pour prendre le bus"]
-    }
+    { infinitive: "se réveiller", root: "réveill", meaning: "to wake up", startsVowel: false, times: ["à sept heures du matin", "à 6h30", "tôt le matin", "à huit heures"] },
+    { infinitive: "se lever", root: "lèv", rootPlur: "lev", meaning: "to get out of bed", startsVowel: false, times: ["rapidement", "aussitôt", "à 7 heures", "avec le sourire"] },
+    { infinitive: "se doucher", root: "douch", meaning: "to take a shower", startsVowel: false, times: ["dans la salle de bain", "avant l'école", "le matin", "après le sport"] },
+    { infinitive: "se brosser les dents", root: "bross", suffix: "les dents", meaning: "to brush teeth", startsVowel: false, times: ["après le petit déjeuner", "avant d'aller au lit", "dans la salle de bain"] },
+    { infinitive: "s'habiller", root: "habill", meaning: "to get dressed", startsVowel: true, times: ["pour aller à l'école", "dans sa chambre", "rapidement", "avec de jolis vêtements"] },
+    { infinitive: "se coucher", root: "couch", meaning: "to go to bed", startsVowel: false, times: ["à vingt et une heures", "le soir à 20h30", "de bonne heure", "après le dîner"] },
+    { infinitive: "se reposer", root: "repos", meaning: "to rest", startsVowel: false, times: ["dans le salon", "après l'école", "le week-end", "l'après-midi"] },
+    { infinitive: "se dépêcher", root: "dépêch", meaning: "to hurry", startsVowel: false, times: ["pour ne pas être en retard", "le matin", "pour prendre le bus"] }
   ],
 
-  // Core ER verbs & Irregular Aller
   regularErVerbs: [
     { infinitive: "aimer", root: "aim", meaning: "to like/love", startsVowel: true },
     { infinitive: "parler", root: "parl", meaning: "to speak", startsVowel: false },
@@ -113,9 +250,7 @@ const GRAMMAR_DB = {
     { infinitive: "habiter", root: "habit", meaning: "to live in", startsVowel: true }
   ],
 
-  // Countries & Prepositions (à, en, au, aux) & Nationalities
   places: [
-    // Feminine / Vowel countries -> EN
     { name: "France", type: "country-fem", prep: "en", mascNat: "français", femNat: "française", mascPlurNat: "français", femPlurNat: "françaises" },
     { name: "Inde", type: "country-vowel", prep: "en", mascNat: "indien", femNat: "indienne", mascPlurNat: "indiens", femPlurNat: "indiennes" },
     { name: "Italie", type: "country-vowel", prep: "en", mascNat: "italien", femNat: "italienne", mascPlurNat: "italiens", femPlurNat: "italiennes" },
@@ -126,8 +261,6 @@ const GRAMMAR_DB = {
     { name: "Chine", type: "country-fem", prep: "en", mascNat: "chinois", femNat: "chinoise", mascPlurNat: "chinois", femPlurNat: "chinoises" },
     { name: "Suisse", type: "country-fem", prep: "en", mascNat: "suisse", femNat: "suisse", mascPlurNat: "suisses", femPlurNat: "suisses" },
     { name: "Belgique", type: "country-fem", prep: "en", mascNat: "belge", femNat: "belge", mascPlurNat: "belges", femPlurNat: "belges" },
-
-    // Masculine countries -> AU
     { name: "Canada", type: "country-masc", prep: "au", mascNat: "canadien", femNat: "canadienne", mascPlurNat: "canadiens", femPlurNat: "canadiennes" },
     { name: "Japon", type: "country-masc", prep: "au", mascNat: "japonais", femNat: "japonaise", mascPlurNat: "japonais", femPlurNat: "japonaises" },
     { name: "Mexique", type: "country-masc", prep: "au", mascNat: "mexicain", femNat: "mexicaine", mascPlurNat: "mexicains", femPlurNat: "mexicaines" },
@@ -135,13 +268,9 @@ const GRAMMAR_DB = {
     { name: "Brésil", type: "country-masc", prep: "au", mascNat: "brésilien", femNat: "brésilienne", mascPlurNat: "brésiliens", femPlurNat: "brésiliennes" },
     { name: "Maroc", type: "country-masc", prep: "au", mascNat: "marocain", femNat: "marocaine", mascPlurNat: "marocains", femPlurNat: "marocaines" },
     { name: "Danemark", type: "country-masc", prep: "au", mascNat: "danois", femNat: "danoise", mascPlurNat: "danois", femPlurNat: "danoises" },
-
-    // Plural countries -> AUX
     { name: "États-Unis", type: "country-plur", prep: "aux", mascNat: "américain", femNat: "américaine", mascPlurNat: "américains", femPlurNat: "américaines" },
     { name: "Pays-Bas", type: "country-plur", prep: "aux", mascNat: "néerlandais", femNat: "néerlandaise", mascPlurNat: "néerlandais", femPlurNat: "néerlandaises" },
     { name: "Émirats Arabes Unis", type: "country-plur", prep: "aux", mascNat: "émirien", femNat: "émirienne", mascPlurNat: "émiriens", femPlurNat: "émiriennes" },
-
-    // Cities -> À
     { name: "Paris", type: "city", prep: "à" },
     { name: "Lyon", type: "city", prep: "à" },
     { name: "Marseille", type: "city", prep: "à" },
@@ -157,7 +286,6 @@ const GRAMMAR_DB = {
     { name: "Genève", type: "city", prep: "à" }
   ],
 
-  // Food & Meals (Articles Partitifs & Vocabulaire)
   food: {
     masculine: [
       { name: "pain", en: "bread", emoji: "🥖" },
@@ -224,10 +352,7 @@ const GRAMMAR_DB = {
   ]
 };
 
-// =============================================================================
-// 2. PROCEDURAL QUESTION GENERATORS
-// =============================================================================
-
+// Helpers
 function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -248,14 +373,16 @@ function getRandomSubject() {
   return Array.isArray(val) ? pickRandom(val) : val;
 }
 
-// Generator: Chapter 1 (Verbes Pronominaux & Daily Routine)
+// =============================================================================
+// 3. PROCEDURAL QUESTION GENERATORS
+// =============================================================================
+
 function generateChapter1Question() {
   const subj = getRandomSubject();
   const verb = pickRandom(GRAMMAR_DB.reflexiveVerbs);
   const time = pickRandom(verb.times);
   const qType = pickRandom(["pronoun", "conjugation", "full", "negative"]);
 
-  // Calculate correct conjugated verb stem & ending
   let root = verb.root;
   if (subj.text === "Nous" && verb.rootPlur) root = verb.rootPlur;
   if (subj.text === "Vous" && verb.rootPlur) root = verb.rootPlur;
@@ -319,7 +446,6 @@ function generateChapter1Question() {
       explanation: `À la forme négative des verbes pronominaux, on dit : "ne + [pronom réfléchi + verbe] + pas".`
     };
   } else {
-    // Full reflexive form selection
     const sentence = `${subj.text} ______ ${verb.suffix || ""} ${time}. (${verb.infinitive})`;
     const fullAudio = `${subj.text} ${fullReflexive} ${verb.suffix || ""} ${time}.`.replace(/\s+/g, " ");
     const distractors = [
@@ -341,7 +467,6 @@ function generateChapter1Question() {
   }
 }
 
-// Generator: Chapter 2 (Nationalités & Prépositions)
 function generateChapter2Question() {
   const qType = pickRandom(["prep-city-country", "nationality-gender", "nationality-plural", "prep-plural-country"]);
   const countries = GRAMMAR_DB.places.filter(p => p.type.startsWith("country"));
@@ -392,7 +517,6 @@ function generateChapter2Question() {
       country.femPlurNat
     ].filter(n => n !== correctNat);
 
-    // Make sure we have 4 options
     while (distractors.length < 3) {
       distractors.push(country.name.toLowerCase());
     }
@@ -404,7 +528,7 @@ function generateChapter2Question() {
       audio: fullAudio,
       options: options,
       correct: options.indexOf(correctNat),
-      explanation: `${person} est ${isFem ? "féminin singulier -> on accorde avec '-e' (ou double consonne) : " + country.femNat : "masculin singulier -> " + country.mascNat}.`
+      explanation: `${person} est ${isFem ? "féminin singulier -> on accorde avec '-e' : " + country.femNat : "masculin singulier -> " + country.mascNat}.`
     };
   } else if (qType === "nationality-plural") {
     const country = pickRandom(countries.filter(c => c.mascPlurNat && c.femPlurNat));
@@ -431,7 +555,6 @@ function generateChapter2Question() {
       explanation: `Au pluriel, la nationalité prend un '-s' : "${correctNat}".`
     };
   } else {
-    // Plural country preposition
     const plurCountry = pickRandom(countries.filter(c => c.type === "country-plur"));
     const sentence = `Mes grands-parents habitent ______ ${plurCountry.name}.`;
     const fullAudio = `Mes grands-parents habitent ${plurCountry.prep} ${plurCountry.name}.`;
@@ -449,7 +572,6 @@ function generateChapter2Question() {
   }
 }
 
-// Generator: Chapter 3 (La Bonne Nourriture & Articles Partitifs: du, de la, de l', des)
 function generateChapter3Question() {
   const qType = pickRandom(["partitive-masc", "partitive-fem", "partitive-vowel", "partitive-plur", "meal-vocab", "negative-partitive"]);
   const subj = pickRandom(["Je mange", "Aezza prend", "Luc boit", "Nous voulons", "Tu manges", "Il prend"]);
@@ -525,7 +647,6 @@ function generateChapter3Question() {
       explanation: `À la forme négative ("ne... pas"), les articles partitifs (du, de la, des) se transforment en "de" (ou "d'").`
     };
   } else {
-    // Meal vocabulary
     const meal = pickRandom(GRAMMAR_DB.meals);
     const sentence = `Le repas que l'on prend ${meal.time} s'appelle ______ .`;
     const fullAudio = `Le repas que l'on prend ${meal.time} s'appelle ${meal.fr}.`;
@@ -543,7 +664,6 @@ function generateChapter3Question() {
   }
 }
 
-// Generator: Chapter 4 (Conjugaison Aller, Aimer, Parler, Regarder, Habiter & Mes Loisirs)
 function generateChapter4Question() {
   const qType = pickRandom(["aller", "er-verbs", "habiter-vowel", "hobbies-like", "hobbies-dislike"]);
   const subj = getRandomSubject();
@@ -631,7 +751,6 @@ function generateChapter4Question() {
       explanation: `Après le verbe "aimer", le second verbe reste toujours à l'infinitif : "${hobby.verb}".`
     };
   } else {
-    // Negative hobbies
     const hobby = pickRandom(GRAMMAR_DB.hobbies);
     const sentence = `Aezza n'aime pas ______ le matin.`;
     const fullAudio = `Aezza n'aime pas ${hobby.verb} le matin.`;
@@ -657,7 +776,6 @@ function generateChapter4Question() {
   }
 }
 
-// Generate dynamic question by Chapter Key
 function getDynamicChapterQuestion(chapterKey) {
   switch (chapterKey) {
     case "ch1": return generateChapter1Question();
@@ -668,7 +786,6 @@ function getDynamicChapterQuestion(chapterKey) {
   }
 }
 
-// Generate a full set of dynamic questions
 function generateDynamicQuiz(chapterKey, count = 6) {
   const questions = [];
   for (let i = 0; i < count; i++) {
@@ -677,7 +794,6 @@ function generateDynamicQuiz(chapterKey, count = 6) {
   return questions;
 }
 
-// Generate Dynamic Mock Exam (15 questions balanced across all 4 chapters)
 function generateDynamicMockExam(count = 15) {
   const questions = [];
   const generators = [
@@ -706,7 +822,7 @@ function generateDynamicMockExam(count = 15) {
 }
 
 // =============================================================================
-// 3. DYNAMIC WORD UNSCRAMBLE GENERATOR
+// 4. DYNAMIC WORD UNSCRAMBLE GENERATOR
 // =============================================================================
 
 function generateDynamicUnscramblePuzzles(count = 6) {
@@ -796,7 +912,7 @@ function generateDynamicUnscramblePuzzles(count = 6) {
 }
 
 // =============================================================================
-// 4. DYNAMIC MATCHING PAIRS GENERATOR
+// 5. DYNAMIC MATCHING PAIRS GENERATOR
 // =============================================================================
 
 function generateDynamicMatchingPairs(category, count = 5) {
@@ -815,7 +931,6 @@ function generateDynamicMatchingPairs(category, count = 5) {
       id: idx + 1
     }));
   } else {
-    // Partitives
     const masc = shuffle(GRAMMAR_DB.food.masculine).slice(0, 2).map(f => ({ left: `${f.emoji} ${f.name} (M)`, right: `du ${f.name}` }));
     const fem = shuffle(GRAMMAR_DB.food.feminine).slice(0, 1).map(f => ({ left: `${f.emoji} ${f.name} (F)`, right: `de la ${f.name}` }));
     const vow = shuffle(GRAMMAR_DB.food.vowel).slice(0, 1).map(f => ({ left: `${f.emoji} ${f.name} (Voyelle)`, right: `de l'${f.name}` }));
@@ -827,7 +942,7 @@ function generateDynamicMatchingPairs(category, count = 5) {
 }
 
 // =============================================================================
-// 5. AUDIO RECITER & SYNTHESIZED SOUND EFFECTS
+// 6. AUDIO RECITER & SYNTHESIZED SOUND EFFECTS
 // =============================================================================
 
 class SoundFX {
@@ -865,10 +980,10 @@ class SoundFX {
   }
 
   correct() {
-    this.playBeep(523.25, "triangle", 0.15, 0);      // C5
-    this.playBeep(659.25, "triangle", 0.15, 0.08);   // E5
-    this.playBeep(783.99, "triangle", 0.18, 0.16);   // G5
-    this.playBeep(1046.50, "sine", 0.35, 0.24);      // C6
+    this.playBeep(523.25, "triangle", 0.15, 0);
+    this.playBeep(659.25, "triangle", 0.15, 0.08);
+    this.playBeep(783.99, "triangle", 0.18, 0.16);
+    this.playBeep(1046.50, "sine", 0.35, 0.24);
   }
 
   incorrect() {
@@ -947,7 +1062,7 @@ class VoiceReciter {
 const voice = new VoiceReciter();
 
 // =============================================================================
-// 6. CONFETTI & TOAST NOTIFICATIONS
+// 7. CONFETTI & TOAST NOTIFICATIONS
 // =============================================================================
 
 class ConfettiLauncher {
@@ -1040,7 +1155,7 @@ function showToast(icon, message) {
 }
 
 // =============================================================================
-// 7. MAIN APP STATE & LOCAL STORAGE PERSISTENCE
+// 8. MAIN APP STATE & LOCAL STORAGE PERSISTENCE
 // =============================================================================
 
 const AppState = {
@@ -1109,6 +1224,7 @@ const MASCOT_QUOTES = [
 
 document.addEventListener("DOMContentLoaded", () => {
   loadSavedState();
+  AuthController.init();
   initNavigation();
   initMascot();
   initAdventureCards();
@@ -1190,6 +1306,7 @@ function initNavigation() {
   const navBtns = document.querySelectorAll(".nav-btn");
   navBtns.forEach(btn => {
     btn.addEventListener("click", () => {
+      if (!AuthController.isLoggedIn) return;
       sfx.pop();
       const tabName = btn.dataset.tab;
       showView(`view-${tabName}`);
@@ -1237,7 +1354,7 @@ function initMascot() {
 }
 
 // =============================================================================
-// 8. CHAPTER QUIZ CONTROLLER (DYNAMIC)
+// 9. CHAPTER QUIZ CONTROLLER (DYNAMIC)
 // =============================================================================
 
 function initAdventureCards() {
@@ -1259,7 +1376,6 @@ function startChapterQuiz(chKey) {
     ch4: "Conjugaison & Mes Loisirs"
   };
 
-  // Generate 6 fresh dynamic questions for this chapter
   AppState.currentQuiz = generateDynamicQuiz(chKey, 6);
   AppState.currentQuizKey = chKey;
   AppState.quizIndex = 0;
@@ -1277,21 +1393,17 @@ function renderQuizQuestion() {
   const idx = AppState.quizIndex;
   const q = qList[idx];
 
-  // Update progress
   document.getElementById("quiz-current-num").textContent = idx + 1;
   document.getElementById("quiz-total-num").textContent = qList.length;
   const pct = ((idx + 1) / qList.length) * 100;
   document.getElementById("quiz-progress-fill").style.width = `${pct}%`;
 
-  // Hide feedback banner
   const feedback = document.getElementById("quiz-feedback-banner");
   feedback.classList.remove("show", "correct", "incorrect");
 
-  // Populate Question Content
   document.getElementById("question-french-text").textContent = q.fr;
   document.getElementById("question-english-hint").textContent = `"${q.en}"`;
 
-  // Audio Buttons
   const frenchAudioBtn = document.getElementById("btn-speak-french");
   const englishAudioBtn = document.getElementById("btn-speak-english");
 
@@ -1307,7 +1419,6 @@ function renderQuizQuestion() {
     voice.speak(q.en, "en-US", speed);
   };
 
-  // Populate Options
   const container = document.getElementById("quiz-options-container");
   container.innerHTML = "";
 
@@ -1412,7 +1523,7 @@ function finishQuiz() {
 }
 
 // =============================================================================
-// 9. DYNAMIC WORD UNSCRAMBLE GAME
+// 10. DYNAMIC WORD UNSCRAMBLE GAME
 // =============================================================================
 
 function initUnscrambleGame() {
@@ -1435,7 +1546,6 @@ function initUnscrambleGame() {
     sfx.pop();
     AppState.unscrambleIndex++;
     if (AppState.unscrambleIndex >= AppState.unscramblePuzzles.length) {
-      // Regenerate fresh new puzzles!
       AppState.unscramblePuzzles = generateDynamicUnscramblePuzzles(6);
       AppState.unscrambleIndex = 0;
       showToast("✨", "Nouvelle série de phrases générée !");
@@ -1541,7 +1651,7 @@ function checkUnscrambleAnswer() {
 }
 
 // =============================================================================
-// 10. DYNAMIC MATCHING PAIRS GAME
+// 11. DYNAMIC MATCHING PAIRS GAME
 // =============================================================================
 
 function initMatchingGame() {
@@ -1659,7 +1769,7 @@ function handleTileClick(tileElement, tileData, totalPairs) {
 }
 
 // =============================================================================
-// 11. FLASHCARDS CONTROLLER
+// 12. FLASHCARDS CONTROLLER
 // =============================================================================
 
 const STATIC_FLASHCARDS = {
@@ -1775,7 +1885,7 @@ function renderFlashcard() {
 }
 
 // =============================================================================
-// 12. DYNAMIC MOCK EXAM (EXAMEN BLANC)
+// 13. DYNAMIC MOCK EXAM (EXAMEN BLANC)
 // =============================================================================
 
 function initMockExam() {
@@ -1798,7 +1908,6 @@ function initMockExam() {
 }
 
 function startMockExam() {
-  // Generate 15 brand-new dynamic questions balanced across all 4 chapters
   AppState.currentQuiz = generateDynamicMockExam(15);
   AppState.currentQuizKey = "mock-exam";
   AppState.quizIndex = 0;
